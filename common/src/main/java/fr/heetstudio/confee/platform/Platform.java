@@ -1,0 +1,59 @@
+package fr.heetstudio.confee.platform;
+
+import java.nio.file.Path;
+import java.util.Collection;
+import java.util.Optional;
+import java.util.Set;
+
+/**
+ * Loader abstraction (spec 9.5), implemented once per loader module and loaded through {@link java.util.ServiceLoader}.
+ * <p>Internal: may change without notice.</p>
+ */
+public interface Platform {
+
+    /** Human readable loader name, for logs. */
+    String getPlatformName();
+
+    /** The game's {@code config/} directory. */
+    Path getConfigDir();
+
+    /** {@code true} on the physical client. */
+    boolean isClient();
+
+    /** {@code true} when running from a development environment (IDE / Gradle run). */
+    boolean isDevelopmentEnvironment();
+
+    /** IDs of every loaded mod. */
+    Collection<String> getModIds();
+
+    /** Display name declared by the mod, if the mod is loaded. */
+    Optional<String> getModDisplayName(String modId);
+
+    boolean isModLoaded(String modId);
+
+    /**
+     * Files handled by the loader's own config system (Forge/NeoForge {@code ModConfig}). The universal editor does not
+     * treat them as raw files (spec 8.2). Empty on Fabric.
+     */
+    default Set<Path> getLoaderManagedConfigFiles() {
+        return Set.of();
+    }
+
+    /** Configs of a mod declared through the loader's config system (spec 8.4). Empty on Fabric. */
+    default java.util.List<LoaderConfig> getLoaderConfigs(String modId) {
+        return java.util.List.of();
+    }
+
+    /**
+     * Root folders of every loaded mod file (jar contents), the game included when the loader exposes it. Used to
+     * list data files (biomes, structures, tags...) outside of a world.
+     */
+    default java.util.List<Path> getModRootPaths() {
+        return java.util.List.of();
+    }
+
+    /** Mods that declared configs through the loader's config system. Empty on Fabric. */
+    default Set<String> getLoaderConfigModIds() {
+        return Set.of();
+    }
+}
