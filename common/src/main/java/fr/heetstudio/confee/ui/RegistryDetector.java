@@ -26,7 +26,7 @@ public final class RegistryDetector {
     public record Detected(String registry, boolean tags) {
     }
 
-    private static final Detected NONE = new Detected("", false);
+    static final Detected NONE = new Detected("", false);
     private static final Map<Option<?>, Detected> CACHE = new WeakHashMap<>();
 
     /** Key words → registry, checked in this order. */
@@ -64,7 +64,7 @@ public final class RegistryDetector {
         if (schema.source() == ConfigSource.CONFEE || option.readOnly() || !textual(option)) {
             return null;
         }
-        Detected found = CACHE.computeIfAbsent(option, o -> detect(o, value));
+        Detected found = CACHE.computeIfAbsent(option, o -> detect(o.key(), value, RegistryEntries::ids));
         return found == NONE ? null : found;
     }
 
@@ -73,7 +73,13 @@ public final class RegistryDetector {
                 || (option.type() == OptionType.LIST && option.elementType() == OptionType.STRING);
     }
 
-    private static Detected detect(Option<?> option, @Nullable Object value) {
+    /**
+     * Guess from the key and the value.
+     *
+     * @param known sorted IDs of a registry (the game's registries; a fake in unit tests)
+     * @return the registry, or {@link #NONE}
+     */
+    static Detected detect(String optionKey, @Nullable Object value, java.util.function.Function<String, List<String>> known) {
         List<String> values = new ArrayList<>();
         if (value instanceof List<?> list) {
             list.forEach(element -> values.add(String.valueOf(element).trim()));
@@ -96,9 +102,9 @@ public final class RegistryDetector {
                 ids.add(id);
             }
         }
-        String key = option.key().toLowerCase(Locale.ROOT);
+        String key = optionKey.toLowerCase(Locale.ROOT);
         for (String[] hint : KEY_HINTS) {
-            if (key.contains(hint[0]) && (ids.isEmpty() || allKnown(hint[1], ids))) {
+            if (key.contains(hint[0]) && (ids.isEmpty() || allKnown(known.apply(hint[1]), ids))) {
                 return new Detected(hint[1], tags);
             }
         }
@@ -106,16 +112,15 @@ public final class RegistryDetector {
             return NONE;
         }
         for (String registry : BY_VALUE) {
-            if (allKnown(registry, ids)) {
+            if (allKnown(known.apply(registry), ids)) {
                 return new Detected(registry, tags);
             }
         }
         return NONE;
     }
 
-    /** Every ID is an entry of the registry. */
-    private static boolean allKnown(String registry, List<String> ids) {
-        List<String> known = RegistryEntries.ids(registry);
+    /** Every ID is an entry of the registry ({@code known}: its sorted IDs). */
+    private static boolean allKnown(List<String> known, List<String> ids) {
         if (known.isEmpty()) {
             return false;
         }
