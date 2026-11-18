@@ -1,0 +1,17 @@
+.omc
+/reference
+# Gradle / IDE
+.gradle/
+build/
+out/
+bin/
+run/
+run-server/
+runs/
+.idea/
+*.iml
+.vscode/
+run-shots/
+
+# Logs written by unit tests and tools
+logs/

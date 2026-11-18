@@ -1,0 +1,28 @@
+plugins {
+    id 'org.spongepowered.gradle.vanilla'
+}
+
+minecraft {
+    version(minecraft_version)
+}
+
+// Test mod (spec 15): shared code, compiled by each loader module. Never published.
+sourceSets {
+    testmod {
+        compileClasspath += sourceSets.main.compileClasspath + sourceSets.main.output
+        runtimeClasspath += sourceSets.main.runtimeClasspath + sourceSets.main.output
+    }
+}
+
+dependencies {
+    compileOnly 'org.jetbrains:annotations:24.1.0'
+
+    testImplementation platform('org.junit:junit-bom:5.10.2')
+    testImplementation 'org.junit.jupiter:junit-jupiter'
+    testImplementation 'org.junit.jupiter:junit-jupiter-params'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+test {
+    useJUnitPlatform()
+}
