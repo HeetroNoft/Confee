@@ -1,8 +1,8 @@
 package fr.heetstudio.confee.testmod.fabric;
 
-import com.terraformersmc.modmenu.ModMenu;
 import fr.heetstudio.confee.testmod.ScreenshotScript;
 import net.fabricmc.api.ClientModInitializer;
+import net.fabricmc.loader.api.FabricLoader;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 
 /**
@@ -17,7 +17,9 @@ public final class ConfeeTestmodFabricClient implements ClientModInitializer {
         if (!ScreenshotScript.enabled()) {
             return;
         }
-        ScreenshotScript script = new ScreenshotScript(ModMenu::getConfigScreen);
+        // Mod Menu is optional (spec 9.1): without it there is no Config button to check
+        ScreenshotScript script = new ScreenshotScript(FabricLoader.getInstance().isModLoaded("modmenu")
+                ? ModMenuButtons.factory() : (modId, parent) -> null);
         ClientTickEvents.END_CLIENT_TICK.register(script::tick);
     }
 }

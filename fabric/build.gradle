@@ -32,7 +32,10 @@ dependencies {
 
     // Optional: Confee works without Mod Menu (spec 9.1)
     modCompileOnly("com.terraformersmc:modmenu:${modmenu_version}") { transitive = false }
-    modLocalRuntime("com.terraformersmc:modmenu:${modmenu_version}") { transitive = false }
+    // -PnoModMenu: runs without Mod Menu, to check Confee works without it
+    if (!project.hasProperty('noModMenu')) {
+        modLocalRuntime("com.terraformersmc:modmenu:${modmenu_version}") { transitive = false }
+    }
 
     // Cohabitation tests (spec 15), dev runs only: mods with their own config screens
     modLocalRuntime "maven.modrinth:cloth-config:${cloth_config_fabric_version}"

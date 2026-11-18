@@ -26,8 +26,11 @@ import java.util.function.Consumer;
  */
 public final class ScreenshotScript {
 
-    private record Step(int waitTicks, Consumer<Minecraft> action) {
+    /** {@code until}: the step is repeated (every 5 ticks, at most {@code waitTicks} times) until it holds. */
+    private record Step(int waitTicks, Consumer<Minecraft> action, @org.jetbrains.annotations.Nullable java.util.function.Predicate<Minecraft> until) {
     }
+
+    private int attempts;
 
     /** Asks the loader's mod list (Mod Menu / Forge) which screen its Config button opens for a mod (null = no button). */
     private final java.util.function.BiFunction<String, Screen, Screen> configScreen;
@@ -59,7 +62,19 @@ public final class ScreenshotScript {
         if (wait-- > 0 || index >= steps.size()) {
             return;
         }
-        Step step = steps.get(index++);
+        Step step = steps.get(index);
+        if (step.until() != null) {
+            if (!step.until().test(mc) && attempts++ < step.waitTicks()) {
+                wait = 5;
+                return;
+            }
+            attempts = 0;
+            index++;
+            step.action().accept(mc);
+            wait = 5;
+            return;
+        }
+        index++;
         step.action().accept(mc);
         wait = step.waitTicks();
     }
@@ -330,6 +345,7 @@ public final class ScreenshotScript {
         if (forge()) {
             forgeSteps();
         }
+        worldSteps();
 
         step(15, mc -> {
             scale(mc, 3);
@@ -343,6 +359,87 @@ public final class ScreenshotScript {
         });
         shot("13-narrow-collapsed");
         step(5, Minecraft::stop);
+    }
+
+    /**
+     * Spec 10.8: in a world, world registries (biomes) and tags come from the world itself. Creates a flat creative
+     * world "confee-test" (deleted first), compares with the lists read from the files, then leaves the world.
+     */
+    private void worldSteps() {
+        String biomes = "minecraft:worldgen/biome";
+        int[] offWorld = new int[2];
+        step(5, mc -> {
+            offWorld[0] = fr.heetstudio.confee.ui.RegistryEntries.ids(biomes).size();
+            offWorld[1] = fr.heetstudio.confee.ui.RegistryEntries.tags(biomes).size();
+            ConfeeLog.info("[testmod] outside a world: {} biomes, {} biome tags", offWorld[0], offWorld[1]);
+            Path save = mc.gameDirectory.toPath().resolve("saves/confee-test");
+            deleteTree(save);
+            String name = "confee-test";
+            mc.createWorldOpenFlows().createFreshLevel(name,
+                    new net.minecraft.world.level.LevelSettings(name, net.minecraft.world.level.GameType.CREATIVE, false,
+                            net.minecraft.world.Difficulty.PEACEFUL, true, new net.minecraft.world.level.GameRules(),
+                            net.minecraft.world.level.WorldDataConfiguration.DEFAULT),
+                    new net.minecraft.world.level.levelgen.WorldOptions(0L, false, false),
+                    registries -> registries.registryOrThrow(net.minecraft.core.registries.Registries.WORLD_PRESET)
+                            .getHolderOrThrow(net.minecraft.world.level.levelgen.presets.WorldPresets.FLAT).value()
+                            .createWorldDimensions());
+        });
+        waitUntil(2400, mc -> mc.level != null && mc.player != null && mc.screen == null);
+        step(40, mc -> {
+            int inWorld = fr.heetstudio.confee.ui.RegistryEntries.ids(biomes).size();
+            int inWorldTags = fr.heetstudio.confee.ui.RegistryEntries.tags(biomes).size();
+            ConfeeLog.info("[testmod] in a world: {} biomes, {} biome tags (files: {}, {})", inWorld, inWorldTags,
+                    offWorld[0], offWorld[1]);
+            mc.setScreen(ConfeeTestmod.annotated.createScreen(null));
+        });
+        step(10, mc -> {
+            config(mc).focusOption("spawnBiomes");
+            for (int i = 0; i < 30; i++) {
+                key(mc, GLFW.GLFW_KEY_BACKSPACE, 0);
+            }
+            type(mc, "#minecraft:is_");
+        });
+        shot("53-world-biome-tags");
+        step(10, mc -> {
+            key(mc, GLFW.GLFW_KEY_ESCAPE, 0);
+            config(mc).focusOption("favoriteMob");
+        });
+        shot("54-world-preview");
+        step(20, mc -> {
+            // leave without saving the edits, then back to the title screen
+            mc.setScreen(null);
+            if (mc.level != null) {
+                mc.level.disconnect();
+            }
+            mc.clearLevel();
+            mc.setScreen(new TitleScreen());
+        });
+        waitUntil(600, mc -> mc.level == null && mc.getSingleplayerServer() == null);
+    }
+
+    private void waitUntil(int maxChecks, java.util.function.Predicate<Minecraft> condition) {
+        steps.add(new Step(maxChecks, mc -> {
+            if (!condition.test(mc)) {
+                ConfeeLog.warn("[testmod] condition still false after waiting");
+            }
+        }, condition));
+    }
+
+    private static void deleteTree(Path dir) {
+        if (!Files.exists(dir)) {
+            return;
+        }
+        try (java.util.stream.Stream<Path> files = Files.walk(dir)) {
+            files.sorted(java.util.Comparator.reverseOrder()).forEach(p -> {
+                try {
+                    Files.delete(p);
+                } catch (IOException e) {
+                    ConfeeLog.warn("[testmod] cannot delete {}", p);
+                }
+            });
+        } catch (IOException e) {
+            ConfeeLog.warn("[testmod] cannot delete {}", dir);
+        }
     }
 
     /** Forge/NeoForge config specs (spec 8.4). */
@@ -380,7 +477,7 @@ public final class ScreenshotScript {
     }
 
     private void step(int waitTicks, Consumer<Minecraft> action) {
-        steps.add(new Step(waitTicks, action));
+        steps.add(new Step(waitTicks, action, null));
     }
 
     private void shot(String name) {
