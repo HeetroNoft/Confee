@@ -1,0 +1,295 @@
+package fr.heetstudio.confee.ui.screen;
+
+import fr.heetstudio.confee.api.Theme;
+import fr.heetstudio.confee.core.Option;
+import fr.heetstudio.confee.core.OptionType;
+import fr.heetstudio.confee.core.Validated;
+import fr.heetstudio.confee.ui.EditSession;
+import fr.heetstudio.confee.ui.Labels;
+import fr.heetstudio.confee.ui.Ui;
+import fr.heetstudio.confee.ui.ValueText;
+import fr.heetstudio.confee.ui.render.Draw;
+import fr.heetstudio.confee.ui.render.Icon;
+import fr.heetstudio.confee.ui.widget.ButtonWidget;
+import fr.heetstudio.confee.ui.widget.ConfeeWidget;
+import fr.heetstudio.confee.ui.widget.DropdownWidget;
+import fr.heetstudio.confee.ui.widget.IconButton;
+import fr.heetstudio.confee.ui.widget.TextFieldWidget;
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.network.chat.Component;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Objects;
+import java.util.function.Consumer;
+import java.util.function.Function;
+
+/**
+ * List editor (spec 10.3): one text field (or a dropdown for enums) per entry with ▲ ▼ (reorder) and ✕ (remove),
+ * "+ Add" at the bottom. The list is only applied when every entry is valid.
+ * <p>Internal: may change without notice.</p>
+ */
+final class ListRow extends OptionRow {
+
+    private static final int GAP = 2;
+
+    private final Function<ValueText.Problem, Component> problemText;
+    private final Consumer<ConfeeWidget> focusRequest;
+    private final DropdownWidget.Opener opener;
+    private final List<Entry> entries = new ArrayList<>();
+    private final ButtonWidget add;
+    @Nullable
+    private List<?> shownList;
+    @Nullable
+    private final Function<String, List<String>> suggester;
+    private final Consumer<Overlay> overlays;
+    /** Declared or guessed registry of the entries, or null. */
+    @Nullable
+    private final String registry;
+    private final Runnable closeOverlay;
+
+    private final class Entry {
+        @Nullable
+        final TextFieldWidget field;
+        @Nullable
+        final DropdownWidget<Object> dropdown;
+        Object enumValue;
+        final IconButton up;
+        final IconButton down;
+        final IconButton remove;
+
+        @SuppressWarnings({"unchecked", "rawtypes"})
+        Entry(Object value) {
+            Theme t = ui.theme();
+            if (isEnumList()) {
+                enumValue = value;
+                List<Object> constants = Arrays.asList((Object[]) option.enumClass().getEnumConstants());
+                dropdown = new DropdownWidget<>(ui, name, constants, Labels::enumValue, () -> enumValue, v -> {
+                    enumValue = v;
+                    edited();
+                }, opener);
+                field = null;
+            } else {
+                field = new TextFieldWidget(ui, name, value instanceof Double || value instanceof Float
+                        ? ValueText.number(value) : String.valueOf(value), 32767, numericFilter(), s -> edited());
+                dropdown = null;
+                if (suggester != null) {
+                    field.setSuggester(suggester);
+                }
+                if (fr.heetstudio.confee.ui.RegistryIcons.hasIcons(registry)) {
+                    TextFieldWidget f = field;
+                    field.setIconRegistry(registry);
+                    field.setPickerAction(() -> overlays.accept(new ItemPickerPopup(ui, name, registry, f.text(),
+                            f::setTextAndNotify, closeOverlay)), Component.translatable("confee.tooltip.pick"));
+                }
+            }
+            up = new IconButton(ui, Icon.ARROW_UP, Component.translatable("confee.tooltip.move_up"), 14,
+                    t::textOnDark, () -> move(this, -1));
+            down = new IconButton(ui, Icon.ARROW_DOWN, Component.translatable("confee.tooltip.move_down"), 14,
+                    t::textOnDark, () -> move(this, 1));
+            remove = new IconButton(ui, Icon.CROSS, Component.translatable("confee.tooltip.remove"), 14,
+                    t::textOnDark, () -> remove(this));
+        }
+
+        ConfeeWidget input() {
+            return field != null ? field : dropdown;
+        }
+
+        @Nullable
+        Component error() {
+            return field == null ? null : field.error();
+        }
+    }
+
+    ListRow(Ui ui, EditSession session, Option<?> option, Component name, @Nullable Component description,
+            Function<ValueText.Problem, Component> problemText, Consumer<ConfeeWidget> focusRequest,
+            DropdownWidget.Opener opener, Consumer<Overlay> overlays, Runnable closeOverlay) {
+        super(ui, session, option, name, description, null);
+        this.problemText = problemText;
+        this.focusRequest = focusRequest;
+        this.opener = opener;
+        this.overlays = overlays;
+        this.closeOverlay = closeOverlay;
+        fr.heetstudio.confee.ui.RegistryDetector.Detected detected =
+                fr.heetstudio.confee.ui.RegistryDetector.of(session.handle().schema(), option, session.get(option));
+        this.registry = detected == null ? null : detected.registry();
+        this.suggester = fr.heetstudio.confee.ui.Suggestions.forSources(registry, detected != null && detected.tags(),
+                option.suggestions(), option.path());
+        this.add = new ButtonWidget(ui, Component.translatable("confee.button.add"), ButtonWidget.Style.NORMAL, this::addEntry);
+        rebuild();
+    }
+
+    private boolean isEnumList() {
+        return option.elementType() == OptionType.ENUM;
+    }
+
+    @Nullable
+    private java.util.function.Predicate<String> numericFilter() {
+        OptionType type = option.elementType();
+        if (type == OptionType.INT || type == OptionType.LONG) {
+            return s -> ValueText.isNumberText(s, false);
+        }
+        if (type == OptionType.FLOAT || type == OptionType.DOUBLE) {
+            return s -> ValueText.isNumberText(s, true);
+        }
+        return null;
+    }
+
+    private List<?> current() {
+        return (List<?>) session.get(option);
+    }
+
+    private void rebuild() {
+        entries.clear();
+        for (Object element : current()) {
+            entries.add(new Entry(element));
+        }
+        shownList = current();
+    }
+
+    /** Re-reads every entry; applies the list only when all are valid. */
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    private void edited() {
+        List<Object> values = new ArrayList<>(entries.size());
+        boolean ok = true;
+        for (Entry entry : entries) {
+            if (entry.field == null) {
+                values.add(entry.enumValue);
+                continue;
+            }
+            ValueText.Parsed parsed = ValueText.parseElement(option, entry.field.text());
+            Validated<?> check = parsed.ok() ? ((Option) option).validate(List.of(parsed.value())) : null;
+            if (!parsed.ok() || check == null || !check.isOk()) {
+                entry.field.setError(problemText.apply(parsed.ok() ? ValueText.Problem.INVALID : parsed.problem()));
+                ok = false;
+            } else {
+                entry.field.setError(null);
+                values.add(((List<?>) check.value()).get(0));
+            }
+        }
+        if (ok) {
+            List<Object> list = List.copyOf(values);
+            ((EditSession) session).set((Option) option, list);
+            shownList = list;
+        }
+    }
+
+    private void addEntry() {
+        OptionType type = option.elementType();
+        Object initial = isEnumList() ? option.enumClass().getEnumConstants()[0]
+                : type == OptionType.BOOLEAN ? "false" : type != null && type.isNumeric() ? "0" : "";
+        Entry entry = new Entry(initial);
+        entries.add(entry);
+        edited();
+        focusRequest.accept(entry.input());
+    }
+
+    private void remove(Entry entry) {
+        int index = entries.indexOf(entry);
+        entries.remove(entry);
+        edited();
+        if (entries.isEmpty()) {
+            focusRequest.accept(add);
+        } else {
+            focusRequest.accept(entries.get(Math.min(index, entries.size() - 1)).remove);
+        }
+    }
+
+    private void move(Entry entry, int direction) {
+        int index = entries.indexOf(entry);
+        int target = index + direction;
+        if (target < 0 || target >= entries.size()) {
+            return;
+        }
+        entries.remove(index);
+        entries.add(target, entry);
+        edited();
+        focusRequest.accept(direction < 0 ? entry.up : entry.down);
+    }
+
+    @Override
+    void syncValue() {
+        // list replaced elsewhere (reset): rebuild the entries
+        boolean editing = entries.stream().anyMatch(e -> e.input().isFocused());
+        if (!editing && !Objects.equals(shownList, current()) && entries.stream().noneMatch(e -> e.error() != null)) {
+            rebuild();
+        }
+        for (int i = 0; i < entries.size(); i++) {
+            entries.get(i).up.setEnabled(editable && i > 0);
+            entries.get(i).down.setEnabled(editable && i < entries.size() - 1);
+        }
+    }
+
+    @Override
+    int layout(int x, int y, int width) {
+        this.x = x;
+        this.y = y;
+        this.width = width;
+        reset.setBounds(x + width - ICON, y - 1, ICON, ICON);
+        int cx = x + DOT_GUTTER;
+        int cw = width - DOT_GUTTER;
+        layoutSubtitle(width);
+        int cy = y + headerHeight();
+        int buttons = 3 * 14 + 2 * GAP;
+        for (Entry entry : entries) {
+            entry.input().setBounds(cx, cy, cw - buttons - GAP, TextFieldWidget.HEIGHT);
+            int bx = cx + cw - buttons;
+            int by = cy + (TextFieldWidget.HEIGHT - 14) / 2;
+            entry.up.setBounds(bx, by, 14, 14);
+            entry.down.setBounds(bx + 14 + GAP, by, 14, 14);
+            entry.remove.setBounds(bx + 2 * (14 + GAP), by, 14, 14);
+            cy += TextFieldWidget.HEIGHT;
+            if (entry.error() != null) {
+                cy += 11;
+            }
+            cy += GAP;
+        }
+        add.setBounds(cx, cy, Math.min(cw, add.preferredWidth()), 18);
+        cy += 18;
+        return height = cy - y;
+    }
+
+    @Override
+    void render(GuiGraphics g, int mouseX, int mouseY, float delta) {
+        Theme t = ui.theme();
+        if (!session.isDefault(option)) {
+            Draw.rect(g, x, y + 3, 3, 3, t.accent());
+        }
+        Draw.textFit(g, ui.font(), name, x + DOT_GUTTER, y + 1, width - DOT_GUTTER - 2 * ICON - 6, labelColor());
+        renderSubtitle(g);
+        renderRestartIcon(g);
+        reset.render(g, mouseX, mouseY, delta);
+        for (Entry entry : entries) {
+            entry.input().render(g, mouseX, mouseY, delta);
+            entry.up.render(g, mouseX, mouseY, delta);
+            entry.down.render(g, mouseX, mouseY, delta);
+            entry.remove.render(g, mouseX, mouseY, delta);
+            if (entry.error() != null) {
+                ConfeeWidget input = entry.input();
+                Draw.textFit(g, ui.font(), entry.error(), input.x, input.y + input.height + 2, input.width, t.error());
+            }
+        }
+        add.render(g, mouseX, mouseY, delta);
+    }
+
+    @Override
+    List<ConfeeWidget> widgets() {
+        List<ConfeeWidget> list = new ArrayList<>();
+        list.add(reset);
+        for (Entry entry : entries) {
+            list.add(entry.input());
+            list.add(entry.up);
+            list.add(entry.down);
+            list.add(entry.remove);
+        }
+        list.add(add);
+        return list;
+    }
+
+    @Override
+    boolean hasError() {
+        return !hiddenByCondition && entries.stream().anyMatch(e -> e.error() != null);
+    }
+}
