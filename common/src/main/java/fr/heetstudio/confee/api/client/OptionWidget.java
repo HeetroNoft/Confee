@@ -1,0 +1,197 @@
+package fr.heetstudio.confee.api.client;
+
+import fr.heetstudio.confee.api.Theme;
+import net.minecraft.client.gui.Font;
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.network.chat.Component;
+
+/**
+ * Your own widget for an option, drawn under its name in place of Confee's widget. <b>Client only.</b>
+ * Use it with {@code @Widget(MyWidget.class)} (the class needs a public no-argument constructor) or register it from
+ * your client initializer with {@link ConfeeWidgets}.
+ *
+ * <p>The value you read and write is the pending value of the screen: it is saved with "Save" and dropped with
+ * "Cancel", like the other options. Values are validated (bounds, allowed values...) before being kept.</p>
+ *
+ * <pre>{@code
+ * public class TemperatureWidget extends OptionWidget<Integer> {
+ *     public void render(GuiGraphics g, int x, int y, int width, int height, int mouseX, int mouseY, float delta) {
+ *         int filled = width * value() / 100;
+ *         g.fill(x, y, x + filled, y + height, theme().accent());
+ *         g.drawString(font(), value() + " °C", x + 4, y + 6, theme().textOnDark());
+ *     }
+ *     public boolean mouseClicked(double mx, double my, int button) {
+ *         setValue((int) ((mx - x()) * 100 / width()));
+ *         return true;
+ *     }
+ * }
+ * }</pre>
+ *
+ * @param <T> value type of the option (Boolean, Integer, String, your enum, List...)
+ */
+public abstract class OptionWidget<T> {
+
+    private Context<T> context;
+    private int x;
+    private int y;
+    private int width;
+    private int height;
+
+    /** Height for a given width, in GUI pixels (default 20). */
+    public int height(int width) {
+        return 20;
+    }
+
+    /** Draws the widget in its box. Coordinates are screen coordinates. */
+    public abstract void render(GuiGraphics g, int x, int y, int width, int height, int mouseX, int mouseY, float delta);
+
+    /** Click inside the box; return true when handled (the widget then gets the keyboard focus). */
+    public boolean mouseClicked(double mouseX, double mouseY, int button) {
+        return false;
+    }
+
+    public boolean mouseDragged(double mouseX, double mouseY, int button, double dragX, double dragY) {
+        return false;
+    }
+
+    public boolean mouseReleased(double mouseX, double mouseY, int button) {
+        return false;
+    }
+
+    public boolean mouseScrolled(double mouseX, double mouseY, double delta) {
+        return false;
+    }
+
+    /** Key pressed while focused (Tab and Escape are kept by the screen). */
+    public boolean keyPressed(int key, int scanCode, int modifiers) {
+        return false;
+    }
+
+    public boolean charTyped(char c, int modifiers) {
+        return false;
+    }
+
+    /** Whether the widget takes the keyboard focus (Tab). Default: true. */
+    public boolean focusable() {
+        return true;
+    }
+
+    /** Text read by the narrator (default: the value). */
+    public Component narration() {
+        return Component.literal(String.valueOf(value()));
+    }
+
+    // ------------------------------------------------------------------ helpers for subclasses
+
+    /** Pending value of the option. */
+    protected final T value() {
+        return context.get();
+    }
+
+    /** Sets the pending value; returns false when it is refused (wrong type, out of range...). */
+    protected final boolean setValue(T value) {
+        return context.set(value);
+    }
+
+    protected final T defaultValue() {
+        return context.defaultValue();
+    }
+
+    /** Lower bound of a number option ({@code @Range}), or null. */
+    @org.jetbrains.annotations.Nullable
+    protected final Number minimum() {
+        return context.minimum();
+    }
+
+    /** Upper bound of a number option ({@code @Range}), or null. */
+    @org.jetbrains.annotations.Nullable
+    protected final Number maximum() {
+        return context.maximum();
+    }
+
+    /** Colors of the screen. */
+    protected final Theme theme() {
+        return context.theme();
+    }
+
+    protected final Font font() {
+        return context.font();
+    }
+
+    /** Name of the option. */
+    protected final Component label() {
+        return context.label();
+    }
+
+    protected final boolean focused() {
+        return context.focused();
+    }
+
+    /** False when the option is grayed out ({@code @EnabledIf}, read-only). */
+    protected final boolean enabled() {
+        return context.enabled();
+    }
+
+    /** Vanilla click sound. */
+    protected final void playClick() {
+        context.click();
+    }
+
+    protected final int x() {
+        return x;
+    }
+
+    protected final int y() {
+        return y;
+    }
+
+    protected final int width() {
+        return width;
+    }
+
+    protected final int height() {
+        return height;
+    }
+
+    // ------------------------------------------------------------------ internal
+
+    /** Internal: set by Confee. */
+    public final void bind(Context<T> context) {
+        this.context = context;
+    }
+
+    /** Internal: set by Confee before each frame. */
+    public final void place(int x, int y, int width, int height) {
+        this.x = x;
+        this.y = y;
+        this.width = width;
+        this.height = height;
+    }
+
+    /** Internal: link between the widget and Confee's screen. */
+    public interface Context<T> {
+        T get();
+
+        boolean set(T value);
+
+        T defaultValue();
+
+        @org.jetbrains.annotations.Nullable
+        Number minimum();
+
+        @org.jetbrains.annotations.Nullable
+        Number maximum();
+
+        Theme theme();
+
+        Font font();
+
+        Component label();
+
+        boolean focused();
+
+        boolean enabled();
+
+        void click();
+    }
+}
