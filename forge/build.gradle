@@ -1,0 +1,169 @@
+plugins {
+    id 'net.minecraftforge.gradle'
+}
+
+// Test mods (spec 15): never part of the published jar.
+// - testmod: uses Confee (annotations, builder, theme)
+// - rawmod: does NOT use Confee and has no screen (universal editor)
+sourceSets {
+    testmod {
+        compileClasspath += main.compileClasspath + main.output
+        runtimeClasspath += main.runtimeClasspath + main.output
+    }
+    rawmod {
+        compileClasspath += main.compileClasspath
+        runtimeClasspath += main.runtimeClasspath
+    }
+}
+
+minecraft {
+    mappings channel: 'official', version: minecraft_version
+    copyIdeResources = true
+
+    runs {
+        configureEach {
+            property 'forge.logging.console.level', 'debug'
+            // lets third-party mixin mods (YACL, cohabitation tests) run in dev
+            property 'mixin.env.remapRefMap', 'true'
+            property 'mixin.env.refMapRemappingFile', "${projectDir}/build/createSrgToMcp/output.srg"
+            mods {
+                confee {
+                    source sourceSets.main
+                }
+            }
+        }
+        client {
+            workingDirectory project.file('run')
+        }
+        server {
+            workingDirectory project.file('run-server')
+            args '--nogui'
+        }
+        testmodClient {
+            parent runs.client
+            workingDirectory project.file('run')
+            taskName 'runTestmodClient'
+            mods {
+                confee_testmod {
+                    source sourceSets.testmod
+                }
+                confee_rawmod {
+                    source sourceSets.rawmod
+                }
+            }
+        }
+        testmodScreenshots {
+            parent runs.client
+            workingDirectory project.file('run-shots')
+            taskName 'runTestmodScreenshots'
+            property 'confee.testmod.screenshots', 'true'
+            args '--width', '1280', '--height', '720'
+            mods {
+                confee_testmod {
+                    source sourceSets.testmod
+                }
+                confee_rawmod {
+                    source sourceSets.rawmod
+                }
+            }
+        }
+        testmodServer {
+            parent runs.server
+            workingDirectory project.file('run-server')
+            taskName 'runTestmodServer'
+            args '--nogui'
+            mods {
+                confee_testmod {
+                    source sourceSets.testmod
+                }
+                confee_rawmod {
+                    source sourceSets.rawmod
+                }
+            }
+        }
+    }
+}
+
+repositories {
+    maven {
+        name = 'Modrinth'
+        url = 'https://api.modrinth.com/maven'
+        content { includeGroup 'maven.modrinth' }
+    }
+}
+
+dependencies {
+    minecraft "net.minecraftforge:forge:${minecraft_version}-${forge_version}"
+    compileOnly project(':common')
+
+    // Cohabitation tests (spec 15), dev runs only: mods with their own config screens
+    runtimeOnly fg.deobf("maven.modrinth:cloth-config:${cloth_config_forge_version}")
+    runtimeOnly fg.deobf("maven.modrinth:yacl:${yacl_forge_version}")
+}
+
+tasks.withType(JavaCompile).matching { it.name == 'compileJava' }.configureEach {
+    source(project(':common').sourceSets.main.allSource)
+}
+tasks.named('compileTestmodJava', JavaCompile) {
+    source(project(':common').sourceSets.testmod.java)
+}
+tasks.named('sourcesJar', Jar) {
+    from(project(':common').sourceSets.main.allSource)
+}
+processResources {
+    from project(':common').sourceSets.main.resources
+}
+
+// Sample config files of other mods (spec 15), copied into each run folder without overwriting your edits
+def fixtures = project(':common').file('src/testmod/fixtures/config')
+['run', 'run-shots', 'run-server'].each { dirName ->
+    def taskName = "installTestFixtures" + dirName.split('-').collect { it.capitalize() }.join('')
+    tasks.register(taskName) {
+        doLast {
+            fileTree(fixtures).visit { details ->
+                def target = file("${dirName}/config/${details.relativePath}")
+                if (!details.directory && !target.exists()) {
+                    target.parentFile.mkdirs()
+                    target.bytes = details.file.bytes
+                }
+            }
+        }
+    }
+}
+tasks.matching { it.name == 'runTestmodClient' }.configureEach { dependsOn 'installTestFixturesRun' }
+tasks.matching { it.name == 'runTestmodServer' }.configureEach { dependsOn 'installTestFixturesRunServer' }
+tasks.matching { it.name == 'runTestmodScreenshots' }.configureEach { dependsOn 'installTestFixturesRunShots' }
+
+jar.finalizedBy('reobfJar')
+
+// Publishing (spec 16). Always a dry run unless CONFEE_PUBLISH=true; tokens only come from environment variables.
+// The 1.20.1 Forge jar also runs on NeoForge 1.20.1 (spec 4.3).
+apply plugin: 'me.modmuss50.mod-publish-plugin'
+publishMods {
+    file = jar.archiveFile
+    changelog = providers.provider { rootProject.file('CHANGELOG.md').text }
+    type = providers.provider { me.modmuss50.mpp.ReleaseType.of(release_type) }
+    version = "${mod_version}+${minecraft_version}-forge"
+    displayName = "Confee ${mod_version} (Forge/NeoForge ${minecraft_version})"
+    modLoaders.addAll('forge', 'neoforge')
+    dryRun = providers.environmentVariable('CONFEE_PUBLISH').map { it != 'true' }.orElse(true)
+
+    modrinth {
+        accessToken = providers.environmentVariable('MODRINTH_TOKEN')
+        projectId = providers.environmentVariable('MODRINTH_PROJECT_ID').orElse('confee')
+        minecraftVersions.add(minecraft_version)
+    }
+    curseforge {
+        accessToken = providers.environmentVariable('CURSEFORGE_TOKEN')
+        projectId = providers.environmentVariable('CURSEFORGE_PROJECT_ID').orElse('0')
+        minecraftVersions.add(minecraft_version)
+        clientRequired = true
+        serverRequired = false
+    }
+}
+tasks.named('publishMods') { dependsOn 'reobfJar' }
+
+// Shared testmod resources (preview images...)
+tasks.named('processTestmodResources', ProcessResources) {
+    from(project(':common').file('src/testmod/resources'))
+}
