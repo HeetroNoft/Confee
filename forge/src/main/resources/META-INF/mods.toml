@@ -1,12 +1,14 @@
 modLoader = "javafml"
 loaderVersion = "${forge_loader_version_range}"
 license = "${mod_license}"
+issueTrackerURL = "${mod_source_url}/issues"
 
 [[mods]]
 modId = "${mod_id}"
 version = "${mod_version}"
 displayName = "${mod_name}"
 authors = "${mod_author}"
+displayURL = "${mod_source_url}"
 logoFile = "assets/confee/img/ConfeeIconPromo@2x.png"
 logoBlur = false
 description = '''${mod_description}'''
