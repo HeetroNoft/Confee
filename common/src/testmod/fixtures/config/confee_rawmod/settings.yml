@@ -1,0 +1,12 @@
+# YAML settings of the raw test mod
+enabled: true
+# Seconds between autosaves
+autosaveDelay: 300
+welcome: Hello world
+blocked:
+  - minecraft:tnt
+  - minecraft:lava_bucket
+hud:
+  # Position of the HUD
+  corner: top-left
+  scale: 1.5

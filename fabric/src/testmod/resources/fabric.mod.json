@@ -1,0 +1,16 @@
+{
+  "schemaVersion": 1,
+  "id": "confee_testmod",
+  "version": "0.0.0",
+  "name": "Confee Test Mod",
+  "description": "Development-only test mod for Confee. Not published.",
+  "license": "LGPL-3.0-only",
+  "environment": "*",
+  "entrypoints": {
+    "main": ["fr.heetstudio.confee.testmod.fabric.ConfeeTestmodFabric"],
+    "client": ["fr.heetstudio.confee.testmod.fabric.ConfeeTestmodFabricClient"]
+  },
+  "depends": {
+    "confee": "*"
+  }
+}

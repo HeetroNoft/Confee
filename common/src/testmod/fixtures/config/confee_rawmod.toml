@@ -1,0 +1,39 @@
+# Raw test file for Confee's universal editor (not written by Confee).
+# The test mod "confee_rawmod" does not use Confee and has no config screen.
+
+# Show the welcome message
+showWelcome = true
+# Maximum number of particles
+maxParticles = 250
+# Opacity of the overlay, from 0 to 1
+overlayOpacity = 0.65
+playerName = 'Steve'
+# Highlight color
+highlight = "#FF8800"
+blockedItems = ["minecraft:tnt", "minecraft:lava_bucket"]
+# Mobs that never spawn
+spawnBlacklist = ["minecraft:creeper", "minecraft:phantom"]
+# Biome where the event happens
+eventBiome = "minecraft:cherry_grove"
+# Ores replaced by the mod (tags allowed)
+replacedOres = ["#minecraft:coal_ores", "minecraft:iron_ore"]
+lastReset = 2024-01-01T10:00:00Z
+
+# Rendering settings
+[render]
+distance = 12 # in chunks
+smoothLighting = true
+
+[render.fog]
+start = 0.75
+end = 1.0
+mode = "LINEAR"
+
+# Waypoint presets
+[[presets]]
+id = "fast"
+speed = 2.5
+
+[[presets]]
+id = "safe"
+speed = 1.0

@@ -1,0 +1,9 @@
+{
+  "schemaVersion": 1,
+  "id": "confee_rawmod",
+  "version": "0.0.0",
+  "name": "Confee Raw Test Mod",
+  "description": "Development-only mod WITHOUT Confee and without a config screen: tests the universal editor. Not published.",
+  "license": "LGPL-3.0-only",
+  "environment": "*"
+}

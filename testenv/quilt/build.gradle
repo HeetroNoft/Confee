@@ -1,0 +1,123 @@
+plugins {
+    id 'java'
+    id 'org.quiltmc.loom' version '1.7.4'
+}
+
+// Development only (spec 15): runs the RELEASE jar of Confee's Fabric module (fabric/build/libs, the file players
+// install) on Quilt Loader + Quilted Fabric API, with the test mods. Never published.
+// Tasks: runTestmodScreenshots, runTestmodClient, runTestmodServer (scripts/confee.ps1 builds the jar first).
+
+def repo = file('../..')
+def props = new Properties()
+file('../../gradle.properties').withInputStream { props.load(it) }
+props.each { k, v -> ext.set(k, v) }
+
+java {
+    toolchain.languageVersion = JavaLanguageVersion.of(17)
+}
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8'
+    options.release.set(17)
+}
+
+repositories {
+    maven {
+        name = 'Quilt'
+        url = 'https://maven.quiltmc.org/repository/release/'
+    }
+    maven {
+        name = 'TerraformersMC'
+        url = 'https://maven.terraformersmc.com/'
+    }
+}
+
+sourceSets {
+    rawmod {
+        resources.srcDirs = [new File(repo, 'fabric/src/rawmod/resources')]
+        java.srcDirs = []
+    }
+    testmod {
+        java.srcDirs = [new File(repo, 'fabric/src/testmod/java'), new File(repo, 'common/src/testmod/java')]
+        resources.srcDirs = [new File(repo, 'fabric/src/testmod/resources'), new File(repo, 'common/src/testmod/resources')]
+        compileClasspath += main.compileClasspath
+        runtimeClasspath += main.runtimeClasspath + rawmod.output
+    }
+}
+
+dependencies {
+    minecraft "com.mojang:minecraft:${minecraft_version}"
+    mappings loom.officialMojangMappings()
+    modImplementation "org.quiltmc:quilt-loader:${quilt_loader_version}"
+    modImplementation "org.quiltmc.quilted-fabric-api:quilted-fabric-api:${quilted_fabric_api_version}"
+    modCompileOnly("com.terraformersmc:modmenu:${modmenu_version}") { transitive = false }
+    modLocalRuntime("com.terraformersmc:modmenu:${modmenu_version}") { transitive = false }
+
+    // the test mods compile against Confee's classes (compiled by the main build); at runtime Confee is the
+    // release jar copied into run*/mods
+    testmodCompileOnly files(new File(repo, 'fabric/build/classes/java/main'))
+}
+
+loom {
+    mods {
+        confee_testmod {
+            sourceSet sourceSets.testmod
+        }
+        confee_rawmod {
+            sourceSet sourceSets.rawmod
+        }
+    }
+    runs {
+        testmodClient {
+            client()
+            configName = 'Quilt Client (testmod)'
+            source sourceSets.testmod
+            runDir('run')
+        }
+        testmodScreenshots {
+            inherit testmodClient
+            configName = 'Quilt Client (testmod screenshots)'
+            runDir('run-shots')
+            vmArg '-Dconfee.testmod.screenshots=true'
+            programArgs '--width', '1280', '--height', '720'
+        }
+        testmodServer {
+            server()
+            configName = 'Quilt Server (testmod)'
+            source sourceSets.testmod
+            runDir('run-server')
+        }
+        remove client
+        remove server
+    }
+}
+
+// Release jar of Confee + sample config files of other mods, copied into each run folder
+def fixtures = new File(repo, 'common/src/testmod/fixtures/config')
+def releaseJar = new File(repo, "fabric/build/libs/confee-${mod_version}+${minecraft_version}-fabric.jar")
+['run', 'run-shots', 'run-server'].each { dirName ->
+    def suffix = dirName.split('-').collect { it.capitalize() }.join('')
+    tasks.register("installConfee${suffix}") {
+        doLast {
+            if (!releaseJar.exists()) {
+                throw new GradleException("Build the Fabric jar first (main build: :fabric:remapJar): ${releaseJar}")
+            }
+            def mods = file("${dirName}/mods")
+            mods.mkdirs()
+            fileTree(mods).matching { include 'confee-*.jar' }.each { it.delete() }
+            copy {
+                from releaseJar
+                into mods
+            }
+            fileTree(fixtures).visit { details ->
+                def target = file("${dirName}/config/${details.relativePath}")
+                if (!details.directory && !target.exists()) {
+                    target.parentFile.mkdirs()
+                    target.bytes = details.file.bytes
+                }
+            }
+        }
+    }
+}
+tasks.matching { it.name == 'runTestmodClient' }.configureEach { dependsOn 'installConfeeRun' }
+tasks.matching { it.name == 'runTestmodScreenshots' }.configureEach { dependsOn 'installConfeeRunShots' }
+tasks.matching { it.name == 'runTestmodServer' }.configureEach { dependsOn 'installConfeeRunServer' }

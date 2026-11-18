@@ -1,0 +1,21 @@
+// Development only (spec 15): separate build, because Quilt Loom cannot share a build with Fabric Loom.
+// Run it through scripts/confee.ps1 (shots-quilt, quilt, quilt-server): the main build makes the jar first.
+pluginManagement {
+    repositories {
+        gradlePluginPortal()
+        maven {
+            name = 'Quilt'
+            url = 'https://maven.quiltmc.org/repository/release/'
+        }
+        maven {
+            name = 'Fabric'
+            url = 'https://maven.fabricmc.net/'
+        }
+    }
+}
+
+plugins {
+    id 'org.gradle.toolchains.foojay-resolver-convention' version '0.8.0'
+}
+
+rootProject.name = 'confee-quilt-test'

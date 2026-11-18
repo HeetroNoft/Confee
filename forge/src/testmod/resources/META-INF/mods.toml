@@ -1,0 +1,16 @@
+modLoader = "javafml"
+loaderVersion = "[47,)"
+license = "LGPL-3.0-only"
+
+[[mods]]
+modId = "confee_testmod"
+version = "0.0.0"
+displayName = "Confee Test Mod"
+description = '''Development-only test mod for Confee. Not published.'''
+
+[[dependencies.confee_testmod]]
+modId = "confee"
+mandatory = true
+versionRange = "[0,)"
+ordering = "AFTER"
+side = "BOTH"
