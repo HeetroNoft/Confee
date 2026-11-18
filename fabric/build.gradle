@@ -1,0 +1,171 @@
+plugins {
+    id 'fabric-loom'
+}
+
+repositories {
+    maven {
+        name = 'TerraformersMC'
+        url = 'https://maven.terraformersmc.com/'
+    }
+    maven {
+        name = 'Modrinth'
+        url = 'https://api.modrinth.com/maven'
+        content { includeGroup 'maven.modrinth' }
+    }
+    maven {
+        name = 'Shedaniel (Cloth Config libraries)'
+        url = 'https://maven.shedaniel.me/'
+        content { includeGroup 'me.shedaniel.cloth' }
+    }
+    maven {
+        name = 'Quilt (YACL libraries)'
+        url = 'https://maven.quiltmc.org/repository/release/'
+        content { includeGroup 'org.quiltmc.parsers' }
+    }
+}
+
+dependencies {
+    minecraft "com.mojang:minecraft:${minecraft_version}"
+    mappings loom.officialMojangMappings()
+    modImplementation "net.fabricmc:fabric-loader:${fabric_loader_version}"
+    modImplementation "net.fabricmc.fabric-api:fabric-api:${fabric_api_version}"
+
+    // Optional: Confee works without Mod Menu (spec 9.1)
+    modCompileOnly("com.terraformersmc:modmenu:${modmenu_version}") { transitive = false }
+    modLocalRuntime("com.terraformersmc:modmenu:${modmenu_version}") { transitive = false }
+
+    // Cohabitation tests (spec 15), dev runs only: mods with their own config screens
+    modLocalRuntime "maven.modrinth:cloth-config:${cloth_config_fabric_version}"
+    modLocalRuntime "maven.modrinth:yacl:${yacl_fabric_version}"
+    localRuntime "org.quiltmc.parsers:json:0.2.1"
+    localRuntime "me.shedaniel.cloth:basic-math:0.6.1"
+    localRuntime "org.quiltmc.parsers:gson:0.2.1"
+
+    compileOnly project(':common')
+}
+
+// Test mods (spec 15): never part of the published jar.
+// - testmod: uses Confee (annotations, builder, theme)
+// - rawmod: does NOT use Confee and has no screen (universal editor)
+sourceSets {
+    rawmod {
+    }
+    testmod {
+        compileClasspath += main.compileClasspath + main.output
+        runtimeClasspath += main.runtimeClasspath + main.output + rawmod.output
+    }
+}
+
+loom {
+    mods {
+        confee {
+            sourceSet sourceSets.main
+        }
+        confee_testmod {
+            sourceSet sourceSets.testmod
+        }
+        confee_rawmod {
+            sourceSet sourceSets.rawmod
+        }
+    }
+    runs {
+        client {
+            client()
+            configName = 'Fabric Client'
+            ideConfigGenerated(true)
+            runDir('run')
+        }
+        server {
+            server()
+            configName = 'Fabric Server'
+            ideConfigGenerated(true)
+            runDir('run-server')
+        }
+        testmodClient {
+            inherit client
+            configName = 'Fabric Client (testmod)'
+            source sourceSets.testmod
+        }
+        testmodScreenshots {
+            inherit testmodClient
+            configName = 'Fabric Client (testmod screenshots)'
+            runDir('run-shots')
+            vmArg '-Dconfee.testmod.screenshots=true'
+            programArgs '--width', '1280', '--height', '720'
+        }
+        testmodServer {
+            inherit server
+            configName = 'Fabric Server (testmod)'
+            source sourceSets.testmod
+            runDir('run-server')
+        }
+    }
+}
+
+tasks.named('compileTestmodJava', JavaCompile) {
+    source(project(':common').sourceSets.testmod.java)
+}
+
+// Sample config files of other mods (spec 15), copied into each run folder without overwriting your edits
+def fixtures = project(':common').file('src/testmod/fixtures/config')
+['run', 'run-shots', 'run-server'].each { dirName ->
+    def taskName = "installTestFixtures" + dirName.split('-').collect { it.capitalize() }.join('')
+    tasks.register(taskName) {
+        doLast {
+            fileTree(fixtures).visit { details ->
+                def target = file("${dirName}/config/${details.relativePath}")
+                if (!details.directory && !target.exists()) {
+                    target.parentFile.mkdirs()
+                    target.bytes = details.file.bytes
+                }
+            }
+        }
+    }
+}
+tasks.matching { it.name == 'runTestmodClient' }.configureEach { dependsOn 'installTestFixturesRun' }
+tasks.matching { it.name == 'runTestmodScreenshots' }.configureEach { dependsOn 'installTestFixturesRunShots' }
+tasks.matching { it.name == 'runTestmodServer' }.configureEach { dependsOn 'installTestFixturesRunServer' }
+
+tasks.named('compileJava', JavaCompile) {
+    source(project(':common').sourceSets.main.allSource)
+}
+tasks.named('sourcesJar', Jar) {
+    from(project(':common').sourceSets.main.allSource)
+}
+processResources {
+    from project(':common').sourceSets.main.resources
+}
+
+// Publishing (spec 16). Always a dry run unless CONFEE_PUBLISH=true; tokens only come from environment variables.
+apply plugin: 'me.modmuss50.mod-publish-plugin'
+publishMods {
+    file = remapJar.archiveFile
+    changelog = providers.provider { rootProject.file('CHANGELOG.md').text }
+    type = providers.provider { me.modmuss50.mpp.ReleaseType.of(release_type) }
+    version = "${mod_version}+${minecraft_version}-fabric"
+    displayName = "Confee ${mod_version} (Fabric/Quilt ${minecraft_version})"
+    modLoaders.addAll('fabric', 'quilt')
+    dryRun = providers.environmentVariable('CONFEE_PUBLISH').map { it != 'true' }.orElse(true)
+
+    modrinth {
+        accessToken = providers.environmentVariable('MODRINTH_TOKEN')
+        projectId = providers.environmentVariable('MODRINTH_PROJECT_ID').orElse('confee')
+        minecraftVersions.add(minecraft_version)
+        requires('fabric-api')
+        optional('modmenu')
+    }
+    curseforge {
+        accessToken = providers.environmentVariable('CURSEFORGE_TOKEN')
+        projectId = providers.environmentVariable('CURSEFORGE_PROJECT_ID').orElse('0')
+        minecraftVersions.add(minecraft_version)
+        requires('fabric-api')
+        optional('modmenu')
+        clientRequired = true
+        serverRequired = false
+    }
+}
+
+// Shared testmod resources (preview images...)
+tasks.named('processTestmodResources', ProcessResources) {
+    from(project(':common').file('src/testmod/resources'))
+}
