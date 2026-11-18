@@ -78,6 +78,7 @@ Gradle 8.8 doit tourner sur un JDK 17 ou 21. Le `~/.gradle/gradle.properties` de
 - Avec les mods de test (`src/testmod` = utilise Confee, `src/rawmod` = sans Confee ni écran pour l'éditeur universel ; jamais publiés) : `:fabric:runTestmodClient`, `:fabric:runTestmodServer`, `:forge:runTestmodClient`, `:forge:runTestmodServer`. Les fichiers d'exemple de `common/src/testmod/fixtures/config/` sont copiés dans `run/config/` sans écraser l'existant (supprimer le fichier pour repartir de l'original).
 - Captures automatiques de l'UI (Fabric, 1280×720, en français) : `:fabric:runTestmodScreenshots` → `fabric/run-shots/screenshots/confee-*.png`, le jeu se ferme tout seul. Le script est dans `common/src/testmod/.../ScreenshotScript.java`.
 - Quilt et NeoForge (dev uniquement) : builds séparés dans `testenv/quilt` (Quilt Loom, lance le jar Fabric de release) et `testenv/neoforge` (NeoGradle 6, propre wrapper Gradle 8.1) ; passer par `confee.ps1` (`quilt`, `neoforge`, `shots-quilt`, `shots-neoforge`, `*-server`). `shots-all` = captures sur les 4 loaders.
+- Fabric sans Mod Menu : ajouter `-PnoModMenu` à une tâche `:fabric:run…`. Le script de captures crée aussi un monde plat de test (`saves/confee-test`) pour vérifier les registres « de monde ».
 - Jars : `fabric/build/libs/confee-<version>+1.20.1-fabric.jar`, `forge/build/libs/confee-<version>+1.20.1-forge.jar`
 
 ## Workflow

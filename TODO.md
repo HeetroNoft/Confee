@@ -7,14 +7,16 @@ prise, la reporter aussi dans `CONFEE_SPEC.md` (point en ✅ DÉCIDÉ, retiré d
 
 - [ ] Serveurs Forge et NeoForge pour de vrai : mettre `eula=true` dans `forge/run-server/eula.txt` et
       `testenv/neoforge/run-server/eula.txt` (sans ça, ils s'arrêtent avant de charger les mods).
-- [ ] Suggestions dans un monde chargé : biomes, structures et tags venant du monde et des datapacks (seul le cas
-      hors partie est testé).
+- [x] Suggestions dans un monde chargé : le script de captures crée un monde plat de test ; biomes et tags lus dans
+      le monde (64 biomes, 119 tags, identiques aux fichiers en vanilla). Reste : un datapack qui ajoute un biome.
 - [ ] Jar Forge de release sur une vraie installation NeoForge 1.20.1 (le test actuel recompile les sources contre
       NeoForge, ce n'est pas le jar de release).
-- [ ] Fabric sans Mod Menu : les écrans restent ouvrables via l'API, sans erreur.
-- [ ] Cohabitation avec Configured (Mod Menu, Cloth Config et YACL déjà vérifiés).
-- [ ] Vrais mods tiers dans `fabric/run/mods/` : l'éditeur universel lit bien leurs fichiers.
-- [ ] Tests unitaires du détecteur d'IDs (`RegistryDetector`), vérifié seulement par les captures.
+- [x] Fabric sans Mod Menu (`-PnoModMenu`) : tous les écrans s'ouvrent via l'API, aucune erreur.
+- [ ] Cohabitation avec Configured (Mod Menu, Cloth Config et YACL déjà vérifiés). Configured (MrCrayfish) n'est que
+      sur CurseForge : déposer son jar dans `fabric/run/mods` / `forge/run/mods` puis lancer le jeu.
+- [x] Vrais fichiers de config de `fabric/run/config` (dont ZombiesBreakBuild, Biome Replacer) : 19 fichiers, 7 formats,
+      lus et réécrits à l'identique (`FormatCorpusTest`). Reste : édition en jeu à la main.
+- [x] Tests unitaires du détecteur d'IDs (`RegistryDetectorTest`, registres simulés).
 
 ## 2. Décisions à prendre
 
@@ -35,14 +37,15 @@ prise, la reporter aussi dans `CONFEE_SPEC.md` (point en ✅ DÉCIDÉ, retiré d
 
 ## 3. Publication
 
-- [ ] Créer le dépôt GitHub (public ou privé) et pousser `1.20.1`.
-- [ ] Lien du dépôt dans les métadonnées : `fabric.mod.json` (contact/sources) et `mods.toml` (displayURL).
+- [x] Lien du dépôt dans les métadonnées (`mod_source_url` dans `gradle.properties`). Le dépôt est privé : les liens
+      ne marcheront pour les joueurs qu'une fois le dépôt public.
 - [ ] Captures de référence Bedrock (`docs/ui-reference/`) : les garder si le dépôt devient public ?
 - [ ] Modrinth / CurseForge : créer les projets, vérifier les slugs, fournir les tokens (variables d'environnement).
 - [ ] Type de release : `beta` par défaut, à confirmer.
 - [ ] Maven pour les devs : Modrinth Maven, ou un Maven dédié (❓) ?
-- [ ] Pages des mods : icône, captures (les `run-shots` peuvent servir), description.
-- [ ] Publication réelle : `.\scripts\confee.ps1 publish-dry` d'abord, puis `CONFEE_PUBLISH=true`.
+- [ ] Pages des mods : brouillon prêt dans `docs/publishing/mod-page.md` + captures en anglais dans
+      `docs/publishing/screenshots/`, à relire.
+- [ ] Publication réelle (`CONFEE_PUBLISH=true`). La simulation `publish-dry` passe pour les 4 envois.
 
 ## 4. Limites connues (V1.1 / V2)
 
