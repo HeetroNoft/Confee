@@ -45,6 +45,13 @@ public final class Suggestions {
     @Nullable
     public static Function<String, List<String>> forSources(@Nullable String registry, boolean tags,
                                                             @Nullable SuggestionProvider provider, String where) {
+        return forSources(registry, tags, provider, where, null);
+    }
+
+    /** @param accept the IDs the option accepts (its filters), or null for every ID of the registry */
+    public static Function<String, List<String>> forSources(@Nullable String registry, boolean tags,
+                                                            @Nullable SuggestionProvider provider, String where,
+                                                            @Nullable java.util.function.Predicate<String> accept) {
         if (registry == null && provider == null) {
             return null;
         }
@@ -60,7 +67,11 @@ public final class Suggestions {
             }
         }
         if (registry != null) {
-            all.addAll(RegistryEntries.ids(registry));
+            for (String id : RegistryEntries.ids(registry)) {
+                if (accept == null || accept.test(id)) {
+                    all.add(id);
+                }
+            }
             if (tags) {
                 all.addAll(RegistryEntries.tags(registry));
             }

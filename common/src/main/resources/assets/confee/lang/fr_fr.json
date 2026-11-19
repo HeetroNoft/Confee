@@ -106,6 +106,7 @@
   "confee.color.new": "Nouvelle",
   "confee.color.old": "Actuelle",
   "confee.narration.color_picker": "Sélecteur de couleur pour %s : %s",
+  "confee.error.filtered": "Non autorisé ici : %s",
   "confee.picker.search": "Rechercher par nom ou ID",
   "confee.picker.count": "%s résultats",
   "confee.picker.style.grid": "Grille",

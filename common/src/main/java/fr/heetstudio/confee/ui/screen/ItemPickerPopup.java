@@ -37,14 +37,16 @@ final class ItemPickerPopup implements Overlay {
     }
 
     /** Styles the dev allows, the one to open with, and what to do when the player switches. */
-    record Styles(List<PickerStyle> allowed, PickerStyle initial, Consumer<PickerStyle> onChange) {
+    record Styles(List<PickerStyle> allowed, PickerStyle initial, Consumer<PickerStyle> onChange,
+                  @Nullable java.util.function.Predicate<String> accept) {
 
         /** Styles of the option (the dev's choice) opening on the player's last choice for this kind of entry. */
         static Styles of(@Nullable fr.heetstudio.confee.core.Option<?> option, String registry) {
             PickerStyle remembered = fr.heetstudio.confee.ConfeeSettings.rememberedPickerStyle(registry);
             return new Styles(fr.heetstudio.confee.core.Pickers.allowed(option),
                     fr.heetstudio.confee.core.Pickers.initial(option, registry, remembered),
-                    style -> fr.heetstudio.confee.ConfeeSettings.rememberPickerStyle(registry, style));
+                    style -> fr.heetstudio.confee.ConfeeSettings.rememberPickerStyle(registry, style),
+                    fr.heetstudio.confee.ui.RegistryFilters.of(option));
         }
     }
 
@@ -83,8 +85,8 @@ final class ItemPickerPopup implements Overlay {
         this.style = styles.initial();
         boolean mods = fr.heetstudio.confee.core.PseudoRegistries.isModList(registry);
         for (String id : fr.heetstudio.confee.ui.RegistryEntries.ids(registry)) {
-            if (hidden.contains(id) && !id.equals(current)) {
-                continue;
+            if ((hidden.contains(id) && !id.equals(current)) || (styles.accept() != null && !styles.accept().test(id))) {
+                continue; // already in the list, or not allowed by the option's filters
             }
             Component name = fr.heetstudio.confee.ui.RegistryIcons.name(registry, id);
             String path = id.substring(id.indexOf(':') + 1);

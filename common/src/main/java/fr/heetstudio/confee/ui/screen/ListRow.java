@@ -53,6 +53,9 @@ final class ListRow extends OptionRow {
     @Nullable
     private final String registry;
     private final Runnable closeOverlay;
+    /** IDs allowed by the option's filters ({@code @Entity(only = ...)}), or null. */
+    @Nullable
+    private final java.util.function.Predicate<String> accepted;
     /** How many entries hold each value (duplicate key), rebuilt only when the list changes (not every frame). */
     @Nullable
     private java.util.Map<Object, Integer> usedCache;
@@ -126,8 +129,9 @@ final class ListRow extends OptionRow {
         fr.heetstudio.confee.ui.RegistryDetector.Detected detected =
                 fr.heetstudio.confee.ui.RegistryDetector.of(session.handle().schema(), option, session.get(option));
         this.registry = detected == null ? null : detected.registry();
+        this.accepted = fr.heetstudio.confee.ui.RegistryFilters.of(option);
         this.suggester = fr.heetstudio.confee.ui.Suggestions.forSources(registry, detected != null && detected.tags(),
-                option.suggestions(), option.path());
+                option.suggestions(), option.path(), accepted);
         this.add = new ButtonWidget(ui, Component.translatable("confee.button.add"), ButtonWidget.Style.NORMAL, this::addEntry);
         rebuild();
     }
@@ -180,8 +184,12 @@ final class ListRow extends OptionRow {
             ValueText.Parsed parsed = ValueText.parseElement(option, entry.field.text());
             // one value at a time: @Range / @Pattern / @MaxLength (the size and duplicates are about the whole list)
             Validated<Object> check = parsed.ok() ? option.validateElement(parsed.value()) : null;
+            String text = entry.field.text().trim();
             if (!parsed.ok() || check == null || !check.isOk()) {
                 entry.field.setError(problemText.apply(parsed.ok() ? ValueText.Problem.INVALID : parsed.problem()));
+                ok = false;
+            } else if (accepted != null && !text.isEmpty() && !text.startsWith("#") && !accepted.test(text)) {
+                entry.field.setError(Component.translatable("confee.error.filtered", text));
                 ok = false;
             } else {
                 entry.field.setError(null);

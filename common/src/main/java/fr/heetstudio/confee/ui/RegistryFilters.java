@@ -1,0 +1,164 @@
+package fr.heetstudio.confee.ui;
+
+import fr.heetstudio.confee.ConfeeLog;
+import fr.heetstudio.confee.api.BiomeFilter;
+import fr.heetstudio.confee.api.EffectFilter;
+import fr.heetstudio.confee.api.EnchantmentFilter;
+import fr.heetstudio.confee.api.EntityFilter;
+import fr.heetstudio.confee.api.ItemFilter;
+import fr.heetstudio.confee.core.Option;
+import net.minecraft.client.Minecraft;
+import net.minecraft.core.HolderLookup;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.data.registries.VanillaRegistries;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.effect.MobEffect;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.ai.attributes.DefaultAttributes;
+import net.minecraft.world.flag.FeatureFlagSet;
+import net.minecraft.world.flag.FeatureFlags;
+import net.minecraft.world.item.BlockItem;
+import net.minecraft.world.item.CreativeModeTab;
+import net.minecraft.world.item.CreativeModeTabs;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.item.enchantment.Enchantment;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Set;
+import java.util.function.Predicate;
+
+/**
+ * Which IDs pass the filters of an option ({@code @Entity(only = EntityFilter.MONSTER)}...), from what the game
+ * already defines: spawn categories, creative tabs, effect categories, enchantment categories, biome tags.
+ * <p>Internal: may change without notice.</p>
+ */
+public final class RegistryFilters {
+
+    private static final Map<String, Set<String>> CACHE = new HashMap<>();
+    @Nullable
+    private static Object cachedWorld;
+
+    private RegistryFilters() {
+    }
+
+    /** The IDs the option accepts, or null when it has no filters (every ID of its registry is fine). */
+    @Nullable
+    public static Predicate<String> of(@Nullable Option<?> option) {
+        if (option == null || option.filters().isEmpty() || option.registry() == null) {
+            return null;
+        }
+        Set<String> accepted = accepted(option.registry(), option.filters());
+        return id -> accepted.contains(id.trim());
+    }
+
+    private static synchronized Set<String> accepted(String registry, List<Enum<?>> filters) {
+        Object world = Minecraft.getInstance().level;
+        if (world != cachedWorld) {
+            CACHE.clear(); // biome tags and creative tabs depend on the world
+            cachedWorld = world;
+        }
+        return CACHE.computeIfAbsent(registry + "|" + filters, k -> {
+            Set<String> out = new HashSet<>();
+            for (String id : RegistryEntries.ids(registry)) {
+                ResourceLocation rl = ResourceLocation.tryParse(id);
+                if (rl == null) {
+                    continue;
+                }
+                for (Enum<?> filter : filters) {
+                    try {
+                        if (matches(registry, rl, filter)) {
+                            out.add(id);
+                            break;
+                        }
+                    } catch (RuntimeException | LinkageError e) {
+                        ConfeeLog.warn("Cannot check {} against {}: {}", id, filter, e.toString());
+                    }
+                }
+            }
+            return out;
+        });
+    }
+
+    private static boolean matches(String registry, ResourceLocation id, Enum<?> filter) {
+        if (filter instanceof EntityFilter f) {
+            if (!BuiltInRegistries.ENTITY_TYPE.containsKey(id)) {
+                return false;
+            }
+            EntityType<?> type = BuiltInRegistries.ENTITY_TYPE.get(id);
+            return f == EntityFilter.LIVING ? DefaultAttributes.hasSupplier(type) : type.getCategory().name().equals(f.name());
+        }
+        if (filter instanceof ItemFilter f) {
+            Item item = "minecraft:block".equals(registry)
+                    ? (BuiltInRegistries.BLOCK.containsKey(id) ? BuiltInRegistries.BLOCK.get(id).asItem() : Items.AIR)
+                    : (BuiltInRegistries.ITEM.containsKey(id) ? BuiltInRegistries.ITEM.get(id) : Items.AIR);
+            if (item == Items.AIR) {
+                return false;
+            }
+            return f == ItemFilter.BLOCKS ? item instanceof BlockItem : tabItems(f).contains(item);
+        }
+        if (filter instanceof EffectFilter f) {
+            MobEffect effect = BuiltInRegistries.MOB_EFFECT.get(id);
+            return effect != null && BuiltInRegistries.MOB_EFFECT.containsKey(id) && effect.getCategory().name().equals(f.name());
+        }
+        if (filter instanceof EnchantmentFilter f) {
+            if (!BuiltInRegistries.ENCHANTMENT.containsKey(id)) {
+                return false;
+            }
+            Enchantment enchantment = BuiltInRegistries.ENCHANTMENT.get(id);
+            return switch (f) {
+                case TREASURE -> enchantment.isTreasureOnly();
+                case CURSE -> enchantment.isCurse();
+                default -> enchantment.category.name().equals(f.name());
+            };
+        }
+        if (filter instanceof BiomeFilter f) {
+            return RegistryEntries.tagMembers("minecraft:worldgen/biome",
+                    "minecraft:is_" + f.name().toLowerCase(Locale.ROOT)).contains(id.toString());
+        }
+        return false;
+    }
+
+    // ------------------------------------------------------------------ creative tabs
+
+    private static final Map<ItemFilter, Set<Item>> TABS = new HashMap<>();
+    @Nullable
+    private static Object tabsWorld = new Object();
+
+    /** Items of a vanilla creative tab, mods' additions included (the tabs are built as the creative inventory does). */
+    private static synchronized Set<Item> tabItems(ItemFilter filter) {
+        Object world = Minecraft.getInstance().level;
+        if (world != tabsWorld) {
+            TABS.clear();
+            tabsWorld = world;
+        }
+        return TABS.computeIfAbsent(filter, f -> {
+            Set<Item> items = new HashSet<>();
+            try {
+                Minecraft mc = Minecraft.getInstance();
+                FeatureFlagSet flags = mc.level != null ? mc.level.enabledFeatures() : FeatureFlags.DEFAULT_FLAGS;
+                HolderLookup.Provider lookup = mc.level != null ? mc.level.registryAccess() : VanillaRegistries.createLookup();
+                CreativeModeTabs.tryRebuildTabContents(flags, false, lookup);
+                CreativeModeTab tab = BuiltInRegistries.CREATIVE_MODE_TAB.get(
+                        new ResourceLocation("minecraft", f.name().toLowerCase(Locale.ROOT)));
+                if (tab != null) {
+                    for (ItemStack stack : tab.getDisplayItems()) {
+                        items.add(stack.getItem());
+                    }
+                }
+            } catch (RuntimeException | LinkageError e) {
+                ConfeeLog.warn("Cannot build the creative tab {}: {}", f, e.toString());
+            }
+            if (items.isEmpty()) {
+                ConfeeLog.warn("Creative tab {} is empty: the filter accepts no item", f);
+            }
+            return items;
+        });
+    }
+}

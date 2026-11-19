@@ -525,9 +525,13 @@ public final class ConfigScreen extends ConfeeScreen {
         };
         int maxLength = option.maxLength() > 0 ? option.maxLength() : Integer.MAX_VALUE;
         TextFieldWidget[] holder = new TextFieldWidget[1];
+        // filters of the option (@Entity(only = ...)): a value outside them is an error on the field
+        java.util.function.Predicate<String> accepted = fr.heetstudio.confee.ui.RegistryFilters.of(option);
         TextFieldWidget field = new TextFieldWidget(ui, name, ValueText.toFieldText(option, session.get(raw)), maxLength, filter, text -> {
             ValueText.Parsed parsed = ValueText.parse(option, text);
-            if (parsed.ok()) {
+            if (parsed.ok() && accepted != null && !text.isBlank() && !text.trim().startsWith("#") && !accepted.test(text)) {
+                holder[0].setError(Component.translatable("confee.error.filtered", text.trim()));
+            } else if (parsed.ok()) {
                 holder[0].setError(null);
                 session.set(raw, parsed.value());
                 if (type == OptionType.COLOR) {
@@ -607,7 +611,7 @@ public final class ConfigScreen extends ConfeeScreen {
                 ? fr.heetstudio.confee.ui.RegistryDetector.of(schema, option, session.get(raw)) : null;
         if (type == OptionType.IDENTIFIER || type == OptionType.STRING) {
             field.setSuggester(Suggestions.forSources(detected == null ? null : detected.registry(),
-                    detected != null && detected.tags(), option.suggestions(), option.path()));
+                    detected != null && detected.tags(), option.suggestions(), option.path(), accepted));
         }
         if (detected != null && fr.heetstudio.confee.ui.RegistryIcons.hasIcons(detected.registry())) {
             String registry = detected.registry();

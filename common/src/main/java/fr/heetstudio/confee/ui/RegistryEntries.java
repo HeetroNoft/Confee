@@ -70,6 +70,81 @@ public final class RegistryEntries {
         return cached("tags|" + registry, () -> loadTags(registry));
     }
 
+    /**
+     * IDs in a tag, nested tags resolved: from the world when one is loaded, else from the tag files of the game and
+     * of the mods.
+     */
+    public static synchronized Set<String> tagMembers(String registry, String tagId) {
+        return new HashSet<>(cached("members|" + registry + "|" + tagId, () -> loadTagMembers(registry, tagId, new HashSet<>())));
+    }
+
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    private static Set<String> loadTagMembers(String registry, String tagId, Set<String> visiting) {
+        Set<String> out = new HashSet<>();
+        ResourceLocation tag = ResourceLocation.tryParse(tagId);
+        if (tag == null || !visiting.add(tagId)) {
+            return out;
+        }
+        RegistryAccess world = world();
+        if (world != null) {
+            Optional<? extends Registry<?>> found = world.registry((ResourceKey) key(registry));
+            if (found.isPresent()) {
+                Registry reg = found.get();
+                Optional<?> set = reg.getTag(net.minecraft.tags.TagKey.create((ResourceKey) key(registry), tag));
+                set.ifPresent(holders -> ((Iterable<net.minecraft.core.Holder<?>>) holders).forEach(holder ->
+                        holder.unwrapKey().ifPresent(k -> out.add(((ResourceKey<?>) k).location().toString()))));
+                if (!out.isEmpty()) {
+                    return out;
+                }
+            }
+        }
+        // outside a world: the tag files ("values": IDs, "#tags", or {"id": ..., "required": false})
+        String path = TagManager.getTagDir((ResourceKey) key(registry)) + "/" + tag.getPath() + ".json";
+        List<String> jsons = new ArrayList<>();
+        try {
+            if (vanillaData == null) {
+                vanillaData = new ServerPacksSource().getVanillaPack();
+            }
+            var resource = vanillaData.getResource(PackType.SERVER_DATA, new ResourceLocation(tag.getNamespace(), path));
+            if (resource != null) {
+                try (var in = resource.get()) {
+                    jsons.add(new String(in.readAllBytes(), java.nio.charset.StandardCharsets.UTF_8));
+                }
+            }
+        } catch (IOException | RuntimeException e) {
+            ConfeeLog.warn("Cannot read the tag {}: {}", tagId, e.toString());
+        }
+        for (Path root : Services.PLATFORM.getModRootPaths()) {
+            Path file = root.resolve("data").resolve(tag.getNamespace()).resolve(path);
+            if (Files.isRegularFile(file)) {
+                try {
+                    jsons.add(Files.readString(file));
+                } catch (IOException e) {
+                    ConfeeLog.warn("Cannot read {}: {}", file, e.toString());
+                }
+            }
+        }
+        for (String json : jsons) {
+            try {
+                com.google.gson.JsonArray values = com.google.gson.JsonParser.parseString(json).getAsJsonObject().getAsJsonArray("values");
+                if (values == null) {
+                    continue;
+                }
+                for (com.google.gson.JsonElement value : values) {
+                    String entry = value.isJsonObject() ? value.getAsJsonObject().get("id").getAsString() : value.getAsString();
+                    if (entry.startsWith("#")) {
+                        out.addAll(loadTagMembers(registry, entry.substring(1), visiting));
+                    } else {
+                        out.add(entry);
+                    }
+                }
+            } catch (RuntimeException e) {
+                ConfeeLog.warn("Cannot read the tag {}: {}", tagId, e.toString());
+            }
+        }
+        return out;
+    }
+
     private interface Loader {
         Set<String> load();
     }

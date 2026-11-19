@@ -106,6 +106,7 @@
   "confee.color.new": "New",
   "confee.color.old": "Current",
   "confee.narration.color_picker": "Color picker for %s: %s",
+  "confee.error.filtered": "Not allowed here: %s",
   "confee.picker.search": "Search by name or ID",
   "confee.picker.count": "%s results",
   "confee.picker.style.grid": "Grid",
