@@ -15,13 +15,20 @@ import java.util.function.Supplier;
 
 /**
  * Segmented buttons (capture 5 "Game mode" / "Difficulty"), for enums of 2 to 4 values. The active segment uses the
- * accent color with a short light line under its text. ←/→ select the previous / next value.
+ * accent color with a short light line under its text. ←/→ select the previous / next value. With the mouse (or a
+ * reset), the active face slides to the new segment in 100 ms with an ease-out; with the keyboard it moves at once.
  * <p>Internal: may change without notice.</p>
  */
 public class SegmentedWidget<T> extends ChoiceWidget<T> {
 
     public static final int HEIGHT = 18;
+    private static final long SLIDE_MS = 100;
     private int pressedIndex = -1;
+    /** Index shown by the last frame, and where the slide started from. */
+    private int shownIndex = -1;
+    private int fromIndex;
+    private long changedAt = -SLIDE_MS;
+    private boolean instant;
 
     public SegmentedWidget(Ui ui, Component label, List<T> values, Function<T, Component> names, Supplier<T> value,
                            Consumer<T> onChange) {
@@ -39,6 +46,17 @@ public class SegmentedWidget<T> extends ChoiceWidget<T> {
         }
         Theme t = ui.theme();
         int current = currentIndex();
+        if (current != shownIndex) {
+            fromIndex = shownIndex < 0 || instant ? current : shownIndex;
+            shownIndex = current;
+            changedAt = ui.now();
+            instant = false;
+        }
+        float progress = Draw.easeOut((ui.now() - changedAt) / (float) SLIDE_MS);
+        if (enabled && progress < 1 && fromIndex != current) {
+            renderSliding(g, t, mouseX, mouseY, current, progress);
+            return;
+        }
         for (int i = 0; i < values.size(); i++) {
             int sx = segmentX(i);
             int sw = segmentX(i + 1) - sx + (i < values.size() - 1 ? 1 : 0); // segments share their 1 px border
@@ -70,6 +88,39 @@ public class SegmentedWidget<T> extends ChoiceWidget<T> {
                 Draw.rect(g, sx + (sw - lineW) / 2, y + height - 5 + (pressed ? 1 : 0), lineW, 1, t.onAccentText());
             }
         }
+        if (focused) {
+            Draw.focusRing(g, x, y, width, height, t.accent());
+        }
+    }
+
+    /** Mid-slide frame: every segment drawn as inactive, then the accent face between the old and the new segment. */
+    private void renderSliding(GuiGraphics g, Theme t, int mouseX, int mouseY, int current, float progress) {
+        int[] xs = new int[values.size()];
+        int[] ws = new int[values.size()];
+        String[] names = new String[values.size()];
+        for (int i = 0; i < values.size(); i++) {
+            xs[i] = segmentX(i);
+            ws[i] = segmentX(i + 1) - xs[i] + (i < values.size() - 1 ? 1 : 0);
+            names[i] = Draw.fit(ui.font(), this.names.apply(values.get(i)).getString(), ws[i] - 6);
+            boolean hover = contains(mouseX, mouseY) && mouseX >= xs[i] && mouseX < xs[i] + ws[i];
+            Draw.bevel(g, xs[i], y, ws[i], height, hover ? t.buttonFaceHover() : t.buttonFace(), t.buttonShadow(),
+                    t.outline(), false);
+        }
+        int ax = Math.round(xs[fromIndex] + (xs[current] - xs[fromIndex]) * progress);
+        int aw = Math.round(ws[fromIndex] + (ws[current] - ws[fromIndex]) * progress);
+        Draw.bevel(g, ax, y, aw, height, t.accent(), t.accentDark(), t.outline(), false);
+        int textY = y + (height - 2 - 8) / 2;
+        for (int i = 0; i < values.size(); i++) {
+            // text over the accent face turns light, in proportion of the overlap
+            int overlap = Math.max(0, Math.min(ax + aw, xs[i] + ws[i]) - Math.max(ax, xs[i]));
+            float onAccent = Math.min(1, overlap / (float) Math.max(1, ws[i]));
+            Draw.textCentered(g, ui.font(), names[i], xs[i] + ws[i] / 2, textY,
+                    Draw.mix(t.textOnLight(), t.onAccentText(), onAccent));
+        }
+        int fromLine = Math.min(ui.font().width(names[fromIndex]), ws[fromIndex] - 10);
+        int toLine = Math.min(ui.font().width(names[current]), ws[current] - 10);
+        int lineW = Math.round(fromLine + (toLine - fromLine) * progress);
+        Draw.rect(g, ax + (aw - lineW) / 2, y + height - 5, lineW, 1, t.onAccentText());
         if (focused) {
             Draw.focusRing(g, x, y, width, height, t.accent());
         }
@@ -118,6 +169,7 @@ public class SegmentedWidget<T> extends ChoiceWidget<T> {
         }
         int next = currentIndex() + direction;
         if (next >= 0 && next < values.size()) {
+            instant = true; // keyboard: no slide, the next press must show at once
             ui.click();
             choose(values.get(next));
         }

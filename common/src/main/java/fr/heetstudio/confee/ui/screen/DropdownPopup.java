@@ -163,6 +163,15 @@ final class DropdownPopup implements Overlay {
         }
     }
 
+    DropdownWidget<?> dropdown() {
+        return dropdown;
+    }
+
+    /** The value under the mouse or the keyboard highlight (the current value when the list opens). */
+    Object highlightedValue() {
+        return dropdown.values().get(highlighted);
+    }
+
     @Override
     public Component narration() {
         return Component.translatable("confee.narration.choice_item", nameAt(highlighted), highlighted + 1,

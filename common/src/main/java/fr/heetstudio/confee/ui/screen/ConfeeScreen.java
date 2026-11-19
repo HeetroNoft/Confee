@@ -35,6 +35,9 @@ public abstract class ConfeeScreen extends Screen {
     @Nullable
     private Object hoverKey;
     private long hoverSince;
+    /** When the tooltip that is (or was last) on screen appeared, and when it was last drawn. */
+    private long tooltipShownAt = Long.MIN_VALUE / 2;
+    private long tooltipLastDrawn = Long.MIN_VALUE / 2;
 
     protected ConfeeScreen(Component title, Screen parent) {
         super(title);
@@ -126,14 +129,20 @@ public abstract class ConfeeScreen extends Screen {
             }
         }
         Object key = target == null ? null : target.key();
+        long now = ui.now();
         if (key == null || !key.equals(hoverKey)) {
             hoverKey = key;
-            hoverSince = ui.now();
+            // moving from one tooltip to the next: no delay and no fade (the player is already reading tooltips)
+            boolean warm = now - tooltipLastDrawn <= Ui.TOOLTIP_WARM_MS;
+            hoverSince = warm ? now - Ui.TOOLTIP_DELAY_MS : now;
+            tooltipShownAt = warm ? now - Ui.TOOLTIP_FADE_MS : now + Ui.TOOLTIP_DELAY_MS;
         }
-        if (target == null || ui.now() - hoverSince < Ui.TOOLTIP_DELAY_MS) {
+        if (target == null || now - hoverSince < Ui.TOOLTIP_DELAY_MS) {
             return;
         }
-        drawTooltip(g, target.text(), mouseX, mouseY, target.anchor());
+        tooltipLastDrawn = now;
+        float alpha = Draw.easeOut((now - tooltipShownAt) / (float) Ui.TOOLTIP_FADE_MS);
+        drawTooltip(g, target.text(), mouseX, mouseY, target.anchor(), alpha);
     }
 
     private static final int TIP_PAD_X = 6;
@@ -144,7 +153,8 @@ public abstract class ConfeeScreen extends Screen {
      * Bedrock tooltip: opaque dark box, light 1 px border, drop shadow. Placed under (else above) the hovered element
      * so it never hides it, inside {@link #tooltipRegion}, and away from an open suggestion list.
      */
-    protected void drawTooltip(GuiGraphics g, Component text, int mouseX, int mouseY, @Nullable int[] anchor) {
+    protected void drawTooltip(GuiGraphics g, Component text, int mouseX, int mouseY, @Nullable int[] anchor,
+                               float alpha) {
         Theme t = ui.theme();
         int[] region = tooltipRegion(anchor);
         int maxText = Math.max(60, Math.min(200, region[2] - region[0] - 2 * TIP_PAD_X - 8));
@@ -164,12 +174,13 @@ public abstract class ConfeeScreen extends Screen {
         int y = pos[1];
         g.pose().pushPose();
         g.pose().translate(0, 0, 800);
-        Draw.rect(g, x + 2, y + 2, w, h, 0x80000000);
-        Draw.rect(g, x, y, w, h, Draw.mix(t.panelBgDeep(), 0xFF000000, 0.35f));
-        Draw.outline(g, x, y, w, h, Draw.mix(t.textOnDark(), t.panelBgDeep(), 0.45f));
+        // fades in (opacity only, no movement); text alpha stays above the 4/255 the font treats as opaque
+        Draw.rect(g, x + 2, y + 2, w, h, Draw.withAlpha(0x80000000, alpha));
+        Draw.rect(g, x, y, w, h, Draw.withAlpha(Draw.mix(t.panelBgDeep(), 0xFF000000, 0.35f), alpha));
+        Draw.outline(g, x, y, w, h, Draw.withAlpha(Draw.mix(t.textOnDark(), t.panelBgDeep(), 0.45f), alpha));
         int ly = y + TIP_PAD_Y;
         for (FormattedCharSequence line : lines) {
-            Draw.text(g, font, line, x + TIP_PAD_X, ly, t.textOnDark());
+            Draw.text(g, font, line, x + TIP_PAD_X, ly, Draw.withAlpha(t.textOnDark(), Math.max(alpha, 0.05f)));
             ly += 10;
         }
         g.pose().popPose();

@@ -15,6 +15,10 @@ public final class Ui {
 
     /** Spec 10.3: tooltips appear after ~500 ms. */
     public static final long TOOLTIP_DELAY_MS = 500;
+    /** A tooltip hidden less than this ago: the next one shows without the delay. */
+    public static final long TOOLTIP_WARM_MS = 1000;
+    /** Fade-in of a tooltip. */
+    public static final long TOOLTIP_FADE_MS = 80;
 
     private final Font font;
     private final Theme theme;

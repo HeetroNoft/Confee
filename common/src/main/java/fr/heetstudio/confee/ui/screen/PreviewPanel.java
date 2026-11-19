@@ -78,6 +78,14 @@ final class PreviewPanel {
     }
 
     void render(GuiGraphics g, int x, int top, int bottom, @Nullable Option<?> option, float delta) {
+        render(g, x, top, bottom, option, null, delta);
+    }
+
+    /**
+     * @param shown value to preview instead of the current one (the item hovered in an open dropdown), or null
+     */
+    void render(GuiGraphics g, int x, int top, int bottom, @Nullable Option<?> option, @Nullable Object shown,
+                float delta) {
         Theme t = ui.theme();
         Draw.rect(g, x, top, width, bottom - top, t.panelBg());
         g.enableScissor(x, top, x + width, bottom);
@@ -96,9 +104,10 @@ final class PreviewPanel {
         }
         y += 4;
         Preview preview = option.preview();
-        String registry = autoPreviewRegistry(schema, option, session.get(option));
+        Object value = shown != null ? shown : session.get(option);
+        String registry = autoPreviewRegistry(schema, option, value);
         if (registry != null) {
-            String id = String.valueOf(session.get(option)).trim();
+            String id = String.valueOf(value).trim();
             boolean tag = id.startsWith("#");
             boolean known = tag ? fr.heetstudio.confee.ui.RegistryEntries.tags(registry).contains(id)
                     : fr.heetstudio.confee.ui.RegistryEntries.ids(registry).contains(id);
@@ -129,7 +138,6 @@ final class PreviewPanel {
             g.disableScissor();
             return;
         }
-        Object value = session.get(option);
         if (preview.image() != null) {
             y = image(g, resolve(preview.image(), value), x + PAD, y, w) + 6;
         }

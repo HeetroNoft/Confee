@@ -809,11 +809,32 @@ public final class ConfigScreen extends ConfeeScreen {
         renderScrollbar(g);
         if (showPreview) {
             updatePreviewOption(mx, my);
-            previewPanel.render(g, previewX, top, bottom, previewOption, delta);
+            Object shown = dropdownPreview(); // may change previewOption: called first
+            previewPanel.render(g, previewX, top, bottom, previewOption, shown, delta);
         }
         if (showSidebar) {
             renderSidebar(g, mouseX, mouseY, delta);
         }
+    }
+
+    /**
+     * While the dropdown of an option is open, the preview shows the hovered item for a moment (nothing is chosen
+     * until the click). Returns that item, or null.
+     */
+    @Nullable
+    private Object dropdownPreview() {
+        if (!(overlay instanceof DropdownPopup popup)) {
+            return null;
+        }
+        for (Row row : rows) {
+            if (row instanceof OptionRow optionRow && !row.hidden() && row.widgets().contains(popup.dropdown())
+                    && java.util.Objects.equals(popup.dropdown().current(), session.get(optionRow.option()))) {
+                // only a dropdown that edits the value itself (not one element of a list)
+                previewOption = optionRow.option();
+                return popup.highlightedValue();
+            }
+        }
+        return null;
     }
 
     /** The hovered option, else the one holding the keyboard focus; kept while the mouse is elsewhere. */
