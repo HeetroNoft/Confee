@@ -7,6 +7,10 @@ import java.lang.annotation.Target;
 
 /**
  * The option is only shown when the condition holds. Same syntax as {@link EnabledIf}.
+ * <pre>{@code
+ * @VisibleIf("quality=INSANE")
+ * public boolean insaneWarning = true;
+ * }</pre>
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.FIELD)

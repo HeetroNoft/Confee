@@ -8,6 +8,10 @@ import java.lang.annotation.Target;
 /**
  * The value is an enchantment ({@code minecraft:sharpness}): suggestions from the {@code minecraft:enchantment} registry, mods' entries included (enchanted book icon, picker).
  * On {@code ResourceLocation}, {@code String} or {@code List<String>} fields. Same as {@code @Registry("minecraft:enchantment")}.
+ * <pre>{@code
+ * @Enchantment
+ * public String favoriteEnchantment = "minecraft:mending";
+ * }</pre>
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.FIELD)

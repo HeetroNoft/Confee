@@ -7,6 +7,10 @@ import java.lang.annotation.Target;
 
 /**
  * Edits a String option in a multi-line text area.
+ * <pre>{@code
+ * @Multiline
+ * public String motd = "Welcome!\nHave fun.";
+ * }</pre>
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.FIELD)

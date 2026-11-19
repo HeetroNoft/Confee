@@ -7,6 +7,10 @@ import java.lang.annotation.Target;
 
 /**
  * Display name used when there is no translation key. Spec 6.1 / 13.
+ * <pre>{@code
+ * @Name("HUD opacity")
+ * public int hudOpacity = 80;
+ * }</pre>
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.FIELD)

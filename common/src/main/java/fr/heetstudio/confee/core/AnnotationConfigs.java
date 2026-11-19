@@ -409,6 +409,20 @@ public final class AnnotationConfigs {
         if (unit != null) {
             builder.unit(unit.value());
         }
+        if (field.isAnnotationPresent(fr.heetstudio.confee.api.annotation.AllowDuplicates.class)) {
+            builder.allowDuplicates(true);
+        }
+        fr.heetstudio.confee.api.annotation.Size size = field.getAnnotation(fr.heetstudio.confee.api.annotation.Size.class);
+        if (size != null) {
+            builder.size(size.min(), size.max());
+        }
+        if (field.isAnnotationPresent(fr.heetstudio.confee.api.annotation.Sorted.class)) {
+            builder.sorted(true);
+        }
+        if (field.isAnnotationPresent(fr.heetstudio.confee.api.annotation.IgnoreCase.class)) {
+            builder.ignoreCase(true);
+        }
+
         if (field.isAnnotationPresent(fr.heetstudio.confee.api.annotation.Multiline.class)) {
             builder.widgetHint(WidgetHint.MULTILINE);
         }

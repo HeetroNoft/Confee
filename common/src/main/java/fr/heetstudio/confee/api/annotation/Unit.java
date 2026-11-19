@@ -7,6 +7,10 @@ import java.lang.annotation.Target;
 
 /**
  * Unit shown after the value of a number ({@code "chunks"} → "Distance : 16 chunks"). Plain text or translation key.
+ * <pre>{@code
+ * @Unit("chunks")
+ * public int renderDistance = 16;
+ * }</pre>
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.FIELD)

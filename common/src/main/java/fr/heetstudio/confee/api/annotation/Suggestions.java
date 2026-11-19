@@ -9,6 +9,10 @@ import java.lang.annotation.Target;
  * Values suggested while typing in a text field ({@code String}, {@code ResourceLocation} or {@code List<String>}).
  * Fixed {@link #value() values} and/or a {@link #provider() provider} called when the screen is opened.
  * The player can still type any other value: use an enum to restrict the choice.
+ * <pre>{@code
+ * @Suggestions({"north", "south", "east", "west"})
+ * public String direction = "north";
+ * }</pre>
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.FIELD)

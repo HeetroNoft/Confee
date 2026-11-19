@@ -9,6 +9,10 @@ import java.lang.annotation.Target;
  * The option can only be edited when the condition holds; otherwise it is grayed out.
  * Condition: {@code "path"} (a boolean option is true), {@code "!path"} (false) or {@code "path=VALUE"} (equals, e.g. an
  * enum name). {@code path} is the dotted path of an option of the same config, e.g. {@code "dash.enabled"}.
+ * <pre>{@code
+ * @EnabledIf("showHud")        // also "!showHud" or "quality=HIGH"
+ * public int hudOpacity = 80;
+ * }</pre>
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.FIELD)

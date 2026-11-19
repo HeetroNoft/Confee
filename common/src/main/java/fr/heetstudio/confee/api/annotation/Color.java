@@ -7,6 +7,10 @@ import java.lang.annotation.Target;
 
 /**
  * Shows an {@code int} option as a color (ARGB). Spec 6.1.
+ * <pre>{@code
+ * @Color(alpha = true)
+ * public int overlay = 0x802D7DD2;
+ * }</pre>
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.FIELD)

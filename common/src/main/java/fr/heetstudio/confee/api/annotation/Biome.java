@@ -8,6 +8,10 @@ import java.lang.annotation.Target;
 /**
  * The value is a biome ({@code minecraft:plains}): suggestions from the {@code minecraft:worldgen/biome} registry, mods' entries included (no icon).
  * On {@code ResourceLocation}, {@code String} or {@code List<String>} fields. Same as {@code @Registry("minecraft:worldgen/biome")}.
+ * <pre>{@code
+ * @Biome(tags = true)
+ * public List<String> spawnBiomes = new ArrayList<>(List.of("minecraft:plains", "#minecraft:is_forest"));
+ * }</pre>
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.FIELD)

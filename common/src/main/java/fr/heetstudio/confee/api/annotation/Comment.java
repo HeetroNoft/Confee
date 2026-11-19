@@ -7,6 +7,10 @@ import java.lang.annotation.Target;
 
 /**
  * Comment written above the key in the file; also the tooltip when there is no translation. Spec 6.1 / 13.
+ * <pre>{@code
+ * @Comment("Show the HUD over the game")
+ * public boolean showHud = true;
+ * }</pre>
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.FIELD, ElementType.TYPE})

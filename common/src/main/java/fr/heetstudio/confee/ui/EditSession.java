@@ -82,7 +82,8 @@ public final class EditSession {
         boolean restart = false;
         for (Map.Entry<Option<?>, Object> entry : pending.entrySet()) {
             Option option = entry.getKey();
-            option.apply(entry.getValue());
+            // a duplicate typed in a list disappears silently on save; a @Sorted list is sorted
+            option.apply(option.normalizeList(entry.getValue()));
             restart |= option.requiresRestart();
         }
         pending.clear();

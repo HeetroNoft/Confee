@@ -54,47 +54,68 @@ public final class ConfigBuilder extends SectionBuilder {
         return new ConfigBuilder(modId, environment);
     }
 
-    /** Config name: the file becomes {@code config/<modId>-<name>.toml}. */
+    /**
+     * Config name: the file becomes {@code config/<modId>-<name>.toml}.
+     * <p>Example: {@code Confee.builder("examplemod").name("client")  // file config/examplemod-client.toml}</p>
+     */
     public ConfigBuilder name(String name) {
         checkNotBuilt();
         this.name = name == null || name.isEmpty() ? null : name;
         return this;
     }
 
+    /**
+     * <p>Example: {@code Confee.builder("examplemod").scope(ConfigScope.CLIENT)}</p>
+     */
     public ConfigBuilder scope(ConfigScope scope) {
         checkNotBuilt();
         this.scope = Objects.requireNonNull(scope);
         return this;
     }
 
+    /**
+     * <p>Example: {@code Confee.builder("examplemod").format(ConfigFormat.JSON5)}</p>
+     */
     public ConfigBuilder format(ConfigFormat format) {
         checkNotBuilt();
         this.format = Objects.requireNonNull(format);
         return this;
     }
 
-    /** Shortcut for a theme that only changes the accent color (ARGB). */
+    /**
+     * Shortcut for a theme that only changes the accent color (ARGB).
+     * <p>Example: {@code Confee.builder("examplemod").accentColor(0xFF2D7DD2)}</p>
+     */
     public ConfigBuilder accentColor(int argb) {
         checkNotBuilt();
         this.theme = theme.toBuilder().accent(argb).build();
         return this;
     }
 
-    /** Full theme (spec 11): every token can be customized. */
+    /**
+     * Full theme (spec 11): every token can be customized.
+     * <p>Example: {@code Confee.builder("examplemod").theme(Theme.builder().accent(0xFF2D7DD2).build())}</p>
+     */
     public ConfigBuilder theme(Theme theme) {
         checkNotBuilt();
         this.theme = Objects.requireNonNull(theme);
         return this;
     }
 
-    /** Layout of the screen (panel width, preview width, sidebar, banner, background). */
+    /**
+     * Layout of the screen (panel width, preview width, sidebar, banner, background).
+     * <p>Example: {@code Confee.builder("examplemod").layout(Layout.builder().panelWidth(440).build())}</p>
+     */
     public ConfigBuilder layout(fr.heetstudio.confee.api.Layout layout) {
         checkNotBuilt();
         this.layout = Objects.requireNonNull(layout);
         return this;
     }
 
-    /** Header comment written at the top of the file. */
+    /**
+     * Header comment written at the top of the file.
+     * <p>Example: {@code Confee.builder("examplemod").comment("Example mod settings")}</p>
+     */
     public ConfigBuilder comment(String comment) {
         checkNotBuilt();
         section.setComment(comment);
@@ -105,6 +126,7 @@ public final class ConfigBuilder extends SectionBuilder {
      * Registers and loads the config. The file is created with defaults and comments if it does not exist.
      *
      * @throws IllegalStateException if a config with the same mod ID and name is already registered
+     * <p>Example: {@code ConfeeConfig<Void> config = b.build();  // registers and loads the file}</p>
      */
     public ConfeeConfig<Void> build() {
         checkNotBuilt();

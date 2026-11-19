@@ -7,6 +7,11 @@ import java.lang.annotation.Target;
 
 /**
  * Layout of the config screen. Every attribute is optional. Builder: {@code ConfigBuilder.layout(...)}.
+ * <pre>{@code
+ * @Config(modId = "examplemod")
+ * @Layout(panelWidth = 440, previewWidth = 160, banner = "examplemod:textures/gui/banner.png")
+ * public class ExampleConfig { ... }
+ * }</pre>
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.TYPE)

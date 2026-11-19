@@ -12,14 +12,20 @@ public final class CategoryBuilder extends SectionBuilder {
         super(owner, section);
     }
 
-    /** Icon of the category: an item ID ({@code minecraft:feather}) or a texture ({@code examplemod:textures/gui/dash.png}). */
+    /**
+     * Icon of the category: an item ID ({@code minecraft:feather}) or a texture ({@code examplemod:textures/gui/dash.png}).
+     * <p>Example: {@code b.category("dash").icon("minecraft:feather")}</p>
+     */
     public CategoryBuilder icon(String icon) {
         owner.checkNotBuilt();
         section.setIcon(icon);
         return this;
     }
 
-    /** Comment written above the category's table in the file. */
+    /**
+     * Comment written above the category's table in the file.
+     * <p>Example: {@code b.category("dash").comment("Dash settings")}</p>
+     */
     public CategoryBuilder comment(String comment) {
         owner.checkNotBuilt();
         section.setComment(comment);

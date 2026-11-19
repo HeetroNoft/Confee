@@ -10,6 +10,10 @@ import java.lang.annotation.Target;
  * {@code "minecraft:entity_type"}, {@code "minecraft:worldgen/biome"} or a registry added by a mod. Entries added by
  * mods are included. World registries (biomes, structures, dimensions...) come from the world when one is loaded,
  * else from the data files of the game and of the mods.
+ * <pre>{@code
+ * @Registry(value = "minecraft:entity_type", tags = true)
+ * public List<String> mobs = new ArrayList<>(List.of("minecraft:zombie"));
+ * }</pre>
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.FIELD)

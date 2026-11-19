@@ -8,6 +8,10 @@ import java.lang.annotation.Target;
 /**
  * Replaces the widget of the option by your own (client-only class with a public no-argument constructor).
  * See {@link fr.heetstudio.confee.api.client.OptionWidget}.
+ * <pre>{@code
+ * @Widget(TemperatureWidget.class)
+ * public int temperature = 19;
+ * }</pre>
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.FIELD)

@@ -93,7 +93,9 @@ final class RawSchemaBuilder {
             case INTEGER -> builder = Option.builder(key, OptionType.LONG);
             case FLOAT -> builder = Option.builder(key, OptionType.DOUBLE);
             case STRING -> builder = Option.builder(key, OptionType.STRING);
-            case LIST -> builder = Option.builder(key, OptionType.LIST).elementType(elementType(value.elementKind()));
+            // files of other mods: their mod decides whether duplicates are allowed, so they are kept
+            case LIST -> builder = Option.builder(key, OptionType.LIST).elementType(elementType(value.elementKind()))
+                    .allowDuplicates(true);
             default -> {
                 builder = Option.builder(key, OptionType.STRING);
                 editable = false;

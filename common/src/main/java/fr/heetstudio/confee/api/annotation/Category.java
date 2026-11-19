@@ -7,6 +7,10 @@ import java.lang.annotation.Target;
 
 /**
  * Puts the field in a category (a tab of the sidebar, a table in the file). Spec 6.1.
+ * <pre>{@code
+ * @Category(value = "dash", icon = "minecraft:feather")
+ * public double dashDistance = 4.0;
+ * }</pre>
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.FIELD)

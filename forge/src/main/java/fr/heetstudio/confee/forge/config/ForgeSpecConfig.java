@@ -105,6 +105,9 @@ public final class ForgeSpecConfig implements EditableConfig {
         OptionType type = typeOf(current != null ? current : def);
         Option.Builder builder = Option.builder(key, type == null ? OptionType.STRING : type);
         boolean editable = type != null && !readOnly;
+        if (type == OptionType.LIST) {
+            builder.allowDuplicates(true); // the Forge spec of the mod decides, not Confee
+        }
         if (type == null) {
             current = String.valueOf(current);
             def = current;

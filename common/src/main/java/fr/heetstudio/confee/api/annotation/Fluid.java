@@ -8,6 +8,10 @@ import java.lang.annotation.Target;
 /**
  * The value is a fluid ({@code minecraft:water}): suggestions from the {@code minecraft:fluid} registry, mods' entries included (bucket icon, picker).
  * On {@code ResourceLocation}, {@code String} or {@code List<String>} fields. Same as {@code @Registry("minecraft:fluid")}.
+ * <pre>{@code
+ * @Fluid
+ * public String lavaReplacement = "minecraft:water";
+ * }</pre>
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.FIELD)

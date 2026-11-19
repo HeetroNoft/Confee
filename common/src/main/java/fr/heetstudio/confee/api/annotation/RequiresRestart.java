@@ -7,6 +7,10 @@ import java.lang.annotation.Target;
 
 /**
  * Changing this option needs a game restart: shows a yellow "!" icon. Spec 6.1.
+ * <pre>{@code
+ * @RequiresRestart
+ * public boolean fancyWorldgen = false;
+ * }</pre>
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.FIELD)

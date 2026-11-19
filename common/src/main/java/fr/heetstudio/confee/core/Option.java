@@ -71,6 +71,18 @@ public final class Option<T> implements Node, ConfigValue<T> {
     @Nullable
     private final java.util.function.Supplier<?> widgetFactory;
     private final WidgetHint widgetHint;
+    private final boolean allowDuplicates;
+    private final int minSize;
+    private final int maxSize;
+    private final boolean sorted;
+    private final boolean ignoreCase;
+    @Nullable
+    private final Number elementMin;
+    @Nullable
+    private final Number elementMax;
+    @Nullable
+    private final Pattern elementPattern;
+    private final int elementMaxLength;
     private final List<ChangeListener<T>> listeners = new CopyOnWriteArrayList<>();
     private String path;
 
@@ -101,6 +113,15 @@ public final class Option<T> implements Node, ConfigValue<T> {
         this.registry = b.registry;
         this.objectFields = b.objectFields == null ? List.of() : List.copyOf(b.objectFields);
         this.widgetHint = b.widgetHint;
+        this.allowDuplicates = b.allowDuplicates;
+        this.minSize = b.minSize;
+        this.maxSize = b.maxSize;
+        this.sorted = b.sorted;
+        this.ignoreCase = b.ignoreCase;
+        this.elementMin = b.elementMin;
+        this.elementMax = b.elementMax;
+        this.elementPattern = b.elementPattern;
+        this.elementMaxLength = b.elementMaxLength;
         this.description = b.description;
         this.allowTags = b.allowTags;
         this.suggestions = b.suggestions;
@@ -197,6 +218,40 @@ public final class Option<T> implements Node, ConfigValue<T> {
             // a set of enum values: no duplicate, declaration order
             value = list.stream().distinct().sorted(java.util.Comparator.comparingInt(e -> ((Enum<?>) e).ordinal())).toList();
         }
+        List<String> fixes = new ArrayList<>();
+        if (type == OptionType.LIST && value instanceof List<?> list) {
+            List<Object> elements = new ArrayList<>(list.size());
+            for (Object element : list) {
+                Validated<Object> check = checkElement(element);
+                if (check.status() == Validated.Status.REPLACED_BY_DEFAULT) {
+                    return Validated.replaced(defaultValue, check.message());
+                }
+                if (check.status() == Validated.Status.CORRECTED) {
+                    fixes.add(check.message());
+                }
+                elements.add(check.value());
+            }
+            List<?> result = elements;
+            if (!allowDuplicates && hasDuplicates(result)) {
+                result = withoutDuplicates(result);
+                fixes.add("duplicate values removed");
+            }
+            if (sorted) {
+                List<?> ordered = sortedCopy(result);
+                if (!ordered.equals(result)) {
+                    result = ordered;
+                    fixes.add("values sorted");
+                }
+            }
+            if (result.size() > maxSize) {
+                result = result.subList(0, maxSize);
+                fixes.add("more than " + maxSize + " values, the last ones were removed");
+            }
+            if (result.size() < minSize) {
+                return Validated.replaced(defaultValue, "fewer than " + minSize + " values");
+            }
+            value = List.copyOf(result);
+        }
         if (type.isNumeric() && (min != null || max != null)) {
             return clamp((Number) value);
         }
@@ -215,7 +270,7 @@ public final class Option<T> implements Node, ConfigValue<T> {
         if (validator != null && !validator.test(value)) {
             return Validated.replaced(defaultValue, "'" + value + "' is refused by the mod");
         }
-        return Validated.ok(value);
+        return fixes.isEmpty() ? Validated.ok(value) : Validated.corrected(value, String.join(", ", fixes));
     }
 
     private Validated<?> clamp(Number value) {
@@ -360,6 +415,152 @@ public final class Option<T> implements Node, ConfigValue<T> {
         return widgetHint;
     }
 
+    /** For a list: whether the same value may appear twice ({@code @AllowDuplicates}). False by default. */
+    public boolean allowDuplicates() {
+        return allowDuplicates;
+    }
+
+    /** For a list: smallest number of values ({@code @Size(min)}), 0 by default. */
+    public int minSize() {
+        return minSize;
+    }
+
+    /** For a list: largest number of values ({@code @Size(max)}), {@link Integer#MAX_VALUE} by default. */
+    public int maxSize() {
+        return maxSize;
+    }
+
+    /** For a list: kept sorted ({@code @Sorted}); the screen hides the move arrows. */
+    public boolean sorted() {
+        return sorted;
+    }
+
+    /** For a list of texts: duplicates are found without case ({@code @IgnoreCase}). */
+    public boolean ignoreCase() {
+        return ignoreCase;
+    }
+
+    /** For a list of numbers: lower bound of each value ({@code @Range} on the list), or null. */
+    @Nullable
+    public Number elementMin() {
+        return elementMin;
+    }
+
+    /** For a list of numbers: upper bound of each value ({@code @Range} on the list), or null. */
+    @Nullable
+    public Number elementMax() {
+        return elementMax;
+    }
+
+    /** For a list of texts: pattern each value must match ({@code @Pattern} on the list), or null. */
+    @Nullable
+    public Pattern elementPattern() {
+        return elementPattern;
+    }
+
+    /** For a list of texts: maximum length of each value ({@code @MaxLength} on the list), 0 when none. */
+    public int elementMaxLength() {
+        return elementMaxLength;
+    }
+
+    /**
+     * The value as the screen saves it: for a list, duplicates removed (first occurrence kept) and sorted with
+     * {@code @Sorted}. The screen lets the player type a duplicate; it disappears silently on save.
+     */
+    @SuppressWarnings("unchecked")
+    public T normalizeList(T value) {
+        if (type != OptionType.LIST || !(value instanceof List<?> list)) {
+            return value;
+        }
+        List<?> result = list;
+        if (!allowDuplicates && hasDuplicates(result)) {
+            result = withoutDuplicates(result);
+        }
+        if (sorted) {
+            result = sortedCopy(result);
+        }
+        return result == list ? value : (T) List.copyOf(result);
+    }
+
+    /** Key used to find duplicates: the lower-case text with {@code @IgnoreCase}, else the value itself. */
+    public Object duplicateKey(Object element) {
+        return ignoreCase && element instanceof String s ? s.toLowerCase(java.util.Locale.ROOT) : element;
+    }
+
+    private boolean hasDuplicates(List<?> list) {
+        java.util.Set<Object> seen = new java.util.HashSet<>();
+        for (Object element : list) {
+            if (!seen.add(duplicateKey(element))) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private List<?> withoutDuplicates(List<?> list) {
+        java.util.Set<Object> seen = new java.util.HashSet<>();
+        List<Object> out = new ArrayList<>(list.size());
+        for (Object element : list) {
+            if (seen.add(duplicateKey(element))) {
+                out.add(element);
+            }
+        }
+        return out;
+    }
+
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    private List<?> sortedCopy(List<?> list) {
+        List<Object> out = new ArrayList<>(list);
+        java.util.Comparator<Object> order;
+        if (elementType == OptionType.ENUM) {
+            order = java.util.Comparator.comparingInt(e -> ((Enum<?>) e).ordinal());
+        } else if (elementType == OptionType.STRING && ignoreCase) {
+            order = (a, b) -> String.CASE_INSENSITIVE_ORDER.compare((String) a, (String) b);
+        } else if (elementType != null && elementType.isNumeric()) {
+            order = java.util.Comparator.comparingDouble(e -> ((Number) e).doubleValue());
+        } else {
+            order = (a, b) -> ((Comparable) a).compareTo(b);
+        }
+        out.sort(order);
+        return out;
+    }
+
+    /**
+     * Converts and checks one value of a list (range, pattern, max length). The screen uses it to show an error on the
+     * field of that value. Never throws.
+     */
+    public Validated<Object> validateElement(@Nullable Object raw) {
+        if (type != OptionType.LIST || elementType == null) {
+            return Validated.replaced(null, "not a list");
+        }
+        Object element;
+        try {
+            element = Coercion.coerce(raw, elementType, enumClass, null);
+        } catch (IllegalArgumentException e) {
+            return Validated.replaced(null, e.getMessage());
+        }
+        return checkElement(element);
+    }
+
+    private Validated<Object> checkElement(Object element) {
+        if ((elementMin != null || elementMax != null) && element instanceof Number n) {
+            double v = n.doubleValue();
+            if (elementMin != null && v < elementMin.doubleValue()) {
+                return Validated.corrected(Coercion.toType(elementMin, elementType), n + " is below " + elementMin + ", clamped");
+            }
+            if (elementMax != null && v > elementMax.doubleValue()) {
+                return Validated.corrected(Coercion.toType(elementMax, elementType), n + " is above " + elementMax + ", clamped");
+            }
+        }
+        if (elementMaxLength > 0 && element instanceof String s && s.length() > elementMaxLength) {
+            return Validated.replaced(null, "'" + s + "' is longer than " + elementMaxLength + " characters");
+        }
+        if (elementPattern != null && element instanceof String s && !elementPattern.matcher(s).matches()) {
+            return Validated.replaced(null, "'" + s + "' does not match " + elementPattern.pattern());
+        }
+        return Validated.ok(element);
+    }
+
     /** Text shown under the name ({@code @Description}), or null. */
     @Nullable
     public String description() {
@@ -417,6 +618,16 @@ public final class Option<T> implements Node, ConfigValue<T> {
         private String registry;
         private List<ObjectField> objectFields;
         private WidgetHint widgetHint = WidgetHint.AUTO;
+        private boolean allowDuplicates;
+        private int minSize;
+        private int maxSize = Integer.MAX_VALUE;
+        private boolean sorted;
+        private boolean ignoreCase;
+        private Number elementMin;
+        private Number elementMax;
+        private Pattern elementPattern;
+        private int elementMaxLength;
+        private String patternError;
         private String description;
         private boolean allowTags;
         private fr.heetstudio.confee.api.SuggestionProvider suggestions;
@@ -466,8 +677,14 @@ public final class Option<T> implements Node, ConfigValue<T> {
             return this;
         }
 
+        /** Text (or, on a list, each text) must match this regular expression. */
         public Builder<T> pattern(@Nullable String regex) {
-            this.pattern = regex == null || regex.isEmpty() ? null : Pattern.compile(regex);
+            try {
+                this.pattern = regex == null || regex.isEmpty() ? null : Pattern.compile(regex);
+                this.patternError = null;
+            } catch (java.util.regex.PatternSyntaxException e) {
+                this.patternError = "'" + regex + "' is not a valid regular expression (" + e.getDescription() + ")";
+            }
             return this;
         }
 
@@ -562,6 +779,31 @@ public final class Option<T> implements Node, ConfigValue<T> {
             return this;
         }
 
+        /** For a list: the same value may appear twice (by default duplicates are removed). */
+        public Builder<T> allowDuplicates(boolean allow) {
+            this.allowDuplicates = allow;
+            return this;
+        }
+
+        /** For a list: number of values allowed ({@code 0 <= min <= max}). */
+        public Builder<T> size(int min, int max) {
+            this.minSize = min;
+            this.maxSize = max;
+            return this;
+        }
+
+        /** For a list: kept sorted (natural order, enums in declaration order). */
+        public Builder<T> sorted(boolean sorted) {
+            this.sorted = sorted;
+            return this;
+        }
+
+        /** For a list of texts: "Dirt" and "dirt" are the same value when looking for duplicates. */
+        public Builder<T> ignoreCase(boolean ignoreCase) {
+            this.ignoreCase = ignoreCase;
+            return this;
+        }
+
         public Builder<T> widgetHint(WidgetHint hint) {
             this.widgetHint = Objects.requireNonNull(hint);
             return this;
@@ -572,6 +814,20 @@ public final class Option<T> implements Node, ConfigValue<T> {
          */
         public Option<T> build() {
             List<String> problems = new ArrayList<>();
+            if (patternError != null) {
+                problems.add("@Pattern / pattern(): " + patternError);
+            }
+            if (type == OptionType.LIST) {
+                // on a list, @Range / @Pattern / @MaxLength apply to each value (one name to learn, not two)
+                elementMin = min;
+                elementMax = max;
+                elementPattern = pattern;
+                elementMaxLength = maxLength;
+                min = null;
+                max = null;
+                pattern = null;
+                maxLength = 0;
+            }
             if (type == OptionType.ENUM && enumClass == null) {
                 problems.add("ENUM option needs an enum class");
             }
@@ -595,6 +851,7 @@ public final class Option<T> implements Node, ConfigValue<T> {
             }
             boolean textual = type == OptionType.IDENTIFIER || type == OptionType.STRING
                     || (type == OptionType.LIST && elementType == OptionType.STRING);
+            listProblems(problems);
             if (widgetHint == WidgetHint.MULTILINE && type != OptionType.STRING) {
                 problems.add("@Multiline / multiline() is only allowed on String options");
             }
@@ -638,13 +895,75 @@ public final class Option<T> implements Node, ConfigValue<T> {
                 throw new IllegalStateException("Invalid option '" + key + "': " + String.join("; ", problems));
             }
             Option<T> option = new Option<>(this);
+            if (sorted && defaultValue instanceof List<?>) {
+                // a sorted list: the default value is sorted for the dev
+                defaultValue = option.normalizeList(defaultValue);
+                option = new Option<>(this);
+            }
             if (defaultValue != null) {
                 Validated<T> check = option.validate(defaultValue);
                 if (!check.isOk()) {
-                    throw new IllegalStateException("Invalid default value for option '" + key + "': " + check.message());
+                    throw new IllegalStateException("Invalid default value for option '" + key + "': " + check.message()
+                            + defaultValueFix(check.message()));
                 }
             }
             return option;
+        }
+
+        /** Mistakes in the list options (spec 14): what is wrong and how to fix it. */
+        private void listProblems(List<String> problems) {
+            boolean list = type == OptionType.LIST;
+            String where = list ? "" : " (this option is a " + type.name().toLowerCase(java.util.Locale.ROOT).replace('_', ' ') + ")";
+            if (allowDuplicates && !list) {
+                problems.add("@AllowDuplicates / allowDuplicates() is only allowed on List options" + where);
+            }
+            if ((minSize != 0 || maxSize != Integer.MAX_VALUE) && !list) {
+                problems.add("@Size / size() is only allowed on List options" + where);
+            }
+            if (minSize < 0 || maxSize < minSize) {
+                problems.add("invalid size: min " + minSize + ", max " + maxSize
+                        + ". Fix: 0 <= min <= max, e.g. @Size(min = 1, max = 10)");
+            }
+            if (sorted && !list) {
+                problems.add("@Sorted / sorted() is only allowed on List options" + where);
+            }
+            if (ignoreCase && !(list && elementType == OptionType.STRING)) {
+                problems.add("@IgnoreCase / ignoreCase() needs a List<String>" + where);
+            }
+            if (ignoreCase && allowDuplicates) {
+                problems.add("@IgnoreCase only changes how duplicates are found, it does nothing with @AllowDuplicates."
+                        + " Fix: remove one of them");
+            }
+            if (list && (elementMin != null || elementMax != null) && (elementType == null || !elementType.isNumeric())) {
+                problems.add("@Range / range() on a list bounds each value: it needs a list of numbers (List<Integer>,"
+                        + " List<Double>...), not a List<" + (elementType == null ? "?" : elementType.name().toLowerCase(java.util.Locale.ROOT)) + ">."
+                        + " Fix: for the number of values, use @Size / size()");
+            }
+            if (list && elementMin != null && elementMax != null && elementMin.doubleValue() > elementMax.doubleValue()) {
+                problems.add("min (" + elementMin + ") is greater than max (" + elementMax + ")");
+            }
+            if (list && (elementPattern != null || elementMaxLength > 0) && elementType != OptionType.STRING) {
+                problems.add("@Pattern / @MaxLength on a list check each value: they need a List<String>");
+            }
+            if (list && elementMaxLength < 0) {
+                problems.add("@MaxLength must be positive");
+            }
+        }
+
+        private static String defaultValueFix(@Nullable String message) {
+            if (message == null) {
+                return "";
+            }
+            if (message.contains("duplicate")) {
+                return ". Fix: remove the duplicates from the default value, or allow them with @AllowDuplicates / allowDuplicates()";
+            }
+            if (message.contains(" values")) {
+                return ". Fix: give the default value a size allowed by @Size / size()";
+            }
+            if (message.contains("clamped") || message.contains("does not match") || message.contains("longer than")) {
+                return ". Fix: change the default value, or the @Range / @Pattern / @MaxLength of the list";
+            }
+            return "";
         }
     }
 }

@@ -148,4 +148,111 @@ class OptionTest {
         assertThrows(IllegalArgumentException.class, () ->
                 Option.<Object>builder("a.b", OptionType.INT));
     }
+
+    // ---------------------------------------------------------------- duplicates in lists
+
+    private static Option<List<String>> blocks(boolean allowDuplicates) {
+        return Option.<List<String>>builder("blocks", OptionType.LIST).elementType(OptionType.STRING)
+                .defaultValue(List.of()).allowDuplicates(allowDuplicates).build();
+    }
+
+    @Test
+    void listDuplicatesAreRemovedKeepingTheFirstOccurrence() {
+        Validated<List<String>> v = blocks(false).validate(List.of("minecraft:dirt", "minecraft:stone", "minecraft:dirt"));
+        assertEquals(Validated.Status.CORRECTED, v.status());
+        assertEquals(List.of("minecraft:dirt", "minecraft:stone"), v.value());
+        assertTrue(blocks(false).validate(List.of("a", "b")).isOk());
+    }
+
+    @Test
+    void allowDuplicatesKeepsThem() {
+        Option<List<String>> o = blocks(true);
+        Validated<List<String>> v = o.validate(List.of("minecraft:dirt", "minecraft:dirt"));
+        assertTrue(v.isOk());
+        assertEquals(List.of("minecraft:dirt", "minecraft:dirt"), v.value());
+        assertEquals(List.of("x", "x"), o.normalizeList(List.of("x", "x")));
+        assertEquals(List.of("x"), blocks(false).normalizeList(List.of("x", "x")));
+    }
+
+    @Test
+    void allowDuplicatesOnANonListIsRefused() {
+        assertThrows(IllegalStateException.class, () -> Option.<String>builder("s", OptionType.STRING)
+                .defaultValue("").allowDuplicates(true).build());
+    }
+
+    // ---------------------------------------------------------------- list options
+
+    private static Option.Builder<List<Object>> list(OptionType element, List<?> defaults) {
+        return Option.<List<Object>>builder("l", OptionType.LIST).elementType(element)
+                .defaultValue(List.copyOf(defaults));
+    }
+
+    @Test
+    void sizeTruncatesLongListsAndRefusesShortOnes() {
+        Option<List<Object>> o = list(OptionType.STRING, List.of("a")).size(1, 2).build();
+        Validated<List<Object>> long3 = o.validate(List.of("x", "y", "z"));
+        assertEquals(Validated.Status.CORRECTED, long3.status());
+        assertEquals(List.of("x", "y"), long3.value());
+        Validated<List<Object>> empty = o.validate(List.of());
+        assertEquals(Validated.Status.REPLACED_BY_DEFAULT, empty.status());
+        assertEquals(List.of("a"), empty.value());
+    }
+
+    @Test
+    void sortedListsAreSortedAndTheDefaultToo() {
+        Option<List<Object>> o = list(OptionType.LONG, List.of(3L, 1L, 2L)).sorted(true).build();
+        assertEquals(List.of(1L, 2L, 3L), o.getDefault());
+        assertEquals(List.of(1L, 5L, 10L), o.validate(List.of(10, 1, 5)).value());
+        assertEquals(List.of(1L, 5L), o.normalizeList(List.of(5L, 1L, 5L)));
+    }
+
+    @Test
+    void ignoreCaseFindsDuplicatesWithoutCase() {
+        Option<List<Object>> o = list(OptionType.STRING, List.of()).ignoreCase(true).build();
+        assertEquals(List.of("Dirt", "stone"), o.validate(List.of("Dirt", "stone", "dirt")).value());
+    }
+
+    @Test
+    void rangeAndPatternOnAListApplyToEachValue() {
+        Option<List<Object>> range = list(OptionType.INT, List.of(1)).range(1, 64).build();
+        assertNull(range.min(), "the list itself has no range");
+        assertEquals(1, range.elementMin());
+        Validated<List<Object>> v = range.validate(List.of(0, 100, 8));
+        assertEquals(Validated.Status.CORRECTED, v.status());
+        assertEquals(List.of(1, 64, 8), v.value());
+        assertFalse(range.validateElement("100").isOk(), "the screen shows an error on the value");
+        assertTrue(range.validateElement("8").isOk());
+
+        Option<List<Object>> names = list(OptionType.STRING, List.of("steve")).pattern("[a-z]+").build();
+        assertEquals(Validated.Status.REPLACED_BY_DEFAULT, names.validate(List.of("ok", "Not OK")).status());
+        assertFalse(names.validateElement("Not OK").isOk());
+    }
+
+    @Test
+    void misplacedListOptionsGiveClearErrors() {
+        IllegalStateException size = assertThrows(IllegalStateException.class, () -> Option.<String>builder("s", OptionType.STRING)
+                .defaultValue("").size(1, 3).build());
+        assertTrue(size.getMessage().contains("@Size / size() is only allowed on List options"), size.getMessage());
+        IllegalStateException ignoreCase = assertThrows(IllegalStateException.class,
+                () -> list(OptionType.INT, List.of()).ignoreCase(true).build());
+        assertTrue(ignoreCase.getMessage().contains("needs a List<String>"), ignoreCase.getMessage());
+        IllegalStateException both = assertThrows(IllegalStateException.class,
+                () -> list(OptionType.STRING, List.of()).ignoreCase(true).allowDuplicates(true).build());
+        assertTrue(both.getMessage().contains("Fix: remove one of them"), both.getMessage());
+        IllegalStateException regex = assertThrows(IllegalStateException.class,
+                () -> list(OptionType.STRING, List.of()).pattern("[a-").build());
+        assertTrue(regex.getMessage().contains("not a valid regular expression"), regex.getMessage());
+        IllegalStateException rangeOnTexts = assertThrows(IllegalStateException.class,
+                () -> list(OptionType.STRING, List.of()).range(1, 3).build());
+        assertTrue(rangeOnTexts.getMessage().contains("Fix: for the number of values, use @Size"), rangeOnTexts.getMessage());
+        Option<List<Object>> shortNames = list(OptionType.STRING, List.of("ab")).maxLength(3).build();
+        assertFalse(shortNames.validateElement("abcd").isOk());
+        assertEquals(0, shortNames.maxLength(), "the list itself has no max length");
+        IllegalStateException badSize = assertThrows(IllegalStateException.class,
+                () -> list(OptionType.STRING, List.of()).size(3, 1).build());
+        assertTrue(badSize.getMessage().contains("0 <= min <= max"), badSize.getMessage());
+        IllegalStateException defaults = assertThrows(IllegalStateException.class,
+                () -> list(OptionType.STRING, List.of("a", "a")).build());
+        assertTrue(defaults.getMessage().contains("Fix: remove the duplicates"), defaults.getMessage());
+    }
 }

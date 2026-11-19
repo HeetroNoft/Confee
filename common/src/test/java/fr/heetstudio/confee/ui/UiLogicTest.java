@@ -127,4 +127,31 @@ class UiLogicTest {
     private static <T> Option<T> cast(Option<?> option) {
         return (Option) option;
     }
+
+    @Test
+    void savingRemovesDuplicatesSilentlyUnlessAllowed() throws Exception {
+        ConfigBuilder b = ConfigBuilder.create("dups", new ConfeeEnvironment(dir, true, true));
+        ConfigValue<List<String>> blocks = b.list("blocks", String.class, List.of("minecraft:sand")).build();
+        ConfigValue<List<Integer>> rolls = b.list("rolls", Integer.class, List.of(1)).allowDuplicates().build();
+        ConfigHandle<?> handle = (ConfigHandle<?>) b.build();
+        Option<List<String>> blocksOption = cast(handle.schema().root().findOption("blocks").orElseThrow());
+        Option<List<Integer>> rollsOption = cast(handle.schema().root().findOption("rolls").orElseThrow());
+
+        EditSession session = new EditSession(handle);
+        session.set(blocksOption, List.of("minecraft:dirt", "minecraft:sand", "minecraft:dirt"));
+        session.set(rollsOption, List.of(6, 6));
+        assertEquals(3, session.get(blocksOption).size(), "the screen keeps what the player typed until saved");
+        session.commit();
+        assertEquals(List.of("minecraft:dirt", "minecraft:sand"), blocks.get());
+        assertEquals(List.of(6, 6), rolls.get());
+    }
+
+    @Test
+    void duplicatesInAFileAreRemovedOnLoad() throws Exception {
+        java.nio.file.Files.writeString(dir.resolve("dupfile.toml"), "blocks = [\"a:b\", \"c:d\", \"a:b\"]\n");
+        ConfigBuilder b = ConfigBuilder.create("dupfile", new ConfeeEnvironment(dir, true, true));
+        ConfigValue<List<String>> blocks = b.list("blocks", String.class, List.of()).build();
+        b.build();
+        assertEquals(List.of("a:b", "c:d"), blocks.get());
+    }
 }
