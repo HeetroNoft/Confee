@@ -178,6 +178,15 @@ public final class OptionBuilder<T> {
     }
 
     /**
+     * For a List option or a list of objects whose order matters: shows the ▲ ▼ move buttons (hidden by default).
+     * <p>Example: {@code b.itemList("lootPriority", "minecraft:diamond").reorderable().build()}</p>
+     */
+    public OptionBuilder<T> reorderable() {
+        delegate.reorderable(true);
+        return this;
+    }
+
+    /**
      * For a List option: kept sorted (natural order, enums in declaration order); no move arrows in the screen.
      * <p>Example: {@code b.list("labels", String.class, List.of("b", "a")).sorted().build()}</p>
      */
@@ -218,6 +227,34 @@ public final class OptionBuilder<T> {
      * The value is an item ID: item suggestions, icon, item picker and automatic preview.
      * <p>Example: {@code b.string("reward", "minecraft:diamond").item().build()}</p>
      */
+    /**
+     * Style the picker opens with (the player can still switch to the other allowed styles). For ID options that have
+     * a picker (items, blocks, entities, mods...).
+     * <p>Example: {@code b.item("reward", "minecraft:diamond").picker(PickerStyle.LIST).build()}</p>
+     */
+    public OptionBuilder<T> picker(fr.heetstudio.confee.api.PickerStyle defaultStyle) {
+        delegate.pickerDefault(defaultStyle);
+        return this;
+    }
+
+    /**
+     * Picker styles the player can choose (all by default). With one style, there is no switch in the picker.
+     * <p>Example: {@code b.modList("mods").pickerStyles(PickerStyle.LIST, PickerStyle.DETAILED).build()}</p>
+     */
+    public OptionBuilder<T> pickerStyles(fr.heetstudio.confee.api.PickerStyle... styles) {
+        delegate.pickerStyles(java.util.List.of(styles));
+        return this;
+    }
+
+    /**
+     * The value is the ID of an installed mod: suggestions with the mods' logos, logo in the field and a mod picker.
+     * On String or List of String options.
+     * <p>Example: {@code b.list("compatibleMods", String.class, List.of("sodium")).modId().build()}</p>
+     */
+    public OptionBuilder<T> modId() {
+        return registry(fr.heetstudio.confee.core.PseudoRegistries.MOD);
+    }
+
     public OptionBuilder<T> item() {
         return registry("minecraft:item");
     }

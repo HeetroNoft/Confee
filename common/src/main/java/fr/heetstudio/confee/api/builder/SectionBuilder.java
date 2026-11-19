@@ -161,6 +161,14 @@ public abstract sealed class SectionBuilder permits ConfigBuilder, CategoryBuild
     }
 
     /**
+     * List of IDs of installed mods: suggestions with the mods' logos and a mod picker.
+     * <p>Example: {@code b.modList("compatibleMods", "sodium", "lithium").build()}</p>
+     */
+    public OptionBuilder<List<String>> modList(String key, String... defaultValues) {
+        return list(key, String.class, List.of(defaultValues)).modId();
+    }
+
+    /**
      * List kept sorted and without duplicates (a set the player edits as a list).
      * <p>Example: {@code b.sortedList("labels", String.class, List.of("alpha", "beta")).build()}</p>
      */
@@ -234,6 +242,14 @@ public abstract sealed class SectionBuilder permits ConfigBuilder, CategoryBuild
      */
     public OptionBuilder<String> block(String key, String defaultBlock) {
         return identifier(key, defaultBlock).block();
+    }
+
+    /**
+     * ID of an installed mod ({@code "sodium"}): suggestions with the mods' logos, logo in the field and a mod picker.
+     * <p>Example: {@code b.modId("favoriteMod", "sodium").build()}</p>
+     */
+    public OptionBuilder<String> modId(String key, String defaultModId) {
+        return string(key, defaultModId).modId();
     }
 
     /**
