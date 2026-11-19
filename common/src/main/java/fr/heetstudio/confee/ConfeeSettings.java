@@ -41,6 +41,9 @@ public final class ConfeeSettings {
     private static ConfigValue<List<String>> fileMappings;
     private static ConfigValue<List<String>> ignoredMods;
     private static ConfigValue<List<String>> forceConfeeEditor;
+    private static ConfigValue<List<String>> pickerStyles;
+    @org.jetbrains.annotations.Nullable
+    private static ConfeeConfig<Void> config;
 
     private ConfeeSettings() {
     }
@@ -56,12 +59,60 @@ public final class ConfeeSettings {
         fileMappings = external.list("fileMappings", String.class, List.of())
                 .comment("Manual mod -> file mappings, one per entry: \"modid=path\" (path relative to config/)").build();
         ignoredMods = external.list("ignoredMods", String.class, List.of())
-                .comment("Mods ignored by the universal editor").requiresRestart().build();
+                .comment("Mods ignored by the universal editor").requiresRestart()
+                .registry(fr.heetstudio.confee.core.PseudoRegistries.EDITABLE_MOD).build();
         // read each time a Config button is clicked: no restart needed
         forceConfeeEditor = external.list("forceConfeeEditor", String.class, List.of())
                 .comment("Mods whose own config screen is replaced by the Confee editor (their config files must be found)")
-                .suggestions(ConfeeSettings::forceableMods).build();
-        return b.build();
+                .registry(fr.heetstudio.confee.core.PseudoRegistries.REPLACEABLE_MOD).build();
+        // suggestions, logos and the mod picker list only the mods whose screen can be replaced
+        fr.heetstudio.confee.core.PseudoRegistries.register(fr.heetstudio.confee.core.PseudoRegistries.REPLACEABLE_MOD,
+                ConfeeSettings::forceableMods);
+        fr.heetstudio.confee.core.PseudoRegistries.register(fr.heetstudio.confee.core.PseudoRegistries.EDITABLE_MOD,
+                ConfeeSettings::editableMods);
+        // last picker style chosen by the player, per kind of entry: "registry=STYLE"
+        pickerStyles = general.list("pickerStyles", String.class, List.of()).hidden()
+                .comment("Last picker style (GRID, LIST, DETAILED) chosen for each kind of ID, \"registry=STYLE\"").build();
+        config = b.build();
+        return config;
+    }
+
+    /** The picker style the player last chose for this kind of entry, or null. */
+    @org.jetbrains.annotations.Nullable
+    public static fr.heetstudio.confee.api.PickerStyle rememberedPickerStyle(String registry) {
+        if (pickerStyles == null) {
+            return null;
+        }
+        for (String entry : pickerStyles.get()) {
+            if (entry.startsWith(registry + "=")) {
+                try {
+                    fr.heetstudio.confee.api.PickerStyle style =
+                            fr.heetstudio.confee.api.PickerStyle.valueOf(entry.substring(registry.length() + 1).trim());
+                    return style == fr.heetstudio.confee.api.PickerStyle.AUTO ? null : style;
+                } catch (IllegalArgumentException e) {
+                    return null;
+                }
+            }
+        }
+        return null;
+    }
+
+    /** Remembers the picker style chosen by the player for this kind of entry and saves confee.toml. */
+    public static void rememberPickerStyle(String registry, fr.heetstudio.confee.api.PickerStyle style) {
+        if (pickerStyles == null || style == rememberedPickerStyle(registry)) {
+            return;
+        }
+        List<String> entries = new ArrayList<>();
+        for (String entry : pickerStyles.get()) {
+            if (!entry.startsWith(registry + "=")) {
+                entries.add(entry);
+            }
+        }
+        entries.add(registry + "=" + style.name());
+        pickerStyles.set(List.copyOf(entries));
+        if (config != null) {
+            config.save();
+        }
     }
 
     public static boolean injectConfigButtons() {
@@ -98,6 +149,22 @@ public final class ConfeeSettings {
                 && forceConfeeEditor.get().contains(modId) && !ignoredMods().contains(modId);
     }
 
+    /**
+     * Suggestions of {@code ignoredMods}: mods the universal editor handles (config files found, or Forge/NeoForge
+     * configs), plus the installed mods already ignored (the discovery skips them).
+     */
+    private static java.util.Collection<String> editableMods() {
+        Set<String> out = new java.util.TreeSet<>(fr.heetstudio.confee.external.ExternalFiles.discoverAll().keySet());
+        out.addAll(fr.heetstudio.confee.platform.Services.PLATFORM.getLoaderConfigModIds());
+        for (String modId : ignoredMods()) {
+            if (fr.heetstudio.confee.platform.Services.PLATFORM.isModLoaded(modId)) {
+                out.add(modId);
+            }
+        }
+        out.remove(ConfeeMod.MOD_ID);
+        return out;
+    }
+
     /** Suggestions of {@code forceConfeeEditor}: mods with their own screen whose config files Confee can edit. */
     private static java.util.Collection<String> forceableMods() {
         Set<String> own = fr.heetstudio.confee.platform.Services.PLATFORM.getModsWithOwnConfigScreen();
@@ -124,6 +191,11 @@ public final class ConfeeSettings {
     /** The {@code forceConfeeEditor} value (test scripts). */
     public static ConfigValue<List<String>> forceConfeeEditorValue() {
         return forceConfeeEditor;
+    }
+
+    /** The {@code pickerStyles} value (test scripts). */
+    public static ConfigValue<List<String>> pickerStylesValue() {
+        return pickerStyles;
     }
 
     public static Set<String> ignoredMods() {
