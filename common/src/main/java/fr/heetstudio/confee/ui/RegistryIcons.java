@@ -42,12 +42,14 @@ public final class RegistryIcons {
 
     /** Whether entries of this registry have icons (field icon, icons in suggestions, grid picker). */
     public static boolean hasIcons(@Nullable String registry) {
-        return ITEM.equals(registry) || BLOCK.equals(registry) || ENTITY.equals(registry)
-                || ENCHANTMENT.equals(registry) || EFFECT.equals(registry) || FLUID.equals(registry);
+        return fr.heetstudio.confee.core.Pickers.hasPicker(registry); // same list as the server-safe check
     }
 
     /** Draws the icon of an entry in a {@code size} box; false when it has none (unknown ID...). */
     public static boolean draw(GuiGraphics g, @Nullable String registry, String id, int x, int y, int size) {
+        if (registry != null && fr.heetstudio.confee.core.PseudoRegistries.isModList(registry)) {
+            return ModIcons.draw(g, id, x, y, size);
+        }
         if (EFFECT.equals(registry)) {
             MobEffect effect = lookup(BuiltInRegistries.MOB_EFFECT, id);
             if (effect == null) {
@@ -95,6 +97,9 @@ public final class RegistryIcons {
     /** Translated name of the entry when the game knows one ("Zombie", "Plains", "Speed"...), else null. */
     @Nullable
     public static Component name(@Nullable String registry, String id) {
+        if (registry != null && fr.heetstudio.confee.core.PseudoRegistries.isModList(registry)) {
+            return fr.heetstudio.confee.platform.Services.PLATFORM.getModDisplayName(id).map(Component::literal).orElse(null);
+        }
         ResourceLocation rl = ResourceLocation.tryParse(id);
         if (registry == null || rl == null) {
             return null;

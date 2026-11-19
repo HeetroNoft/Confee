@@ -55,11 +55,18 @@ public final class RegistryEntries {
 
     /** Sorted IDs of the registry (empty when unknown, logged once). */
     public static synchronized List<String> ids(String registry) {
+        if (fr.heetstudio.confee.core.PseudoRegistries.isPseudo(registry)) {
+            // installed mods: not a game registry
+            return cached("ids|" + registry, () -> new HashSet<>(fr.heetstudio.confee.core.PseudoRegistries.ids(registry)));
+        }
         return cached("ids|" + registry, () -> loadIds(registry));
     }
 
     /** Sorted tags of the registry, as {@code #namespace:path}. */
     public static synchronized List<String> tags(String registry) {
+        if (fr.heetstudio.confee.core.PseudoRegistries.isPseudo(registry)) {
+            return List.of(); // mods have no tags
+        }
         return cached("tags|" + registry, () -> loadTags(registry));
     }
 

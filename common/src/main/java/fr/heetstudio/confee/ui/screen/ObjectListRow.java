@@ -172,10 +172,12 @@ final class ObjectListRow extends OptionRow {
         int cy = y + headerHeight() + 2;
         for (Card card : cards) {
             card.top = cy;
-            int bx = cx + cw - PAD - 3 * 12 - 4;
+            // ▲ ▼ only with @Reorderable: the remove button takes the place of the arrows otherwise
+            int buttons = option.reorderable() ? 3 : 1;
+            int bx = cx + cw - PAD - buttons * 12 - (buttons - 1) * 2;
             card.up.setBounds(bx, cy + 1, 12, 12);
             card.down.setBounds(bx + 14, cy + 1, 12, 12);
-            card.remove.setBounds(bx + 28, cy + 1, 12, 12);
+            card.remove.setBounds(bx + (buttons - 1) * 14, cy + 1, 12, 12);
             int fy = cy + HEADER_H;
             for (ScalarEditor editor : card.editors) {
                 int h = editor.height();
@@ -206,8 +208,10 @@ final class ObjectListRow extends OptionRow {
             Draw.rect(g, cx, card.top, cw, card.bottom - card.top, Draw.mix(t.panelBg(), t.panelBgDeep(), 0.55f));
             Draw.outline(g, cx, card.top, cw, card.bottom - card.top, Draw.mix(t.panelBg(), t.outline(), 0.5f));
             Draw.text(g, ui.font(), "#" + (i + 1), cx + PAD, card.top + 3, ui.secondaryText());
-            card.up.render(g, mouseX, mouseY, delta);
-            card.down.render(g, mouseX, mouseY, delta);
+            if (option.reorderable()) {
+                card.up.render(g, mouseX, mouseY, delta);
+                card.down.render(g, mouseX, mouseY, delta);
+            }
             card.remove.render(g, mouseX, mouseY, delta);
             for (int f = 0; f < card.editors.size(); f++) {
                 ScalarEditor editor = card.editors.get(f);
@@ -232,8 +236,10 @@ final class ObjectListRow extends OptionRow {
             for (ScalarEditor editor : card.editors) {
                 list.add(editor.widget);
             }
-            list.add(card.up);
-            list.add(card.down);
+            if (option.reorderable()) {
+                list.add(card.up);
+                list.add(card.down);
+            }
             list.add(card.remove);
         }
         list.add(add);

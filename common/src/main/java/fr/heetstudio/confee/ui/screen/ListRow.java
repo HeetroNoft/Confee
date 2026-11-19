@@ -30,7 +30,8 @@ import java.util.function.Function;
  * List editor (spec 10.3): one text field (or a dropdown for enums) per entry with ▲ ▼ (reorder) and ✕ (remove),
  * "+ Add" at the bottom. The list is only applied when every entry is valid.
  * <p>List options (spec 6.1): values already in the list are not suggested nor offered by "+ Add" and the picker
- * (unless {@code @AllowDuplicates}); {@code @Size} greys out "+ Add" / ✕ at the bounds; {@code @Sorted} hides the
+ * (unless {@code @AllowDuplicates}); {@code @Size} greys out "+ Add" / ✕ at the bounds; ▲ ▼ only with
+ * {@code @Reorderable}; {@code @Sorted} hides the
  * arrows; {@code @Range} / {@code @Pattern} / {@code @MaxLength} on the list show an error on the field of the value.</p>
  * <p>Internal: may change without notice.</p>
  */
@@ -91,7 +92,8 @@ final class ListRow extends OptionRow {
                     field.setIconRegistry(registry);
                     Entry self = this;
                     field.setPickerAction(() -> overlays.accept(new ItemPickerPopup(ui, name, registry, f.text(),
-                            usedIds(self), f::setTextAndNotify, closeOverlay)), Component.translatable("confee.tooltip.pick"));
+                            usedIds(self), ItemPickerPopup.Styles.of(option, registry), f::setTextAndNotify, closeOverlay)),
+                            Component.translatable("confee.tooltip.pick"));
                 }
             }
             up = new IconButton(ui, Icon.ARROW_UP, Component.translatable("confee.tooltip.move_up"), 14,
@@ -128,6 +130,11 @@ final class ListRow extends OptionRow {
                 option.suggestions(), option.path());
         this.add = new ButtonWidget(ui, Component.translatable("confee.button.add"), ButtonWidget.Style.NORMAL, this::addEntry);
         rebuild();
+    }
+
+    /** ▲ ▼ move buttons: only on a list whose order matters ({@code @Reorderable}), never on a sorted one. */
+    private boolean showArrows() {
+        return option.reorderable() && !option.sorted();
     }
 
     private boolean isEnumList() {
@@ -327,7 +334,7 @@ final class ListRow extends OptionRow {
         int cw = width - DOT_GUTTER;
         layoutSubtitle(width);
         int cy = y + headerHeight();
-        int arrows = option.sorted() ? 0 : 2;
+        int arrows = showArrows() ? 2 : 0;
         int buttons = (arrows + 1) * 14 + arrows * GAP;
         for (Entry entry : entries) {
             entry.input().setBounds(cx, cy, cw - buttons - GAP, TextFieldWidget.HEIGHT);
@@ -359,7 +366,7 @@ final class ListRow extends OptionRow {
         reset.render(g, mouseX, mouseY, delta);
         for (Entry entry : entries) {
             entry.input().render(g, mouseX, mouseY, delta);
-            if (!option.sorted()) {
+            if (showArrows()) {
                 entry.up.render(g, mouseX, mouseY, delta);
                 entry.down.render(g, mouseX, mouseY, delta);
             }
@@ -378,7 +385,7 @@ final class ListRow extends OptionRow {
         list.add(reset);
         for (Entry entry : entries) {
             list.add(entry.input());
-            if (!option.sorted()) {
+            if (showArrows()) {
                 list.add(entry.up);
                 list.add(entry.down);
             }

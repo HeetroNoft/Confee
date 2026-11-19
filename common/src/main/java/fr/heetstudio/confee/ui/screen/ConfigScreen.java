@@ -612,8 +612,9 @@ public final class ConfigScreen extends ConfeeScreen {
         if (detected != null && fr.heetstudio.confee.ui.RegistryIcons.hasIcons(detected.registry())) {
             String registry = detected.registry();
             field.setIconRegistry(registry);
-            field.setPickerAction(() -> openOverlay(new ItemPickerPopup(ui, name, registry, field.text(),
-                    field::setTextAndNotify, this::closeOverlay)), Component.translatable("confee.tooltip.pick"));
+            field.setPickerAction(() -> openOverlay(new ItemPickerPopup(ui, name, registry, field.text(), java.util.Set.of(),
+                    ItemPickerPopup.Styles.of(option, registry), field::setTextAndNotify, this::closeOverlay)),
+                    Component.translatable("confee.tooltip.pick"));
         }
         if (option.readOnly()) {
             field.setEnabled(false);

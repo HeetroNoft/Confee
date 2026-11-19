@@ -110,6 +110,8 @@ final class PreviewPanel {
             String id = String.valueOf(value).trim();
             boolean tag = id.startsWith("#");
             boolean known = tag ? fr.heetstudio.confee.ui.RegistryEntries.tags(registry).contains(id)
+                    : fr.heetstudio.confee.core.PseudoRegistries.isModList(registry)
+                    ? fr.heetstudio.confee.platform.Services.PLATFORM.isModLoaded(id) // hidden sub-mods are known too
                     : fr.heetstudio.confee.ui.RegistryEntries.ids(registry).contains(id);
             if (!known) {
                 paragraph(g, Component.translatable(tag ? "confee.preview.unknown_tag" : "confee.preview.unknown_item", id),
