@@ -10,6 +10,10 @@ overlayOpacity = 0.65
 playerName = 'Steve'
 # Highlight color
 highlight = "#FF8800"
+# Color of the boss bar, stored as an integer (RGB)
+barColor = 16746496
+# Tint of the overlay, signed ARGB integer
+overlayTint = -2147418368
 blockedItems = ["minecraft:tnt", "minecraft:lava_bucket"]
 # Mobs that never spawn
 spawnBlacklist = ["minecraft:creeper", "minecraft:phantom"]

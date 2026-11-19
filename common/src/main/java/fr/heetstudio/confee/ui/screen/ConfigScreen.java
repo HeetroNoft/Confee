@@ -571,6 +571,34 @@ public final class ConfigScreen extends ConfeeScreen {
                 }, this::closeOverlay));
             });
         }
+        if ((type == OptionType.INT || type == OptionType.LONG) && schema.source() != ConfigSource.CONFEE
+                && !option.readOnly() && IntColors.isColorKey(option.key())
+                && IntColors.argb(session.get(raw)) != null) {
+            // spec 8.2 bis: integers named like a color (in range) get a preview and the color picker
+            boolean alpha = IntColors.hasAlpha(session.get(raw));
+            boolean signed = ((Number) session.get(raw)).longValue() < 0;
+            field.setSwatch(IntColors.argb(session.get(raw)));
+            field.setResponder(text -> {
+                ValueText.Parsed parsed = ValueText.parse(option, text);
+                if (parsed.ok()) {
+                    field.setError(null);
+                    session.set(raw, parsed.value());
+                    field.setSwatch(IntColors.argb(parsed.value()));
+                } else {
+                    field.setError(problemText(option, parsed.problem()));
+                }
+            });
+            field.setSwatchAction(() -> {
+                Integer argb = IntColors.argb(session.get(raw));
+                openOverlay(new ColorPickerPopup(ui, name, argb == null ? 0xFFFFFFFF : argb, alpha, picked -> {
+                    Object value = IntColors.toValue(picked, alpha, signed, type == OptionType.LONG);
+                    session.set(raw, value);
+                    field.setTextSilently(String.valueOf(value));
+                    field.setSwatch(picked);
+                    field.setError(null);
+                }, this::closeOverlay));
+            });
+        }
         Component unit = Labels.unit(option);
         if (unit != null) {
             field.setSuffix(unit);
