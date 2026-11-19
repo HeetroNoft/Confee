@@ -54,11 +54,13 @@ Toutes tranchées par Lucas le 2026-11-19 et reportées dans `CONFEE_SPEC.md` (�
 - [x] GitHub (2026-11-19) : dépôt **public**, description, site (page CurseForge), topics, `CONTRIBUTING.md`,
       modèles d'issue et de PR, CI GitHub Actions (`./gradlew build`), protection de `1.20.1` (CI `build` + 1
       approbation pour les PR, pas de force push ; l'admin n'est pas bloqué).
-- [x] Modrinth / CurseForge : projets créés (Modrinth `itTlrYl0`, CurseForge `1817213`, IDs dans `gradle.properties`). Reste : les tokens en variables d'environnement au moment de publier.
+- [x] Modrinth / CurseForge : projets créés (Modrinth `itTlrYl0`, CurseForge `1817213`, IDs dans `gradle.properties`).
+      Tokens dans `.env` (lu par `scripts/confee.ps1`, voir `.env.example`).
 - [x] Type de release : **`beta`** (validé le 2026-11-19).
-- [ ] Maven pour les devs : Modrinth Maven, ou un Maven dédié (❓) ?
-- [ ] Pages des mods : brouillon dans `docs/publishing/mod-page.md` relu le 2026-11-19 (ligne sur l'écran des mods
-      mise à jour pour `forceConfeeEditor`) ; reste la relecture de Lucas.
+- [x] Maven pour les devs : **plus tard** (V1.1, décidé le 2026-11-19). Modrinth Maven marche dès la publication :
+      `maven.modrinth:confee:<version>`.
+- [x] Pages des mods : remplies par Lucas sur Modrinth et CurseForge (2026-11-19), à partir de
+      `docs/publishing/mod-page.md`.
 - [ ] Publication réelle (`CONFEE_PUBLISH=true`). La simulation `publish-dry` passe pour les 4 envois.
 
 ## 4. Limites connues (V1.1 / V2)

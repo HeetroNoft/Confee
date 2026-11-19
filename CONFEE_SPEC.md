@@ -808,7 +808,7 @@ fileMappings = ["xaerominimap=xaerominimap.txt"]
   - jar Forge 1.20.1 → tags **Forge + NeoForge**,
   - catégorie « Library » + « Utility », environnement : client **et** serveur (serveur optionnel côté joueur 🟡).
 - Publication automatisée (ex. plugin Gradle de publication Modrinth/CurseForge) 🟡.
-- Maven pour les devs (Modrinth Maven au minimum ; Maven dédié ❓).
+- Maven pour les devs : voir plus bas (plus tard).
 - Documentation dev (README + wiki) avec l'exemple « 10 lignes » en premier.
 
 ✅ DÉCIDÉ / implémenté (étape 10) :
@@ -818,7 +818,7 @@ fileMappings = ["xaerominimap=xaerominimap.txt"]
 - ✅ DÉCIDÉ (Lucas, 2026-11-19) : la licence reste **LGPL-3.0** (licences « source disponible » type PolyForm Shield écartées).
 - ✅ DÉCIDÉ (Lucas, 2026-11-19) : CurseForge, distribution par des tiers **autorisée** (launchers tiers via l'API).
 - ✅ DÉCIDÉ (Lucas, 2026-11-19) : les captures Bedrock de `docs/ui-reference/` restent **en local**, hors du dépôt public (ignorées par Git).
-- Maven pour les devs : **plus tard**.
+- ✅ DÉCIDÉ (Lucas, 2026-11-19) : Maven pour les devs **plus tard** (V1.1) ; en attendant, Modrinth Maven (`maven.modrinth:confee:<version>`).
 - Slug `confee` libre sur Modrinth (vérifié). CurseForge : à vérifier par Lucas (API à clé).
 - Logo, URL du dépôt / page du mod : à fournir par Lucas (pas encore dans `fabric.mod.json` / `mods.toml`).
 
