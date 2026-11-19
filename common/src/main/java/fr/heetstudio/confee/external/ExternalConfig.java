@@ -18,6 +18,7 @@ import fr.heetstudio.confee.format.ParsedList;
 import fr.heetstudio.confee.format.ParsedDocument;
 import fr.heetstudio.confee.format.ParsedValue;
 import fr.heetstudio.confee.format.SourceText;
+import fr.heetstudio.confee.format.ValueKind;
 import fr.heetstudio.confee.format.FormatAdapter;
 import fr.heetstudio.confee.format.Formats;
 import fr.heetstudio.confee.format.hocon.HoconParser;
@@ -63,6 +64,8 @@ public final class ExternalConfig implements EditableConfig {
     private Map<Option<?>, RawSchemaBuilder.Binding> bindings = Map.of();
     /** Texts changed in memory by list changes (spec 8.2 bis), written on "Save". */
     private final Map<Path, String> working = new LinkedHashMap<>();
+    /** Empty lists that can get an element again, and the text that gives them one ({@link #emptyListText}). */
+    private Map<List<String>, String> templates = Map.of();
 
     /**
      * One file of the config.
@@ -74,7 +77,7 @@ public final class ExternalConfig implements EditableConfig {
      * @param original its copy made before Confee's first change, parsed, or null
      */
     private record Member(Path file, ParsedDocument document, String diskText, FileStamp stamp,
-                          @Nullable ParsedDocument original) {
+                          @Nullable ParsedDocument original, List<String> prefix) {
     }
 
     private ExternalConfig(String modId, Path file, Path configDir, boolean backups) {
@@ -177,7 +180,7 @@ public final class ExternalConfig implements EditableConfig {
 
     private Member member(Path path, ParsedDocument document, List<String> prefix) throws IOException {
         String diskText = SourceText.decode(Files.readAllBytes(path)).text();
-        return new Member(path, document, diskText, FileStamp.of(path), readOriginal(path, prefix));
+        return new Member(path, document, diskText, FileStamp.of(path), readOriginal(path, prefix), List.copyOf(prefix));
     }
 
     private void buildSchema() {
@@ -187,7 +190,20 @@ public final class ExternalConfig implements EditableConfig {
             documents.add(m.document());
             originals.add(m.original());
         }
-        RawSchemaBuilder.Result result = RawSchemaBuilder.build(documents, originals, this::listActions);
+        templates = new LinkedHashMap<>();
+        for (Member m : members) {
+            List<ParsedValue> values = new ArrayList<>(m.document().values());
+            values.addAll(m.document().nestedValues());
+            for (ParsedValue value : values) {
+                if (value.kind() == ValueKind.LIST && ((List<?>) value.value()).isEmpty()) {
+                    String text = emptyListText(m, value);
+                    if (text != null) {
+                        templates.put(value.path(), text);
+                    }
+                }
+            }
+        }
+        RawSchemaBuilder.Result result = RawSchemaBuilder.build(documents, originals, templates.keySet(), this::listActions);
         bindings = result.bindings();
         schema = new ConfigSchema(modId, readableName(), ConfigScope.CLIENT, confeeFormat(), file, Theme.DEFAULT,
                 ConfigSource.RAW_FILE, result.root());
@@ -199,6 +215,16 @@ public final class ExternalConfig implements EditableConfig {
         return new ListActions() {
             @Override
             public boolean add(Map<Option<?>, Object> pending) {
+                if (templates.containsKey(path)) {
+                    // an emptied list: an element of the original file is the model
+                    String filled = templates.get(path);
+                    return changeText(path, pending, owner -> owner.document().find(path)
+                            .filter(v -> v.kind() == ValueKind.LIST && ((List<?>) v.value()).isEmpty())
+                            .map(v -> {
+                                String text = owner.document().source().text();
+                                return text.substring(0, v.start()) + filled + text.substring(v.end());
+                            }).orElse(null));
+                }
                 return changeList(path, pending, ListEdits::duplicateLast);
             }
 
@@ -220,16 +246,34 @@ public final class ExternalConfig implements EditableConfig {
      */
     private boolean changeList(List<String> path, Map<Option<?>, Object> pending,
                                BiFunction<String, ParsedList, String> change) {
+        return changeText(path, pending, owner -> owner.document().list(path)
+                .map(list -> change.apply(owner.document().source().text(), list)).orElse(null));
+    }
+
+    /**
+     * Keeps the values edited on screen, then changes the text of the file that holds {@code path} ({@code change}
+     * gives null for a file that does not hold it), in memory only.
+     */
+    private boolean changeText(List<String> path, Map<Option<?>, Object> pending,
+                               java.util.function.Function<Member, String> change) {
         if (status != Status.OK || members.isEmpty()) {
             return false;
         }
         try {
             Map<Path, String> texts = editedTexts(pending);
             List<Member> withValues = load(texts);
-            Member owner = withValues.stream().filter(m -> m.document().list(path).isPresent()).findFirst()
-                    .orElseThrow(() -> new IllegalStateException("no list " + String.join(".", path)));
-            ParsedList list = owner.document().list(path).orElseThrow();
-            texts.put(owner.file(), change.apply(owner.document().source().text(), list));
+            boolean done = false;
+            for (Member owner : withValues) {
+                String changedText = change.apply(owner);
+                if (changedText != null) {
+                    texts.put(owner.file(), changedText);
+                    done = true;
+                    break;
+                }
+            }
+            if (!done) {
+                throw new IllegalStateException("no list " + String.join(".", path));
+            }
             List<Member> changed = load(texts);
             working.clear();
             for (Member m : changed) {
@@ -244,6 +288,47 @@ public final class ExternalConfig implements EditableConfig {
         }
         buildSchema();
         return true;
+    }
+
+    /**
+     * What replaces an empty list ({@code []}) to give it one element: a copy of the first element the list had in the
+     * original copy of the file, else in the file on disk; null when there is none, or when it cannot be put there
+     * (a YAML element must keep the column it was written at).
+     */
+    @Nullable
+    private String emptyListText(Member member, ParsedValue empty) {
+        List<ParsedDocument> sources = new ArrayList<>();
+        if (member.original() != null) {
+            sources.add(member.original());
+        }
+        FormatAdapter adapter = Formats.forFile(file).orElseThrow();
+        try {
+            SourceText disk = new SourceText(member.diskText(), false, SourceText.detectLineSeparator(member.diskText()));
+            sources.add(adapter == Formats.HOCON ? HoconParser.parse(disk, member.prefix()) : adapter.parse(disk));
+        } catch (FormatException e) {
+            // the file on disk cannot be read any more: only the original copy can help
+        }
+        String text = member.document().source().text();
+        for (ParsedDocument source : sources) {
+            ParsedList list = source.list(empty.path()).orElse(null);
+            if (list == null || list.items().isEmpty()) {
+                continue;
+            }
+            ParsedList.Item first = list.items().get(0);
+            String sourceText = source.source().text();
+            String element = sourceText.substring(first.valueStart(), first.end());
+            if (adapter != Formats.YAML) {
+                return "[" + element + "]";
+            }
+            // YAML: "- ..." lines, at the column of the original element, on a line of their own
+            int lineStart = text.lastIndexOf('\n', empty.start() - 1) + 1;
+            int sourceLineStart = sourceText.lastIndexOf('\n', first.valueStart() - 1) + 1;
+            if (text.substring(lineStart, empty.start()).isBlank()
+                    && empty.start() - lineStart == first.valueStart() - sourceLineStart) {
+                return element;
+            }
+        }
+        return null;
     }
 
     /** The text of every file with these option values written in. */

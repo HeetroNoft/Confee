@@ -289,6 +289,33 @@ class ExternalConfigTest {
 
     // ------------------------------------------------------------------ lists of objects (spec 8.2 bis)
 
+    @Test
+    void anEmptiedListGetsAnElementOfTheOriginalFileBack() throws Exception {
+        String json = String.join("\n", "{", "  \"rules\": [", "    { \"name\": \"a\" }", "  ]", "}", "");
+        String yaml = String.join("\n", "rules:", "  - name: a", "    n: 1", "end: 2", "");
+        for (String[] sample : new String[][]{{"examplemod.json", json}, {"examplemod.yml", yaml}}) {
+            Path f = file(sample[0], sample[1]);
+            ExternalConfig cfg = ExternalConfig.open("examplemod", f, config, true);
+            Section rules = (Section) cfg.root().find("rules").orElseThrow();
+            assertTrue(rules.listActions().remove(0, Map.of()));
+            new EditSession(cfg).commit();
+            assertFalse(Files.readString(f).contains("name"), Files.readString(f));
+            // the emptied list is still a list of objects, with "+ Add"
+            rules = (Section) cfg.root().find("rules").orElseThrow();
+            assertNotNull(rules.listActions(), sample[0]);
+            assertTrue(rules.children().isEmpty());
+            assertTrue(rules.listActions().add(Map.of()), sample[0]);
+            new EditSession(cfg).commit();
+            String text = Files.readString(f);
+            assertEquals(1, ((Section) cfg.root().find("rules").orElseThrow()).children().size(), text);
+            if (sample[0].endsWith(".yml")) {
+                assertEquals(yaml, text, "back to the original");
+            } else {
+                assertTrue(text.contains("\"rules\": [{ \"name\": \"a\" }]"), text);
+            }
+        }
+    }
+
     @SuppressWarnings({"unchecked", "rawtypes"})
     @Test
     void listElementsAreAddedMovedAndRemovedInMemoryUntilSave() throws Exception {

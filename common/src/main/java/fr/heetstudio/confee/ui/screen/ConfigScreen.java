@@ -148,6 +148,10 @@ public final class ConfigScreen extends ConfeeScreen {
     }
 
     private static boolean hasVisibleOptions(Section section) {
+        if (section.listActions() != null) {
+            // a list of objects / lists, even emptied: it still has "+ Add"
+            return true;
+        }
         boolean[] any = {false};
         section.forEachOption(o -> any[0] |= !o.hidden());
         return any[0];
@@ -305,7 +309,7 @@ public final class ConfigScreen extends ConfeeScreen {
                 rows.add(new Row.Single(ui, navButton));
             }
         }
-        if (section.listActions() != null && !children.isEmpty()) {
+        if (section.listActions() != null) {
             fr.heetstudio.confee.core.ListActions actions = section.listActions();
             rows.add(new Row.Single(ui, new ButtonWidget(ui, Component.translatable("confee.button.add"), ButtonWidget.Style.NORMAL,
                     () -> changeList(() -> actions.add(session.pendingValues())))));

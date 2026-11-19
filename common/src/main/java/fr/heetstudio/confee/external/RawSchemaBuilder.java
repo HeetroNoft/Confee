@@ -36,6 +36,7 @@ final class RawSchemaBuilder {
     @Nullable
     private ParsedDocument original;
     private int fileIndex;
+    private java.util.Set<List<String>> emptyLists = java.util.Set.of();
     private final Section root = Section.root(null);
     private final Map<List<String>, Section> sections = new HashMap<>();
     private final Map<List<String>, String> tableComments = new HashMap<>();
@@ -73,8 +74,9 @@ final class RawSchemaBuilder {
      *                  or null to use the current values
      */
     static Result build(List<ParsedDocument> documents, List<ParsedDocument> originals,
-                        Function<List<String>, ListActions> listActions) {
+                        java.util.Set<List<String>> emptyLists, Function<List<String>, ListActions> listActions) {
         RawSchemaBuilder builder = new RawSchemaBuilder(documents);
+        builder.emptyLists = emptyLists;
         for (int f = 0; f < documents.size(); f++) {
             ParsedDocument document = documents.get(f);
             builder.document = document;
@@ -108,6 +110,10 @@ final class RawSchemaBuilder {
                 section.setListActions(listActions.apply(list.path()));
                 builder.nameElements(section);
             }
+        }
+        // emptied lists of objects / lists: only "+ Add" (an element of the original file is the model)
+        for (List<String> path : emptyLists) {
+            builder.section(path).setListActions(listActions.apply(path));
         }
         return new Result(builder.root, builder.bindings);
     }
@@ -168,6 +174,11 @@ final class RawSchemaBuilder {
     @SuppressWarnings({"unchecked", "rawtypes"})
     private void add(ParsedValue value) {
         List<String> path = value.path();
+        if (emptyLists.contains(path)) {
+            // shown as a list section with "+ Add", see build()
+            section(path);
+            return;
+        }
         Section parent = section(path.subList(0, path.size() - 1));
         String key = uniqueKey(parent, value.key());
         String displayName = ValueText.humanize(value.key());
