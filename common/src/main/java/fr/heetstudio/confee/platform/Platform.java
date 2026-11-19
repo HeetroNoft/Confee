@@ -64,4 +64,22 @@ public interface Platform {
     default Set<String> getModsWithOwnConfigScreen() {
         return Set.of();
     }
+
+    /**
+     * Mods shown in mod suggestions and the mod picker: every mod except the ones bundled inside another mod (the
+     * modules of Fabric API, for example), as in Mod Menu.
+     */
+    default Collection<String> getTopLevelModIds() {
+        return getModIds();
+    }
+
+    /** Description of the mod from its metadata, or empty. */
+    default java.util.Optional<String> getModDescription(String modId) {
+        return java.util.Optional.empty();
+    }
+
+    /** Logo file of the mod (Fabric {@code icon}, Forge {@code logoFile}) inside its jar, or empty. */
+    default java.util.Optional<Path> getModIcon(String modId) {
+        return java.util.Optional.empty();
+    }
 }
