@@ -73,6 +73,7 @@ public final class Option<T> implements Node, ConfigValue<T> {
     private final WidgetHint widgetHint;
     private final boolean allowDuplicates;
     private final boolean reorderable;
+    private final List<Enum<?>> filters;
     private final List<fr.heetstudio.confee.api.PickerStyle> pickerStyles;
     private final fr.heetstudio.confee.api.PickerStyle pickerDefault;
     private final int minSize;
@@ -118,6 +119,7 @@ public final class Option<T> implements Node, ConfigValue<T> {
         this.widgetHint = b.widgetHint;
         this.allowDuplicates = b.allowDuplicates;
         this.reorderable = b.reorderable;
+        this.filters = List.copyOf(b.filters);
         this.pickerStyles = List.copyOf(b.pickerStyles);
         this.pickerDefault = b.pickerDefault;
         this.minSize = b.minSize;
@@ -431,6 +433,14 @@ public final class Option<T> implements Node, ConfigValue<T> {
         return pickerDefault;
     }
 
+    /**
+     * For an ID option: the entries it is limited to ({@code EntityFilter}, {@code ItemFilter}...; any of them),
+     * empty = all. Checked by the screen (suggestions, picker, field error).
+     */
+    public List<Enum<?>> filters() {
+        return filters;
+    }
+
     /** For a list or a list of objects: the screen shows the ▲ ▼ move buttons ({@code @Reorderable}). False by default. */
     public boolean reorderable() {
         return reorderable;
@@ -641,6 +651,7 @@ public final class Option<T> implements Node, ConfigValue<T> {
         private WidgetHint widgetHint = WidgetHint.AUTO;
         private boolean allowDuplicates;
         private boolean reorderable;
+        private List<Enum<?>> filters = List.of();
         private List<fr.heetstudio.confee.api.PickerStyle> pickerStyles = List.of();
         private fr.heetstudio.confee.api.PickerStyle pickerDefault = fr.heetstudio.confee.api.PickerStyle.AUTO;
         private int minSize;
@@ -809,6 +820,12 @@ public final class Option<T> implements Node, ConfigValue<T> {
             return this;
         }
 
+        /** For an ID option: entries it is limited to (EntityFilter, ItemFilter, EffectFilter, EnchantmentFilter, BiomeFilter). */
+        public Builder<T> filters(List<? extends Enum<?>> filters) {
+            this.filters = List.copyOf(filters);
+            return this;
+        }
+
         /** For a list or a list of objects: show the ▲ ▼ move buttons. */
         public Builder<T> reorderable(boolean reorderable) {
             this.reorderable = reorderable;
@@ -895,6 +912,7 @@ public final class Option<T> implements Node, ConfigValue<T> {
                     || (type == OptionType.LIST && elementType == OptionType.STRING);
             listProblems(problems);
             pickerProblems(problems);
+            filterProblems(problems);
             if (widgetHint == WidgetHint.MULTILINE && type != OptionType.STRING) {
                 problems.add("@Multiline / multiline() is only allowed on String options");
             }
@@ -958,6 +976,29 @@ public final class Option<T> implements Node, ConfigValue<T> {
                 }
             }
             return option;
+        }
+
+        /** A filter must match the registry of the option (an EntityFilter on an entity option...). */
+        private void filterProblems(List<String> problems) {
+            for (Enum<?> filter : filters) {
+                String expected = switch (filter.getClass().getSimpleName()) {
+                    case "EntityFilter" -> "minecraft:entity_type";
+                    case "ItemFilter" -> "minecraft:item";
+                    case "EffectFilter" -> "minecraft:mob_effect";
+                    case "EnchantmentFilter" -> "minecraft:enchantment";
+                    case "BiomeFilter" -> "minecraft:worldgen/biome";
+                    default -> null;
+                };
+                boolean ok = expected != null && (expected.equals(registry)
+                        || (filter instanceof fr.heetstudio.confee.api.ItemFilter && "minecraft:block".equals(registry)));
+                if (!ok) {
+                    problems.add(filter.getClass().getSimpleName() + "." + filter.name() + " does not fit "
+                            + (registry == null ? "an option without registry" : "the registry " + registry)
+                            + ". Fix: EntityFilter with @Entity, ItemFilter with @Item / @Block, EffectFilter with @Effect,"
+                            + " EnchantmentFilter with @Enchantment, BiomeFilter with @Biome");
+                    return;
+                }
+            }
         }
 
         /** Mistakes in the picker styles (spec 14). */

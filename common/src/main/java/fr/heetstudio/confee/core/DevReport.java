@@ -137,6 +137,11 @@ public final class DevReport {
         } else if (option.registry() != null) {
             parts.add("registry " + option.registry() + (option.allowTags() ? " + #tags" : ""));
         }
+        if (!option.filters().isEmpty()) {
+            List<String> names = new ArrayList<>();
+            option.filters().forEach(f -> names.add(f.name()));
+            parts.add("only " + String.join(" or ", names));
+        }
         if (Pickers.hasPicker(option.registry())) {
             String def = Pickers.defaultStyle(option, option.registry()).name().toLowerCase(Locale.ROOT);
             List<String> others = new ArrayList<>();

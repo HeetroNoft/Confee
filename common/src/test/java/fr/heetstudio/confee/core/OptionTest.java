@@ -325,4 +325,21 @@ class OptionTest {
                 () -> list(OptionType.STRING, List.of()).reorderable(true).sorted(true).build());
         assertTrue(withSorted.getMessage().contains("cannot be used together"), withSorted.getMessage());
     }
+
+    @Test
+    void filtersMustFitTheRegistry() {
+        Option<String> monsters = Option.<String>builder("b", OptionType.STRING).defaultValue("minecraft:zombie")
+                .registry("minecraft:entity_type").filters(List.of(fr.heetstudio.confee.api.EntityFilter.MONSTER)).build();
+        assertEquals(List.of(fr.heetstudio.confee.api.EntityFilter.MONSTER), monsters.filters());
+        // an ItemFilter works on blocks too (the block's item)
+        Option.<String>builder("f", OptionType.STRING).defaultValue("minecraft:stone")
+                .registry("minecraft:block").filters(List.of(fr.heetstudio.confee.api.ItemFilter.NATURAL_BLOCKS)).build();
+        IllegalStateException wrong = assertThrows(IllegalStateException.class, () -> Option.<String>builder("b", OptionType.STRING)
+                .defaultValue("minecraft:zombie").registry("minecraft:item")
+                .filters(List.of(fr.heetstudio.confee.api.EntityFilter.MONSTER)).build());
+        assertTrue(wrong.getMessage().contains("EntityFilter.MONSTER does not fit the registry minecraft:item"), wrong.getMessage());
+        IllegalStateException none = assertThrows(IllegalStateException.class, () -> Option.<String>builder("b", OptionType.STRING)
+                .defaultValue("x").filters(List.of(fr.heetstudio.confee.api.BiomeFilter.NETHER)).build());
+        assertTrue(none.getMessage().contains("an option without registry"), none.getMessage());
+    }
 }

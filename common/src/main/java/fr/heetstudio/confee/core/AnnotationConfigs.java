@@ -444,6 +444,7 @@ public final class AnnotationConfigs {
                 registries.add("@" + shortcut.getKey().getSimpleName());
                 builder.registry(shortcut.getValue());
                 tags |= shortcutTags(a);
+                builder.filters(shortcutFilters(a));
             }
         }
         if (registries.size() > 1) {
@@ -488,6 +489,20 @@ public final class AnnotationConfigs {
             builder.widgetFactory(() -> instantiate(widgetClass));
         }
         return builder.build();
+    }
+
+    /** {@code only = ...} of a registry shortcut ({@code @Entity(only = EntityFilter.MONSTER)}), empty when none. */
+    private static List<Enum<?>> shortcutFilters(java.lang.annotation.Annotation a) {
+        try {
+            Object only = a.annotationType().getMethod("only").invoke(a);
+            List<Enum<?>> out = new ArrayList<>();
+            for (Object filter : (Object[]) only) {
+                out.add((Enum<?>) filter);
+            }
+            return out;
+        } catch (ReflectiveOperationException e) {
+            return List.of(); // the shortcut has no filters (@Sound, @ModId...)
+        }
     }
 
     private static boolean shortcutTags(java.lang.annotation.Annotation a) {
