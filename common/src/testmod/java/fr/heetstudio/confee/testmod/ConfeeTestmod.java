@@ -99,6 +99,14 @@ public final class ConfeeTestmod {
         b.modList("companionMods", "minecraft").build();
         b.item("reward", "minecraft:diamond").pickerStyles(PickerStyle.LIST, PickerStyle.DETAILED).picker(PickerStyle.LIST)
                 .description("@Picker(styles = {LIST, DETAILED}): the item picker as a list, no grid.").build();
+        b.string("boss", "minecraft:zombie").entity(fr.heetstudio.confee.api.EntityFilter.MONSTER)
+                .description("@Entity(only = MONSTER): monsters only.").build();
+        b.list("snacks", String.class, List.of("minecraft:apple"))
+                .item(fr.heetstudio.confee.api.ItemFilter.FOOD_AND_DRINKS, fr.heetstudio.confee.api.ItemFilter.INGREDIENTS)
+                .description("@Item(only = {FOOD_AND_DRINKS, INGREDIENTS}): food or ingredients.").build();
+        b.string("curse", "minecraft:poison").effect(fr.heetstudio.confee.api.EffectFilter.HARMFUL).build();
+        b.string("weaponEnchantment", "minecraft:sharpness").enchantment(fr.heetstudio.confee.api.EnchantmentFilter.WEAPON).build();
+        b.string("netherHome", "minecraft:nether_wastes").biome(fr.heetstudio.confee.api.BiomeFilter.NETHER).build();
         b.list("allowedDifficulties", AnnotatedTestConfig.Difficulty.class,
                 List.of(AnnotatedTestConfig.Difficulty.EASY, AnnotatedTestConfig.Difficulty.NORMAL)).comment("List of enum values").build();
         b.map("biomeWeights", Integer.class, Map.of("desert", 3, "plains", 10)).comment("Key -> value map").build();

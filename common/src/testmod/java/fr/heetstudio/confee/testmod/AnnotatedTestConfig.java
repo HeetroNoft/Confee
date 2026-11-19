@@ -203,6 +203,24 @@ public class AnnotatedTestConfig {
     @Description("@Picker(styles = {LIST, DETAILED}): the item picker as a list, no grid.")
     public String reward = "minecraft:diamond";
 
+    @fr.heetstudio.confee.api.annotation.Entity(only = fr.heetstudio.confee.api.EntityFilter.MONSTER)
+    @Description("@Entity(only = MONSTER): monsters only.")
+    public String boss = "minecraft:zombie";
+
+    @fr.heetstudio.confee.api.annotation.Item(only = {fr.heetstudio.confee.api.ItemFilter.FOOD_AND_DRINKS,
+            fr.heetstudio.confee.api.ItemFilter.INGREDIENTS})
+    @Description("@Item(only = {FOOD_AND_DRINKS, INGREDIENTS}): food or ingredients.")
+    public List<String> snacks = new ArrayList<>(List.of("minecraft:apple"));
+
+    @fr.heetstudio.confee.api.annotation.Effect(only = fr.heetstudio.confee.api.EffectFilter.HARMFUL)
+    public String curse = "minecraft:poison";
+
+    @fr.heetstudio.confee.api.annotation.Enchantment(only = fr.heetstudio.confee.api.EnchantmentFilter.WEAPON)
+    public String weaponEnchantment = "minecraft:sharpness";
+
+    @fr.heetstudio.confee.api.annotation.Biome(only = fr.heetstudio.confee.api.BiomeFilter.NETHER)
+    public String netherHome = "minecraft:nether_wastes";
+
     @Comment("List of enum values")
     public List<Difficulty> allowedDifficulties = new ArrayList<>(List.of(Difficulty.EASY, Difficulty.NORMAL));
 

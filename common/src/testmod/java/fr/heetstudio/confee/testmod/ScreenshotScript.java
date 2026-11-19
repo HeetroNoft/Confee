@@ -141,6 +141,25 @@ public final class ScreenshotScript {
         shot("02-general");
         step(10, mc -> mc.screen.mouseScrolled(mc.screen.width / 2.0, mc.screen.height / 2.0, -3));
         shot("03-general-scrolled");
+        // the wheel over a text area that has nothing to scroll moves the panel (it used to get stuck)
+        step(10, mc -> {
+            config(mc).focusOption("motd");
+        });
+        int[] wheelBefore = {0};
+        step(5, mc -> {
+            ConfeeWidget w = config(mc).focusedWidget();
+            wheelBefore[0] = w == null ? 0 : w.y;
+            if (w != null) {
+                mc.screen.mouseScrolled(w.x + w.width / 2.0, w.y + w.height / 2.0, -2);
+            }
+        });
+        step(5, mc -> {
+            // positions are laid out again on the next frame
+            ConfeeWidget after = config(mc).focusedWidget();
+            ConfeeLog.info("[testmod] wheel over the text area: widget y {} -> {} (panel {})", wheelBefore[0],
+                    after == null ? -1 : after.y, after != null && after.y != wheelBefore[0] ? "scrolled" : "DID NOT SCROLL");
+        });
+        shot("03b-wheel-over-text-area");
         step(10, mc -> key(mc, GLFW.GLFW_KEY_TAB, GLFW.GLFW_MOD_CONTROL));
         shot("04-dash");
         step(10, mc -> {
@@ -331,6 +350,41 @@ public final class ScreenshotScript {
         step(5, mc -> clickRightEdge(mc));
         // @Picker(styles = {LIST, DETAILED}): no grid button
         shot("50f-item-picker-list");
+        // filters: monsters only in the picker, a cow is refused, food and ingredients only
+        step(5, mc -> {
+            key(mc, GLFW.GLFW_KEY_ESCAPE, 0);
+            config(mc).focusOption("boss");
+        });
+        step(5, mc -> clickRightEdge(mc));
+        shot("50g-filter-monsters");
+        step(5, mc -> {
+            key(mc, GLFW.GLFW_KEY_ESCAPE, 0);
+            config(mc).focusOption("boss");
+            for (int i = 0; i < 30; i++) {
+                key(mc, GLFW.GLFW_KEY_BACKSPACE, 0);
+            }
+            type(mc, "minecraft:cow");
+        });
+        shot("50h-filter-refused");
+        step(5, mc -> {
+            config(mc).focusOption("netherHome");
+            for (int i = 0; i < 30; i++) {
+                key(mc, GLFW.GLFW_KEY_BACKSPACE, 0);
+            }
+            type(mc, "minecraft:");
+        });
+        shot("50i-filter-nether-biomes");
+        step(5, mc -> {
+            key(mc, GLFW.GLFW_KEY_ESCAPE, 0); // closes the suggestions
+            config(mc).focusOption("snacks");
+        });
+        step(5, mc -> {
+            // the "+ Add" button is focused: add an entry, then open its picker
+            key(mc, GLFW.GLFW_KEY_ENTER, 0);
+        });
+        step(5, mc -> clickRightEdge(mc));
+        shot("50j-filter-food");
+        step(5, mc -> key(mc, GLFW.GLFW_KEY_ESCAPE, 0));
         step(5, mc -> {
             key(mc, GLFW.GLFW_KEY_ESCAPE, 0);
             config(mc).focusOption("favoriteMod");
