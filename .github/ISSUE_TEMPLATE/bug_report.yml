@@ -1,0 +1,50 @@
+name: Bug report
+description: Something does not work, crashes or edits a file wrongly.
+labels: [bug]
+body:
+  - type: input
+    id: confee
+    attributes:
+      label: Confee version
+      placeholder: 0.1.0
+    validations:
+      required: true
+  - type: dropdown
+    id: loader
+    attributes:
+      label: Loader
+      options: [Fabric, Quilt, Forge, NeoForge]
+    validations:
+      required: true
+  - type: input
+    id: versions
+    attributes:
+      label: Minecraft and loader versions
+      placeholder: Minecraft 1.20.1, NeoForge 47.1.106
+    validations:
+      required: true
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened, and what did you expect?
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Open the mod list
+        2. Click Config on ...
+    validations:
+      required: true
+  - type: textarea
+    id: mods
+    attributes:
+      label: Other mods
+      description: The mod whose config is involved, and any config or menu mod (Mod Menu, Configured, Cloth Config, YACL...).
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs and files
+      description: Link to latest.log or the crash report (mclo.gs or a gist). If a config file is involved, attach it too.

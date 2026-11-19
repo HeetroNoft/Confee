@@ -1,0 +1,23 @@
+name: Feature request
+description: An idea for players or for mod developers.
+labels: [enhancement]
+body:
+  - type: dropdown
+    id: who
+    attributes:
+      label: Who is it for?
+      options: [Players (universal editor, screens), Mod developers (API), Both]
+    validations:
+      required: true
+  - type: textarea
+    id: need
+    attributes:
+      label: What do you need?
+      description: The problem you have today, then the change you suggest.
+    validations:
+      required: true
+  - type: textarea
+    id: example
+    attributes:
+      label: Example
+      description: A config file, a code sample or a screenshot that shows the case.

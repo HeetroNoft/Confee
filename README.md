@@ -543,6 +543,8 @@ the usual tasks:
 .\scripts\confee.ps1 publish-dry   # what would be published to Modrinth / CurseForge, without publishing
 ```
 
+To contribute, see [CONTRIBUTING.md](CONTRIBUTING.md).
+
 ## License
 
 [LGPL-3.0](LICENSE). Author: Heet.
