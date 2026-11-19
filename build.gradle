@@ -32,6 +32,13 @@ subprojects {
         options.release.set(17)
     }
 
+    // sources are UTF-8: without this, javadoc reads them with the platform encoding (windows-1252) and fails
+    tasks.withType(Javadoc).configureEach {
+        options.encoding = 'UTF-8'
+        options.charSet = 'UTF-8'
+        options.docEncoding = 'UTF-8'
+    }
+
     jar {
         from(rootProject.file('LICENSE')) {
             rename { "${it}_${mod_id}" }
