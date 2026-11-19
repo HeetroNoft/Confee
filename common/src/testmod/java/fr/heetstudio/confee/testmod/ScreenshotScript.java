@@ -87,7 +87,7 @@ public final class ScreenshotScript {
         step(5, mc -> {
             // spec 8.1 / 15: Confee screens for Confee and raw mods; mods with their own screen keep it
             for (String id : List.of("confee", ConfeeTestmod.MOD_ID, "confee_rawmod", "forge", "minecraft", "modmenu",
-                    "cloth-config", "cloth_config", "yet_another_config_lib_v3")) {
+                    "cloth-config", "cloth_config", "yet_another_config_lib_v3", "configured")) {
                 if (Services.PLATFORM.isModLoaded(id)) {
                     Screen screen;
                     try {
