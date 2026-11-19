@@ -101,6 +101,33 @@ public final class ScreenshotScript {
                             screen == null ? "none" : screen.getClass().getName());
                 }
             }
+            // forceConfeeEditor: replaces the screen of a mod that has its own, read on each click (no restart)
+            var forced = fr.heetstudio.confee.ConfeeSettings.forceConfeeEditorValue();
+            var mappings = fr.heetstudio.confee.ConfeeSettings.fileMappingsValue();
+            List<String> before = forced.get();
+            List<String> mappingsBefore = mappings.get();
+            List<String> mapped = new java.util.ArrayList<>(mappingsBefore);
+            // Cloth Config has no config file: map one so that Confee can replace its screen (no restart needed)
+            mapped.add("cloth-config=confee_rawmod.toml");
+            mapped.add("cloth_config=confee_rawmod.toml");
+            mappings.set(mapped);
+            for (String id : Services.PLATFORM.getModsWithOwnConfigScreen()) {
+                if (id.equals("confee")) {
+                    continue;
+                }
+                try {
+                    forced.set(List.of(id));
+                    Screen on = configScreen.apply(id, mc.screen);
+                    forced.set(List.of());
+                    Screen off = configScreen.apply(id, mc.screen);
+                    ConfeeLog.info("[testmod] forceConfeeEditor {}: on={} off={}", id,
+                            on == null ? "none" : on.getClass().getName(), off == null ? "none" : off.getClass().getName());
+                } catch (RuntimeException | LinkageError e) {
+                    ConfeeLog.error("[testmod] forceConfeeEditor check of " + id + " failed", e instanceof RuntimeException re ? re : new RuntimeException(e));
+                }
+            }
+            forced.set(before);
+            mappings.set(mappingsBefore);
         });
         step(15, mc -> {
             scale(mc, 2);
@@ -130,6 +157,12 @@ public final class ScreenshotScript {
             key(mc, GLFW.GLFW_KEY_ENTER, 0);
         });
         shot("07-dropdown");
+        // the preview follows the highlighted item while the list is open (nothing chosen yet)
+        step(10, mc -> {
+            key(mc, GLFW.GLFW_KEY_DOWN, 0);
+            key(mc, GLFW.GLFW_KEY_DOWN, 0);
+        });
+        shot("07b-dropdown-preview");
         step(10, mc -> {
             key(mc, GLFW.GLFW_KEY_ESCAPE, 0);
             config(mc).focusOption("title");
@@ -151,6 +184,9 @@ public final class ScreenshotScript {
         shot("29-preview-image");
         step(10, mc -> config(mc).focusOption("particleCount"));
         shot("30-preview-renderer");
+        // list options: @Sorted (no arrows), @Size(max), @Range / @Pattern on a list
+        step(10, mc -> config(mc).focusOption("labels"));
+        shot("30b-list-options");
         step(10, mc -> {
             config(mc).focusOption("showHud");
             key(mc, GLFW.GLFW_KEY_ENTER, 0);

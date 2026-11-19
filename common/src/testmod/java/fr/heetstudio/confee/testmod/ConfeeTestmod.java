@@ -86,6 +86,14 @@ public final class ConfeeTestmod {
         b.header("Collections");
         b.list("blacklist", String.class, List.of("minecraft:dirt", "minecraft:sand")).block().build();
         b.list("numbers", Integer.class, List.of(1, 2, 3)).build();
+        b.list("diceRolls", Integer.class, List.of(6, 6, 1)).allowDuplicates()
+                .description("@AllowDuplicates: the same value may appear twice.").build();
+        b.sortedList("labels", String.class, List.of("alpha", "beta")).maxSize(5).ignoreCase()
+                .description("@Size(max = 5), @Sorted, @IgnoreCase: at most 5 labels, kept sorted, Dirt = dirt.").build();
+        b.list("stackSizes", Integer.class, List.of(16, 64)).size(1, Integer.MAX_VALUE).range(1, 64)
+                .description("@Size(min = 1), @Range(1 ~ 64) on a list: each stack size, at least one.").build();
+        b.list("playerNames", String.class, List.of("steve", "alex")).pattern("[a-z0-9_]+").maxLength(16)
+                .description("@Pattern + @MaxLength(16) on a list: lower-case names only.").build();
         b.list("allowedDifficulties", AnnotatedTestConfig.Difficulty.class,
                 List.of(AnnotatedTestConfig.Difficulty.EASY, AnnotatedTestConfig.Difficulty.NORMAL)).comment("List of enum values").build();
         b.map("biomeWeights", Integer.class, Map.of("desert", 3, "plains", 10)).comment("Key -> value map").build();

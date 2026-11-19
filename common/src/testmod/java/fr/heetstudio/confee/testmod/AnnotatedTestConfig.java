@@ -1,6 +1,10 @@
 package fr.heetstudio.confee.testmod;
 
 import fr.heetstudio.confee.api.Decoration;
+import fr.heetstudio.confee.api.annotation.AllowDuplicates;
+import fr.heetstudio.confee.api.annotation.IgnoreCase;
+import fr.heetstudio.confee.api.annotation.Size;
+import fr.heetstudio.confee.api.annotation.Sorted;
 import fr.heetstudio.confee.api.annotation.Block;
 import fr.heetstudio.confee.api.annotation.Category;
 import fr.heetstudio.confee.api.annotation.Description;
@@ -161,6 +165,26 @@ public class AnnotatedTestConfig {
     public List<String> blacklist = new ArrayList<>(List.of("minecraft:dirt", "minecraft:sand"));
 
     public List<Integer> numbers = new ArrayList<>(List.of(1, 2, 3));
+
+    @AllowDuplicates
+    @Description("@AllowDuplicates: the same value may appear twice.")
+    public List<Integer> diceRolls = new ArrayList<>(List.of(6, 6, 1));
+
+    @Size(max = 5)
+    @Sorted
+    @IgnoreCase
+    @Description("@Size(max = 5), @Sorted, @IgnoreCase: at most 5 labels, kept sorted, Dirt = dirt.")
+    public List<String> labels = new ArrayList<>(List.of("alpha", "beta"));
+
+    @Size(min = 1)
+    @Range(min = 1, max = 64)
+    @Description("@Size(min = 1), @Range(1 ~ 64) on a list: each stack size, at least one.")
+    public List<Integer> stackSizes = new ArrayList<>(List.of(16, 64));
+
+    @Pattern("[a-z0-9_]+")
+    @MaxLength(16)
+    @Description("@Pattern + @MaxLength(16) on a list: lower-case names only.")
+    public List<String> playerNames = new ArrayList<>(List.of("steve", "alex"));
 
     @Comment("List of enum values")
     public List<Difficulty> allowedDifficulties = new ArrayList<>(List.of(Difficulty.EASY, Difficulty.NORMAL));
