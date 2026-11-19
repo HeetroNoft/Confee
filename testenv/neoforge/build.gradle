@@ -91,6 +91,22 @@ dependencies {
     minecraft "net.neoforged:forge:${minecraft_version}-${neoforge_version}"
 }
 
+// -PwithConfigured: also runs Configured (the jar placed in forge/run/mods), deobfuscated like a dependency, to check
+// the cohabitation (spec 15). A release jar dropped in run*/mods cannot load in a development environment.
+if (project.hasProperty('withConfigured')) {
+    repositories {
+        flatDir { dirs new File(repo, 'forge/run/mods') }
+    }
+    dependencies {
+        runtimeOnly fg.deobf('local:configured-forge-1.20.1:2.2.3')
+    }
+    // the mixins of a release jar name the game's methods with SRG names: Mixin maps them to the dev names
+    minecraft.runs.configureEach {
+        property 'mixin.env.remapRefMap', 'true'
+        property 'mixin.env.refMapRemappingFile', "${projectDir}/build/createSrgToMcp/output.srg"
+    }
+}
+
 processResources {
     def modProps = [
             mod_id                    : mod_id,
