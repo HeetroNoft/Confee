@@ -252,8 +252,11 @@ if (CONFIG.get().showHud) { ... }
 | `@Unit(value)` ✅                                           | numérique       | Unité affichée (suffixe du champ, label du slider). Texte ou clé de traduction.                        |
 | `@Multiline` ✅                                             | String          | Zone de texte multi-ligne.                                                                            |
 | `@AllowDuplicates` ✅ (Lucas)                              | List            | Autorise la même valeur plusieurs fois dans la liste (builder : `.allowDuplicates()`).                |
+| `@ModId` ✅ (Lucas)                                        | String, List<String> | ID d'un mod installé : suggestions avec les logos des mods, logo dans le champ, sélecteur en grille des mods (`.modId()`, `modId()`, `modList()`). Les sous-modules (Fabric API, mods embarqués, `modmenu.parent`) sont cachés mais restent valides. Pas sur ResourceLocation, pas de tags. |
+| `@Picker(styles, defaultStyle)` ✅ (Lucas)                 | champ ID avec sélecteur | Styles du sélecteur : `GRID` (icônes), `LIST` (icône + nom + ID), `DETAILED` (+ description du mod, sinon l'ID). `styles` vide = tous ; `defaultStyle = AUTO` = grille pour items/blocs/autres, liste pour les mods. Le joueur bascule avec les boutons de l'en-tête (ou Tab) ; dernier choix retenu par type d'ID dans `confee.toml` (`pickerStyles`, caché), ignoré s'il n'est pas autorisé. Builder : `.picker(style)`, `.pickerStyles(...)`. Erreur dev si pas de sélecteur, `AUTO` dans `styles`, ou défaut hors des styles autorisés. |
 | `@Size(min, max)` ✅ (Lucas)                               | List            | Nombre de valeurs. Fichier : trop long → coupé, trop court → défaut. Écran : « + Ajouter » / ✕ grisés aux bornes (`.size()`, `.maxSize()`). |
 | `@Sorted` ✅ (Lucas)                                        | List            | Liste triée au chargement et à l'enregistrement (ordre naturel, enums dans l'ordre de déclaration) ; flèches ↑↓ cachées ; défaut trié automatiquement (`.sorted()`). |
+| `@Reorderable` ✅ (Lucas)                                  | List, liste d'objets | Affiche les flèches ▲▼ de déplacement ; **sans elle, pas de flèches** (par défaut). Interdit avec `@Sorted` (`.reorderable()`). |
 | `@IgnoreCase` ✅ (Lucas)                                    | List<String>    | Doublons comparés sans la casse (`.ignoreCase()`). Interdit avec `@AllowDuplicates`. |
 | `@Range` / `@Pattern` / `@MaxLength` sur une List ✅ (Lucas) | List            | S'appliquent à **chaque valeur** (pas d'annotation `@Element…` séparée). Fichier : nombre ramené à la borne, texte invalide → valeur par défaut. Écran : erreur sur le champ de la valeur. Le nombre de valeurs, c'est `@Size`. |
 | `@Registry(id)` ✅                                          | ResourceLocation| Suggestions d'autocomplétion depuis un registre intégré (`minecraft:item`, `minecraft:block`…).       |
@@ -408,7 +411,7 @@ Dans la liste des mods (Mod Menu sur Fabric/Quilt, liste des mods intégrée sur
 - Si aucun fichier de config n'est trouvé pour ce mod, **pas de bouton** (ne pas afficher un bouton qui mène à un écran vide).
 - ✅ DÉCIDÉ (Lucas, remplace l'ancien « pas d'option ») : le joueur peut **forcer l'éditeur Confee** sur des mods choisis qui ont déjà leur propre écran, via `forceConfeeEditor` dans `confee.toml` (§12) :
   - le bouton Config du mod ouvre l'éditeur Confee sur ses fichiers **à la place** de son écran (Cloth, YACL, Configured, écran maison…) ;
-  - seuls les mods dont Confee trouve des fichiers (fichiers bruts, mapping, `registerExternalFile`) ou des configs Forge/NeoForge sont concernés ; les suggestions de l'option ne proposent que ceux-là, et un ID sans fichier garde son écran ;
+  - seuls les mods dont Confee trouve des fichiers (fichiers bruts, mapping, `registerExternalFile`) ou des configs Forge/NeoForge sont concernés ; les suggestions (avec les logos des mods) et le sélecteur en grille ne proposent que ceux-là, et un ID sans fichier garde son écran ;
   - pris en compte **à chaud** (relu à chaque clic sur Config) ;
   - `ignoredMods` bloque l'override ; `injectConfigButtons = false` ne le bloque pas ;
   - Fabric/Quilt : mixin dans Mod Menu (`ModMenu.getConfigScreen`), appliqué seulement si Mod Menu est installé ; les configs cachées dans les réglages de Mod Menu restent cachées. Le même mixin donne l'éditeur Confee aux mods qui déclarent une intégration Mod Menu **sans** écran (fin de la limite connue du §12). Forge/NeoForge : la factory d'écran du mod est enveloppée au `FMLClientSetupEvent`.
@@ -745,6 +748,8 @@ fileMappings = ["xaerominimap=xaerominimap.txt"]
 ```
 
 `injectConfigButtons` et `ignoredMods` sont marqués « redémarrage requis » (Mod Menu / Forge construisent la liste des boutons au démarrage). Scope CLIENT.
+
+✅ DÉCIDÉ (Lucas) : `ignoredMods` et `forceConfeeEditor` ont des suggestions avec les logos des mods et un sélecteur en grille (comme `@ModId`). `ignoredMods` propose les mods que l'éditeur universel gère (fichiers trouvés ou configs Forge/NeoForge) plus ceux déjà ignorés ; `forceConfeeEditor` propose seulement les mods remplaçables (§8.1).
 
 ✅ Implémenté (étape 7) : découverte §8.2 points 1, 3, 4, 5 (`Confee.registerExternalFile`) ; le point 2 (specs Forge) exclut pour l'instant les fichiers gérés par Forge, ils seront éditables à l'étape 8. Sur Fabric, Mod Menu garde l'écran déclaré par un mod, sauf `forceConfeeEditor` ; un mod qui déclare une intégration Mod Menu **sans** écran reçoit maintenant l'éditeur Confee (mixin, §8.1). `forceConfeeEditor` n'est **pas** « redémarrage requis ».
 

@@ -185,6 +185,8 @@ defaults. The class needs a constructor without arguments.
 | `@Registry("minecraft:item")` | ResourceLocation, String, List&lt;String&gt; | Autocompletion from a built-in registry. |
 | `@Item`, `@Block` | ResourceLocation, String, List&lt;String&gt; | Item / block ID: icon, suggestions with icons, a searchable grid picker and an automatic preview. |
 | `@Entity`, `@Biome`, `@Dimension`, `@Structure`, `@Enchantment`, `@Effect`, `@Sound`, `@Fluid` | ResourceLocation, String, List&lt;String&gt; | ID of that registry, entries added by mods included. See [Registry options](#registry-options). |
+| `@ModId` | String, List&lt;String&gt; | ID of an installed mod: suggestions with the mods' logos, logo in the field and a mod picker. |
+| `@Picker(styles, defaultStyle)` | ID field with a picker | Picker styles: `GRID`, `LIST` (icon, name, ID), `DETAILED` (plus the mod description). The player switches with the buttons of the picker (or Tab) and Confee remembers the choice per kind of ID. Default: grid for items/blocks, list for mods. |
 | `@Description("...")` | field | Text shown under the name on the screen (not written in the file: use `@Comment` for that). |
 | `@Suggestions({"a", "b"}, provider = ...)` | String, ResourceLocation, List&lt;String&gt; | Values suggested while typing (fixed and/or from a `SuggestionProvider`). |
 | `@Stepper(step = 1)` | number | Field with − and + buttons. |
@@ -194,7 +196,7 @@ defaults. The class needs a constructor without arguments.
 | `@Icon("minecraft:compass")` | `@Section` field or class | Icon of the sub-section. |
 | `@Layout(...)` | class | Screen layout, see [Layout and decorations](#layout-and-decorations). |
 
-List annotations (`@AllowDuplicates`, `@Size`, `@Sorted`, `@IgnoreCase`, and `@Range` / `@Pattern` / `@MaxLength` on a list): see [Lists](#lists).
+List annotations (`@AllowDuplicates`, `@Size`, `@Sorted`, `@Reorderable`, `@IgnoreCase`, and `@Range` / `@Pattern` / `@MaxLength` on a list): see [Lists](#lists).
 
 Supported field types: `boolean`, `int`, `long`, `float`, `double` (and their wrappers), `String`, any enum,
 `ResourceLocation`, `List` of `String`, `Integer`, `Long`, `Float`, `Double`, `Boolean` or an enum,
@@ -227,7 +229,8 @@ CONFIG = b.build(); // registers and loads
 
 Option methods: `bool`, `intValue` / `intRange`, `longValue` / `longRange`, `floatValue` / `floatRange`,
 `doubleValue` / `doubleRange`, `string`, `enumValue`, `enumSet` (check boxes), `list`, `map`, `objectList`, `color`,
-`identifier`, `item`, `block`, `keybind`, and the list shortcuts `itemList`, `blockList`, `idList`, `sortedList`.
+`identifier`, `item`, `block`, `modId`, `keybind`, and the list shortcuts `itemList`, `blockList`, `modList`, `idList`,
+`sortedList`.
 
 ```java
 b.map("biomeWeights", Integer.class, Map.of("plains", 10, "desert", 3)).build();
@@ -238,8 +241,8 @@ b.objectList("waypoints", waypoint, List.of(waypoint.element("name", "home", "y"
 
 Option modifiers: `.comment()`, `.name()`, `.description()`, `.range()`, `.slider(step)`, `.stepper(step)`,
 `.requiresRestart()`, `.hidden()`, `.pattern()`, `.maxLength()`, `.alpha()`, `.preview()`, `.enabledIf()`,
-`.visibleIf()`, `.unit()`, `.multiline()`, `.allowDuplicates()`, `.size()`, `.maxSize()`, `.sorted()`,
-`.ignoreCase()`, `.registry()`, `.item()`, `.block()`, `.suggestions(...)`,
+`.visibleIf()`, `.unit()`, `.multiline()`, `.allowDuplicates()`, `.size()`, `.maxSize()`, `.sorted()`, `.reorderable()`,
+`.ignoreCase()`, `.registry()`, `.item()`, `.block()`, `.modId()`, `.picker()`, `.pickerStyles()`, `.suggestions(...)`,
 `.listener((oldValue, newValue) -> ...)`.
 
 Screen elements: `b.header("...")`, `b.separator()`, `b.info("...")`, `b.image(texture, height)`,
@@ -260,6 +263,7 @@ file, duplicates are removed when it is loaded (first one kept, a warning in the
 | `@AllowDuplicates` | `.allowDuplicates()` | Duplicates kept. | Every value is suggested. |
 | `@Size(min = 1, max = 5)` | `.size(1, 5)`, `.maxSize(5)` | Extra values removed; a list too short is replaced by the default. | **+ Add** greyed out at the max, ✕ at the min. |
 | `@Sorted` | `.sorted()` | Sorted (texts and numbers in natural order, enums in declaration order). | No move arrows; sorted when saved. |
+| `@Reorderable` | `.reorderable()` | Order kept as the player sets it. | ▲ ▼ move buttons (hidden without it). Also on lists of objects. Not with `@Sorted`. |
 | `@IgnoreCase` | `.ignoreCase()` | `Dirt` and `dirt` are duplicates. | Same for the suggestions. |
 | `@Range(min = 1, max = 64)` | `.range(1, 64)` | Each value: out of range values clamped. | Error on the field of the value. |
 | `@Pattern("[a-z_]+")`, `@MaxLength(16)` | `.pattern("[a-z_]+")`, `.maxLength(16)` | Each value: one that does not fit gives the default value. | Error on the field of the value. |
