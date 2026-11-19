@@ -138,6 +138,9 @@ public final class ConfigBuilder extends SectionBuilder {
         ConfigHandle<Void> handle = new ConfigHandle<>(schema, null, scope != ConfigScope.CLIENT || environment.client());
         ConfeeRegistry.register(handle);
         handle.load();
+        if (environment.development()) {
+            fr.heetstudio.confee.core.DevReport.log(schema, null);
+        }
         return handle;
     }
 

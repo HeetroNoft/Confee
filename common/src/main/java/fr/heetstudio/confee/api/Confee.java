@@ -28,6 +28,9 @@ public final class Confee {
         ConfigHandle<T> handle = AnnotationConfigs.create(configClass);
         ConfeeRegistry.register(handle);
         handle.load();
+        if (fr.heetstudio.confee.core.ConfeeEnvironment.current().development()) {
+            fr.heetstudio.confee.core.DevReport.log(handle.schema(), configClass.getClassLoader());
+        }
         return handle;
     }
 
