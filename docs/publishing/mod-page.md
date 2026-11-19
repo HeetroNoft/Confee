@@ -24,7 +24,8 @@ Library, Utility. Environment: client and server (the server side is optional fo
 - **Forge configs too.** Configs declared with Forge's config system are edited and applied while the game runs.
 - **Smart fields.** Item, block and mob IDs show their icon, get suggestions and a searchable picker; colors get a
   color picker.
-- **Never replaces a mod's own screen.** Mods with their own config screen keep it.
+- **Your choice of screen.** Mods with their own config screen keep it, unless you list them in Confee's settings
+  (`forceConfeeEditor`): their Config button then opens the Confee editor on their files, no restart needed.
 
 ### For mod developers
 

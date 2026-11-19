@@ -8,7 +8,33 @@ files of mods that do not use it.
 
 Minecraft 1.20.1 · Fabric, Quilt, Forge, NeoForge · Java 17 · LGPL-3.0
 
-## A config in 10 lines
+Contents: [Getting started](#getting-started) · [Recipes](#recipes) · [Reference](#reference)
+([annotations](#annotations), [builder](#builder), [lists](#lists), [using a config](#using-a-config),
+[translations](#translations)) · [For players](#for-players)
+
+## Getting started
+
+### 1. Depend on Confee
+
+Players need the Confee jar next to your mod (see [For players](#for-players)), so declare it as a required
+dependency:
+
+```json
+// fabric.mod.json (Fabric, Quilt)
+"depends": { "confee": "*" }
+```
+
+```toml
+# mods.toml (Forge, NeoForge)
+[[dependencies.examplemod]]
+modId = "confee"
+mandatory = true
+versionRange = "*"
+ordering = "NONE"
+side = "BOTH"
+```
+
+### 2. Declare the config
 
 ```java
 @Config(modId = "examplemod")
@@ -30,28 +56,105 @@ if (CONFIG.get().showHud) { ... }
 This creates `config/examplemod.toml`, with comments and range hints:
 
 ```toml
-# Show the HUD
+#: Show the HUD
 showHud = true
 
 [dash]
-# Range: 1.0 ~ 10.0
+#: Range: 1.0 ~ 10.0
 dashDistance = 4.0
 ```
 
 Your mod's **Config** button opens the generated screen.
 
-## Installing
+### 3. Check what Confee understood
 
-Players install Confee like any library mod:
+In a development environment, Confee logs a report for each config when it is registered: the file, each option with
+the widget it gets and its constraints, and the option names that have no translation yet (with the keys to copy into
+your language file):
 
-| Loader | File | Also needs |
-|---|---|---|
-| Fabric, Quilt | `confee-<version>+1.20.1-fabric.jar` | Fabric API. Mod Menu to see the Config buttons. |
-| Forge, NeoForge (1.20.1) | `confee-<version>+1.20.1-forge.jar` | Nothing else. |
+```text
+[Confee] Dev report for examplemod (shown in development only)
+  file: config/examplemod.toml (TOML, scope COMMON)
+  2 option(s), 1 section(s)
+  - showHud            toggle
+  - dash.dashDistance  slider  [range 1.0 ~ 10.0, step 0.5]
+  names: 2 option(s) without translation nor @Name in assets/examplemod/lang/en_us.json (the field name is shown instead):
+      "config.examplemod.showHud": "...",
+      "config.examplemod.dash.dashDistance": "...",
+```
 
-Mods that use Confee declare it as a required dependency. Embedding Confee in another jar (jar-in-jar) is not supported.
+A mistake in the declaration (for example `@Slider` without `@Range`, or `@Size` on a `String`) stops the game in
+development with every mistake of the class listed, each with how to fix it. Players never see these errors: in
+production the field is skipped with a warning.
 
-## Annotations
+## Recipes
+
+Each recipe shows the annotation, then the builder equivalent.
+
+**A number with a slider**
+
+```java
+@Range(min = 0, max = 100) @Slider(step = 5) @Unit("%")
+public int volume = 70;
+
+b.intRange("volume", 70, 0, 100).slider(5).unit("%").build();
+```
+
+**A list of items (icons, suggestions, item picker, no duplicates)**
+
+```java
+@Item(tags = true) @Size(max = 9)
+public List<String> loot = new ArrayList<>(List.of("minecraft:diamond", "#minecraft:logs"));
+
+b.itemList("loot", "minecraft:diamond", "#minecraft:logs").tags().maxSize(9).build();
+```
+
+More list options (sorted, case-insensitive, bounds of each value...): [Lists](#lists).
+
+**An option that only makes sense when another is on**
+
+```java
+public boolean showHud = true;
+
+@EnabledIf("showHud")             // greyed out; @VisibleIf hides it instead
+public int hudOpacity = 80;
+
+b.intValue("hudOpacity", 80).enabledIf("showHud").build();
+```
+
+**A choice between a few values**
+
+```java
+public Difficulty difficulty = Difficulty.NORMAL;   // 2 to 4 values: segmented buttons, more: a dropdown
+
+b.enumValue("difficulty", Difficulty.NORMAL).build();
+```
+
+**React when the player saves**
+
+```java
+CONFIG.onChange(() -> Hud.refresh());                                   // after a save from the screen
+SHOW_HUD.addListener((oldValue, newValue) -> Hud.setVisible(newValue));  // each time this value changes
+```
+
+**Open the screen from your own button (client only)**
+
+```java
+minecraft.setScreen(CONFIG.createScreen(currentScreen));
+```
+
+**Names and tooltips in several languages**
+
+```json
+"config.examplemod.dash.dashDistance": "Dash distance",
+"config.examplemod.dash.dashDistance.tooltip": "How far the dash goes, in blocks"
+```
+
+See [Translations](#translations); the dev report lists the keys still missing.
+
+## Reference
+
+### Annotations
 
 The public, non-static, non-transient fields of a `@Config` class are the options; their initial values are the
 defaults. The class needs a constructor without arguments.
@@ -63,11 +166,11 @@ defaults. The class needs a constructor without arguments.
 | `@Category("key")` | field | Puts the option in a category: a sidebar tab, and a table in the file. |
 | `@Comment("...")` | field, class | Comment written in the file, and tooltip when no translation exists. |
 | `@Name("...")` | field | Display name when no translation exists. |
-| `@Range(min, max)` | number | Bounds. Values out of range are clamped. |
+| `@Range(min, max)` | number, List of numbers | Bounds (of each value, on a list). Values out of range are clamped. |
 | `@Slider(step)` | number | Shown as a slider. Needs both bounds. |
 | `@RequiresRestart` | field | Yellow "!" icon. The player is told to restart after saving. |
 | `@Hidden` | field | Saved in the file, but not shown on the screen. |
-| `@Pattern("regex")`, `@MaxLength(n)` | String | Text validation. |
+| `@Pattern("regex")`, `@MaxLength(n)` | String, List of String | Text validation (of each value, on a list). |
 | `@Color(alpha = false)` | int | Shown as a color field with a preview. |
 | `@Key("name")` | field | Key in the file, when it differs from the field name. |
 | `@Section` | nested static class | A field of this type becomes a sub-table. |
@@ -75,6 +178,10 @@ defaults. The class needs a constructor without arguments.
 | `@EnabledIf("path")`, `@VisibleIf("path")` | field | Grays out / hides the option unless the condition holds: `"showHud"`, `"!showHud"` or `"quality=HIGH"`. |
 | `@Unit("%")` | number | Unit shown after the value (text or translation key). |
 | `@Multiline` | String | Multi-line text area. |
+| `@AllowDuplicates` | List | The list may hold the same value twice. By default duplicates are removed (on load and on save). |
+| `@Size(min, max)` | List | Number of values allowed. |
+| `@Sorted` | List | The list is kept sorted. |
+| `@IgnoreCase` | List of String | "Dirt" and "dirt" are the same value. |
 | `@Registry("minecraft:item")` | ResourceLocation, String, List&lt;String&gt; | Autocompletion from a built-in registry. |
 | `@Item`, `@Block` | ResourceLocation, String, List&lt;String&gt; | Item / block ID: icon, suggestions with icons, a searchable grid picker and an automatic preview. |
 | `@Entity`, `@Biome`, `@Dimension`, `@Structure`, `@Enchantment`, `@Effect`, `@Sound`, `@Fluid` | ResourceLocation, String, List&lt;String&gt; | ID of that registry, entries added by mods included. See [Registry options](#registry-options). |
@@ -86,6 +193,8 @@ defaults. The class needs a constructor without arguments.
 | `@Category("dash", icon = "minecraft:feather")` | field | Category with an icon (item ID or texture). |
 | `@Icon("minecraft:compass")` | `@Section` field or class | Icon of the sub-section. |
 | `@Layout(...)` | class | Screen layout, see [Layout and decorations](#layout-and-decorations). |
+
+List annotations (`@AllowDuplicates`, `@Size`, `@Sorted`, `@IgnoreCase`, and `@Range` / `@Pattern` / `@MaxLength` on a list): see [Lists](#lists).
 
 Supported field types: `boolean`, `int`, `long`, `float`, `double` (and their wrappers), `String`, any enum,
 `ResourceLocation`, `List` of `String`, `Integer`, `Long`, `Float`, `Double`, `Boolean` or an enum,
@@ -99,7 +208,7 @@ screen (see [Layout and decorations](#layout-and-decorations)).
 
 `@Category` is only allowed in the `@Config` class, not inside a `@Section`.
 
-## Builder
+### Builder
 
 ```java
 ConfigBuilder b = Confee.builder("examplemod")
@@ -118,7 +227,7 @@ CONFIG = b.build(); // registers and loads
 
 Option methods: `bool`, `intValue` / `intRange`, `longValue` / `longRange`, `floatValue` / `floatRange`,
 `doubleValue` / `doubleRange`, `string`, `enumValue`, `enumSet` (check boxes), `list`, `map`, `objectList`, `color`,
-`identifier`, `item`, `block`, `keybind`.
+`identifier`, `item`, `block`, `keybind`, and the list shortcuts `itemList`, `blockList`, `idList`, `sortedList`.
 
 ```java
 b.map("biomeWeights", Integer.class, Map.of("plains", 10, "desert", 3)).build();
@@ -129,7 +238,8 @@ b.objectList("waypoints", waypoint, List.of(waypoint.element("name", "home", "y"
 
 Option modifiers: `.comment()`, `.name()`, `.description()`, `.range()`, `.slider(step)`, `.stepper(step)`,
 `.requiresRestart()`, `.hidden()`, `.pattern()`, `.maxLength()`, `.alpha()`, `.preview()`, `.enabledIf()`,
-`.visibleIf()`, `.unit()`, `.multiline()`, `.registry()`, `.item()`, `.block()`, `.suggestions(...)`,
+`.visibleIf()`, `.unit()`, `.multiline()`, `.allowDuplicates()`, `.size()`, `.maxSize()`, `.sorted()`,
+`.ignoreCase()`, `.registry()`, `.item()`, `.block()`, `.suggestions(...)`,
 `.listener((oldValue, newValue) -> ...)`.
 
 Screen elements: `b.header("...")`, `b.separator()`, `b.info("...")`, `b.image(texture, height)`,
@@ -139,7 +249,43 @@ Layout: `b.layout(Layout.builder()...build())`.
 Each `build()` returns a `ConfigValue<T>` with `get()`, `set(value)`, `getDefault()`, `reset()` and
 `addListener(...)`.
 
-## Previews
+### Lists
+
+A list never holds the same value twice. In the screen, values already in the list are not suggested, not offered by
+**+ Add** and hidden in the item / block picker; a duplicate typed by hand is removed when the player saves. In the
+file, duplicates are removed when it is loaded (first one kept, a warning in the log).
+
+| Annotation | Builder | In the file | In the screen |
+|---|---|---|---|
+| `@AllowDuplicates` | `.allowDuplicates()` | Duplicates kept. | Every value is suggested. |
+| `@Size(min = 1, max = 5)` | `.size(1, 5)`, `.maxSize(5)` | Extra values removed; a list too short is replaced by the default. | **+ Add** greyed out at the max, ✕ at the min. |
+| `@Sorted` | `.sorted()` | Sorted (texts and numbers in natural order, enums in declaration order). | No move arrows; sorted when saved. |
+| `@IgnoreCase` | `.ignoreCase()` | `Dirt` and `dirt` are duplicates. | Same for the suggestions. |
+| `@Range(min = 1, max = 64)` | `.range(1, 64)` | Each value: out of range values clamped. | Error on the field of the value. |
+| `@Pattern("[a-z_]+")`, `@MaxLength(16)` | `.pattern("[a-z_]+")`, `.maxLength(16)` | Each value: one that does not fit gives the default value. | Error on the field of the value. |
+
+```java
+@Size(max = 5) @Sorted @IgnoreCase
+public List<String> labels = new ArrayList<>(List.of("alpha", "beta"));
+
+@Range(min = 1, max = 64)          // on a list: each value
+public List<Integer> stackSizes = new ArrayList<>(List.of(16, 64));
+```
+
+Builder shortcuts:
+
+```java
+b.itemList("loot", "minecraft:diamond", "minecraft:emerald").build();      // icons, suggestions, item picker
+b.blockList("blacklist", "minecraft:dirt").tags().build();                  // blocks and #tags
+b.idList("mobs", "minecraft:entity_type", "minecraft:zombie").build();     // any registry
+b.sortedList("labels", String.class, List.of("alpha", "beta")).maxSize(5).build();
+```
+
+A list option that does not fit its type (for example `@Size` on a `String`, `@IgnoreCase` on a `List<Integer>`, or
+a default value with duplicates) stops the game in a development environment with a message that says how to fix
+it.
+
+### Previews
 
 Any option can have a preview, shown in a third column on the right of the screen (hidden when the window is too
 narrow). It shows the hovered option, or the focused one. Everything is optional:
@@ -158,7 +304,7 @@ b.intValue("particleCount", 20)
 - `renderer`: a `PreviewRenderer` drawing the value live. It is client-only code, created only when the screen shows
   it; with the annotation, the class needs a public no-argument constructor. Errors are caught and shown as a message.
 
-## Registry options
+### Registry options
 
 `@Registry("namespace:registry")` (or a shortcut such as `@Entity`) turns a text field into an ID field: suggestions
 while typing, an icon when the type has one (items, blocks, spawn eggs for entities, enchanted books, effect icons,
@@ -180,7 +326,7 @@ public List<String> spawnBiomes = new ArrayList<>(List.of("minecraft:plains", "#
 b.list("spawnBiomes", String.class, List.of("minecraft:plains")).biome().tags().build();
 ```
 
-## Layout and decorations
+### Layout and decorations
 
 ```java
 @Config(modId = "examplemod")
@@ -204,7 +350,7 @@ public class ExampleConfig {
   `sidebar` (`AUTO` or `HIDDEN`: categories in a dropdown), `banner` + `bannerHeight`, `background` (tiled texture).
 - Icons are an item ID (`minecraft:feather`) or a texture ending with `.png`.
 
-## Your own widgets
+### Your own widgets
 
 Extend `OptionWidget<T>` (client only) and draw what you want; read and write the value with `value()` /
 `setValue(...)`. The value is validated and saved with the other options.
@@ -229,7 +375,7 @@ If your widget throws, it is replaced by a message and the game keeps running.
 Widgets also work for Forge configs (`ForgeConfigSpec`) shown by Confee: their config ID is `modid:client`,
 `modid:common` or `modid:server`, so a companion mod can give a nicer widget to another mod's setting.
 
-## Using a config
+### Using a config
 
 ```java
 ConfeeConfig<T> config = ...;
@@ -245,20 +391,22 @@ Confee.get("examplemod", "client");    // look up a registered config
 Listeners are called whenever a value changes. `onChange` callbacks run after a save from the screen, then the file is
 written.
 
-### Scopes
+#### Scopes
 
 - `CLIENT`: loaded only on the physical client.
 - `COMMON`: loaded on both sides, each with its own local file.
 - `SERVER`: reserved for the future server-to-client synchronization. It throws for now.
 
-### Formats
+#### Formats
 
 `format = ConfigFormat.TOML` (default), `JSON`, `JSON5`, `YAML` or `PROPERTIES`.
 
-- Comments and range hints are written in every format except JSON, which has no comments.
+- Comments and range hints are written in every format except JSON, which has no comments. Confee marks the
+  comments it writes with `#:` (`//:` in JSON5). Comments players add by hand (`#`, `//`) are kept when the file
+  is saved, and only the values that changed are rewritten.
 - In `.properties` files, keys are flat (`dash.distance=4.0`) and lists are comma-separated.
 
-### Robustness
+#### Robustness
 
 Confee never crashes the game because of a file:
 
@@ -271,7 +419,7 @@ Confee never crashes the game because of a file:
 A mistake in a declaration, such as `@Slider` without `@Range`, throws a clear error in a development environment: every
 mistake of the class is listed at once, each with how to fix it. In production, it logs a warning and skips the field.
 
-## Theme
+### Theme
 
 Every color of the screen can be customized. A token you leave out keeps its default; `accentDark`, `accentLight` and
 `onAccentText` are derived from the accent.
@@ -288,7 +436,7 @@ Tokens: `accent`, `accentDark`, `accentLight`, `onAccentText`, `panelBg`, `panel
 `buttonFaceHover`, `buttonShadow`, `outline`, `textOnDark`, `textOnLight`, `textDisabled`, `warning`, `error`,
 `toggleOffTrack`, `titleBarBg`, `titleBarText`.
 
-## Translations
+### Translations
 
 The screen looks for these keys in your mod's language files:
 
@@ -299,7 +447,20 @@ The screen looks for these keys in your mod's language files:
 Without a translation, the screen uses `@Name` / `.name()`, then the key made readable (`dashDistance` becomes
 "Dash Distance"). Tooltips fall back to the comment, texts under the name to `@Description` / `.description()`.
 
-## Universal editor
+## For players
+
+### Installing
+
+Players install Confee like any library mod:
+
+| Loader | File | Also needs |
+|---|---|---|
+| Fabric, Quilt | `confee-<version>+1.20.1-fabric.jar` | Fabric API. Mod Menu to see the Config buttons. |
+| Forge, NeoForge (1.20.1) | `confee-<version>+1.20.1-forge.jar` | Nothing else. |
+
+Mods that use Confee declare it as a required dependency. Embedding Confee in another jar (jar-in-jar) is not supported.
+
+### Universal editor
 
 Confee gives a **Config** button to mods that have no config screen, when their config files are found in `config/`.
 
@@ -333,6 +494,7 @@ Confee.registerExternalFile("examplemod", Path.of("examplemod/settings.json")); 
 - `backupExternalFiles`
 - `fileMappings`, as `"modid=path"` entries for files Confee could not match
 - `ignoredMods`
+- `forceConfeeEditor`: mod IDs whose own config screen is replaced by the Confee editor (applies on the next click)
 
 ## API stability
 

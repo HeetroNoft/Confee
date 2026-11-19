@@ -180,7 +180,9 @@ Option<T>
 - Valeur hors bornes → ramenée à la borne la plus proche + warning dans le log.
 - Mauvais type / valeur illisible → valeur par défaut + warning.
 - Clé manquante → ajoutée avec la valeur par défaut au prochain enregistrement.
-- Clé inconnue (ancienne option) → **conservée telle quelle** dans le fichier 🟡 À VALIDER (alternative : supprimée).
+- ✅ DÉCIDÉ (Lucas) : clé inconnue (ancienne option) → **conservée telle quelle** dans le fichier.
+- ✅ DÉCIDÉ (Lucas) : les **commentaires écrits à la main** dans un fichier Confee existant sont **conservés** : le fichier est édité en place (édition chirurgicale, comme pour les autres mods) ; seuls les commentaires générés par Confee (`@Comment`, Range/Allowed) sont mis à jour quand ils changent. ✅ DÉCIDÉ (Lucas) : Confee reconnaît ses commentaires à un **marqueur** (préfixe distinct de celui d'un commentaire normal) ; tout commentaire sans marqueur est considéré comme écrit à la main et gardé. ✅ DÉCIDÉ (Lucas) : marqueur **`#:`** (TOML, YAML, properties) et **`//:`** (JSON5) ; JSON n'a pas de commentaires. Fonctionnement : si toutes les options sont déjà dans le fichier, seules les valeurs changées et les commentaires générés modifiés sont remplacés (le reste est recopié tel quel, un enregistrement sans changement ne touche pas au fichier) ; sinon (option ajoutée par une mise à jour du mod, map ou liste d'objets modifiée) le fichier est réécrit et les lignes de commentaire écrites à la main juste au-dessus de chaque option et de chaque en-tête de section sont remises (commentaires en fin de ligne et commentaires isolés par une ligne vide perdus dans ce cas).
+- ✅ DÉCIDÉ (Lucas) : une **liste** ne contient jamais deux fois la même valeur, sauf `@AllowDuplicates` / `.allowDuplicates()`. Fichier Confee : doublons retirés au chargement (1re occurrence gardée, warning `[Confee]`, fichier réécrit). Écran : les suggestions et « + Ajouter » ne proposent pas une valeur déjà présente ; un doublon tapé à la main est retiré sans message à l'enregistrement. Fichiers des autres mods (éditeur universel, specs Forge) : doublons conservés (c'est leur mod qui décide). Le sélecteur en grille cache aussi les valeurs déjà présentes. Raccourcis builder : `itemList`, `blockList`, `idList(key, registry, ...)`, `sortedList`. Une option de liste mal déclarée (mauvais type, bornes incohérentes, défaut avec doublons) donne une erreur qui dit comment corriger.
 - ✅ DÉCIDÉ : String qui ne respecte pas `@Pattern` / `@MaxLength` → valeur par défaut + warning (pas de troncature).
 - ✅ DÉCIDÉ : les `ChangeListener` sont appelés à **chaque** changement de valeur, y compris via `ConfigValue#set()` depuis le code.
 - Fichier totalement illisible (syntaxe cassée) → copie de sauvegarde `fichier.toml.broken-<date>` puis régénération avec les valeurs par défaut + message dans le log. Jamais de crash.
@@ -229,7 +231,7 @@ public static final ConfeeConfig<ExampleConfig> CONFIG = Confee.register(Example
 if (CONFIG.get().showHud) { ... }
 ```
 
-**Annotations V1** 🟡 À VALIDER (liste) :
+**Annotations V1** ✅ DÉCIDÉ (Lucas) : la liste ci-dessous (37 annotations de `api/annotation`) est figée pour la V1.
 
 | Annotation                                                 | Cible           | Rôle                                                                                                  |
 | ---------------------------------------------------------- | --------------- | ----------------------------------------------------------------------------------------------------- |
@@ -249,6 +251,11 @@ if (CONFIG.get().showHud) { ... }
 | `@EnabledIf(cond)` / `@VisibleIf(cond)` ✅                  | champ           | Condition entre options : `"chemin"`, `"!chemin"` ou `"chemin=VALEUR"`. Grisé / masqué sinon.         |
 | `@Unit(value)` ✅                                           | numérique       | Unité affichée (suffixe du champ, label du slider). Texte ou clé de traduction.                        |
 | `@Multiline` ✅                                             | String          | Zone de texte multi-ligne.                                                                            |
+| `@AllowDuplicates` ✅ (Lucas)                              | List            | Autorise la même valeur plusieurs fois dans la liste (builder : `.allowDuplicates()`).                |
+| `@Size(min, max)` ✅ (Lucas)                               | List            | Nombre de valeurs. Fichier : trop long → coupé, trop court → défaut. Écran : « + Ajouter » / ✕ grisés aux bornes (`.size()`, `.maxSize()`). |
+| `@Sorted` ✅ (Lucas)                                        | List            | Liste triée au chargement et à l'enregistrement (ordre naturel, enums dans l'ordre de déclaration) ; flèches ↑↓ cachées ; défaut trié automatiquement (`.sorted()`). |
+| `@IgnoreCase` ✅ (Lucas)                                    | List<String>    | Doublons comparés sans la casse (`.ignoreCase()`). Interdit avec `@AllowDuplicates`. |
+| `@Range` / `@Pattern` / `@MaxLength` sur une List ✅ (Lucas) | List            | S'appliquent à **chaque valeur** (pas d'annotation `@Element…` séparée). Fichier : nombre ramené à la borne, texte invalide → valeur par défaut. Écran : erreur sur le champ de la valeur. Le nombre de valeurs, c'est `@Size`. |
 | `@Registry(id)` ✅                                          | ResourceLocation| Suggestions d'autocomplétion depuis un registre intégré (`minecraft:item`, `minecraft:block`…).       |
 | `@Item` / `@Block` ✅                                       | ResourceLocation, String, List<String> | Raccourci : registre item/bloc + icône dans le champ et les suggestions + sélecteur en grille + aperçu automatique. |
 | `@Entity` `@Biome` `@Dimension` `@Structure` `@Enchantment` `@Effect` `@Sound` `@Fluid` ✅ | ResourceLocation, String, List<String> | Raccourcis typés (= `@Registry(...)`). Attribut `tags = true` (aussi sur `@Item`, `@Block`, `@Registry`) : tags acceptés et suggérés (`#ns:chemin`), champ String / List<String> obligatoire. Builder : `.entity()`, `.biome()`… `.tags()`. |
@@ -262,7 +269,7 @@ if (CONFIG.get().showHud) { ... }
 | `@Layout(...)` ✅                                           | classe          | Mise en page : largeur du panneau et de l'aperçu, sidebar masquée, bannière, fond en texture.         |
 | champ `Decoration` ✅                                       | champ public    | Élément d'écran non enregistré, à sa place parmi les options : titre, séparateur, texte (info/avertissement), image, bouton d'action. `visibleIf` et icône possibles. |
 
-- Sections imbriquées : un champ dont le type est une classe statique annotée `@Section` devient une sous-section 🟡 À VALIDER.
+- Sections imbriquées : un champ dont le type est une classe statique annotée `@Section` devient une sous-section ✅ DÉCIDÉ (Lucas).
 - Collections ✅ DÉCIDÉ : `List<String|Integer|Long|Float|Double|Boolean|Enum>`, `Map<String, scalaire|Enum>` (éditeur clé → valeur), `List<ClasseSection>` (liste d'objets : classe statique `@Section` avec constructeur public sans argument et champs scalaires/enum uniquement).
 - Erreurs de déclaration ✅ DÉCIDÉ : en dev, **toutes** les erreurs d'une classe sont listées d'un coup, chacune avec la correction à faire (« Fix: … ») ; une condition vers une clé inconnue propose le bon chemin (« did you mean … »).
 - Conditions ✅ DÉCIDÉ : évaluées sur les valeurs en cours d'édition (pas encore enregistrées) ; une cible inconnue fait échouer l'enregistrement en dev, est ignorée (log `[Confee]`) en prod.
@@ -346,10 +353,11 @@ Confee:
 | Properties                | `.properties`                               | ✅                                          | ✅                      | ✅                              | ✅                     |
 | Forge legacy cfg          | `.cfg` (format `S:key=value`, `B:`, `I:` …) | ✅                                          | ❌                      | ✅                              | ✅                     |
 | INI                       | `.ini`                                      | ✅                                          | ❌                      | ✅                              | ✅                     |
-| HOCON                     | `.conf`, `.hocon`                           | ✅ 🟡                                       | ❌                      | ✅ 🟡                           | ✅                     |
+| HOCON (V1.1)              | `.conf`, `.hocon`                           | ✅                                          | ❌                      | ✅                              | ✅                     |
 | Fichier inconnu / binaire | autre                                       | ❌ → message + bouton « Ouvrir le fichier » | —                       | —                               | —                      |
 
 ✅ DÉCIDÉ : HOCON reporté en **V1.1** (2 fichiers `.conf` sur ~1 900 configs réelles observées).
+✅ DÉCIDÉ (Lucas) : en V1.1, **spec HOCON complète**, substitutions `${}`, `include` et concaténation de valeurs compris, éditables.
 
 ✅ DÉCIDÉ (validé par Lucas) : SERVER Forge grisé hors d'un monde / lecture seule dans un monde ; ordre Client, Common, Server.
 
@@ -398,7 +406,13 @@ Dans la liste des mods (Mod Menu sur Fabric/Quilt, liste des mods intégrée sur
 
 - Si le mod **a déjà** un écran de config (le sien, ou fourni par Cloth/YACL/Configured…), Confee **ne le remplace pas**. ✅ (comme Configured)
 - Si aucun fichier de config n'est trouvé pour ce mod, **pas de bouton** (ne pas afficher un bouton qui mène à un écran vide).
-- ✅ DÉCIDÉ : **pas d'option** pour forcer l'éditeur Confee sur un mod qui a déjà son propre écran. Le bouton Confee ajouté se comporte exactement comme si le mod avait fourni son propre écran.
+- ✅ DÉCIDÉ (Lucas, remplace l'ancien « pas d'option ») : le joueur peut **forcer l'éditeur Confee** sur des mods choisis qui ont déjà leur propre écran, via `forceConfeeEditor` dans `confee.toml` (§12) :
+  - le bouton Config du mod ouvre l'éditeur Confee sur ses fichiers **à la place** de son écran (Cloth, YACL, Configured, écran maison…) ;
+  - seuls les mods dont Confee trouve des fichiers (fichiers bruts, mapping, `registerExternalFile`) ou des configs Forge/NeoForge sont concernés ; les suggestions de l'option ne proposent que ceux-là, et un ID sans fichier garde son écran ;
+  - pris en compte **à chaud** (relu à chaque clic sur Config) ;
+  - `ignoredMods` bloque l'override ; `injectConfigButtons = false` ne le bloque pas ;
+  - Fabric/Quilt : mixin dans Mod Menu (`ModMenu.getConfigScreen`), appliqué seulement si Mod Menu est installé ; les configs cachées dans les réglages de Mod Menu restent cachées. Le même mixin donne l'éditeur Confee aux mods qui déclarent une intégration Mod Menu **sans** écran (fin de la limite connue du §12). Forge/NeoForge : la factory d'écran du mod est enveloppée au `FMLClientSetupEvent`.
+- Sans override, le bouton Confee ajouté se comporte exactement comme si le mod avait fourni son propre écran.
 - ✅ DÉCIDÉ : les fichiers de `config/` associés à **aucun** mod ne sont pas accessibles en V1 (seule l'option A existe).
 
 ### 8.2 Trouver les fichiers de config d'un mod
@@ -410,11 +424,11 @@ Ordre de priorité :
 3. **Heuristique sur les noms de fichiers** dans `config/` → source `RAW_FILE` :
    - `config/<modid>.<ext>`
    - `config/<modid>-<suffix>.<ext>` et `config/<modid>_<suffix>.<ext>` (ex. `-client`, `-common`)
-   - tous les fichiers de `config/<modid>/` (un niveau, 🟡 récursif ?)
+   - tous les fichiers de `config/<modid>/`, **récursivement, sans limite de profondeur** ✅ DÉCIDÉ (Lucas)
    - comparaison **insensible à la casse**, en traitant `-`, `_` et l'absence de séparateur comme équivalents ; tester aussi le **nom affiché** du mod normalisé (ex. mod ID `xaerominimap` ↔ fichier `xaero-minimap.txt`).
    - exclure les fichiers déjà couverts par 1 et 2, les `.bak`, `.old`, `.broken-*`, les fichiers > 1 Mo, les binaires.
 4. **Mapping manuel** dans `config/confee.toml` (cf. §12) pour corriger l'heuristique.
-5. **API pour les devs tiers** : `Confee.registerExternalFile(modId, path)` pour qu'un mod déclare ses fichiers sans utiliser Confee pour le reste. 🟡 À VALIDER
+5. **API pour les devs tiers** : `Confee.registerExternalFile(modId, path)` pour qu'un mod déclare ses fichiers sans utiliser Confee pour le reste. ✅ DÉCIDÉ (Lucas)
 
 Si plusieurs fichiers → **écran de sélection de fichier** d'abord (cf. §10.4).
 
@@ -423,6 +437,8 @@ Si plusieurs fichiers → **écran de sélection de fichier** d'abord (cf. §10.
 - Textes et listes de textes qui ressemblent à des IDs (`ns:chemin`, tags `#ns:chemin` acceptés) : le registre est deviné d'abord par le **nom de la clé** (`biome`, `dimension`, `structure`, `enchant`, `effect`/`potion`, `sound`, `fluid`, `entit`/`mob`, `block`, `item`), sinon par les **valeurs** (toutes connues dans item, block, entity_type, enchantment ou mob_effect, dans cet ordre). Mêmes suggestions, icônes, sélecteur et aperçu que pour les configs Confee.
 - Textes couleur (`#RRGGBB`, `#AARRGGBB`, `0x…`) : pastille + **color picker** ; la couleur choisie est réécrite au même format (préfixe, longueur, casse).
 - Les configs Confee ne sont jamais devinées (le mod déclare ce qu'il veut).
+- ✅ DÉCIDÉ (Lucas, V1.1) : **couleurs stockées en entier** dans les fichiers bruts → pastille + color picker si le **nom de la clé** contient `color`, `colour`, `couleur` ou `tint` (insensible à la casse) **et** si la valeur est entre 0 et `0xFFFFFFFF` (les ARGB négatifs, entiers signés, sont acceptés). RGB si la valeur ≤ `0xFFFFFF`, ARGB sinon. Réécrite sous forme d'entier, en signé si l'original était négatif.
+- ✅ DÉCIDÉ (Lucas, V1.1) : **structures imbriquées** (liste de listes, objet dans un objet, map dont les valeurs sont des objets) et **listes d'objets YAML** des autres mods → éditables dans un **sous-écran** par objet ou liste, avec fil d'Ariane et bouton Retour, sans limite de profondeur.
 - ✅ Widgets custom sur les **configs Forge** (`ForgeConfigSpec`) : `ConfeeWidgets.forOption("modid:client", chemin, …)` / `forType(modid, …)` ; ids de config Forge = `modid:client`, `modid:common`, `modid:server`. Pas sur les fichiers bruts.
 
 ### 8.3 Fichier brut (`RAW_FILE`) : inférence des types
@@ -442,7 +458,7 @@ Si plusieurs fichiers → **écran de sélection de fichier** d'abord (cf. §10.
 - Pour le Forge legacy `.cfg`, utiliser le préfixe de type (`B:` bool, `I:` int, `D:` double, `S:` string) et les commentaires `# Min: / Max:` s'ils existent pour proposer des bornes.
 - Un type ne doit **jamais changer** à l'enregistrement (un `5` reste un entier, un `5.0` reste un décimal, une string reste entre guillemets, le style de guillemets d'origine est conservé).
 
-**Valeurs par défaut inconnues** : un fichier brut ne contient pas ses valeurs par défaut. Comportement demandé 🟡 À VALIDER :
+**Valeurs par défaut inconnues** : un fichier brut ne contient pas ses valeurs par défaut. ✅ DÉCIDÉ (Lucas) :
 
 - À la **première modification** d'un fichier par Confee, copie de l'original dans `config/confee/backups/<chemin-relatif>`.
 - Le bouton par option devient **« Restaurer la valeur d'origine »** (valeur de cette copie) au lieu de « par défaut ».
@@ -458,7 +474,7 @@ Sur Forge/NeoForge, pour chaque mod, récupérer ses `ModConfig` (types CLIENT /
 - Pour chaque `ConfigValue` : clé/chemin, valeur, **valeur par défaut**, **commentaire**, **clé de traduction**, **bornes** (`ValueSpec#getRange`), drapeau **`needsWorldRestart`** → mappé sur `requiresRestart`.
 - Modification : `ConfigValue#set(...)` puis sauvegarde de la spec via l'API Forge → **application à chaud** (Forge déclenche son événement de rechargement pour le mod). Pas de bandeau « redémarrage » sauf si `needsWorldRestart`.
 - Le reset utilise les **vraies valeurs par défaut** de la spec.
-- Configs **SERVER** : 🟡 À VALIDER — en V1, affichées en **lecture seule** avec le message « Les configs serveur seront modifiables dans une future version » (cohérent avec la synchro repoussée). Alternative : modifiables uniquement en solo, monde chargé.
+- Configs **SERVER** : ✅ DÉCIDÉ (Lucas) — en V1, affichées en **lecture seule** avec le message « Les configs serveur seront modifiables dans une future version » (cohérent avec la synchro repoussée). Alternative : modifiables uniquement en solo, monde chargé.
 - S'inspirer du fonctionnement de **Configured** (MrCrayfish) et **Config Menus for Forge** (Fuzs) pour l'accès aux specs. **Ne pas copier leur code** (vérifier leurs licences).
 - Sur les versions où Forge et NeoForge divergent (≥ 1.20.2), NeoForge utilise `ModConfigSpec` (même principe, autres noms) : à adapter dans la branche de la version concernée.
 
@@ -469,7 +485,7 @@ Sur Forge/NeoForge, pour chaque mod, récupérer ses `ModConfig` (types CLIENT /
 - Application à chaud : le watcher de fichiers de Forge **ne réagit pas** à une sauvegarde faite par `spec.save()`. Confee fait donc ce que fait le watcher, via l'API publique de FML : `spec.afterReload()` puis `ModContainer#dispatchConfigEvent(IConfigEvent.reloading(config))` → le mod reçoit `ModConfigEvent.Reloading`.
 - Types non gérés par les widgets (listes mixtes, objets) : affichés en lecture seule.
 
-🟡 À VALIDER (V1.1 ?) : sur Fabric, mods utilisant **Forge Config API Port** → même intégration que ci-dessus.
+✅ DÉCIDÉ (Lucas) : sur Fabric, mods utilisant **Forge Config API Port** → même intégration que ci-dessus (implémentée).
 
 ---
 
@@ -513,7 +529,7 @@ Après chaque sauvegarde depuis l'écran :
 3. appel des callbacks `onChange` de la config,
 4. écriture du fichier.
 
-Thread : tout se passe sur le **thread client** (render thread). Écriture disque : 🟡 synchrone en V1 (fichiers petits).
+Thread : tout se passe sur le **thread client** (render thread). Écriture disque : ✅ DÉCIDÉ (Lucas) synchrone en V1 (fichiers petits).
 
 ---
 
@@ -528,9 +544,9 @@ Lucas a fourni 4 captures de l'UI de Minecraft **Bedrock Edition** (à placer da
 3. Écran « Create New World » : barre de titre avec flèche retour, **sidebar gauche** (sections « Edit Settings », boutons pleine largeur, élément actif en **vert**), panneau droit scrollable avec labels au-dessus des champs, champ texte sombre, dropdowns, toggles, ligne avec icône + chevron `›`.
 4. Écran à **onglets** en haut (onglet actif vert), liste à gauche, panneau de détail à droite, scrollbars fines.
 
-**Le style doit être reproduit en Java Edition**, en dessinant les widgets **par code** (rectangles pleins, pas de textures) pour que la couleur d'accent soit recolorable. 🟡 À VALIDER (alternative : textures 9-slice teintées).
+**Le style doit être reproduit en Java Edition**, en dessinant les widgets **par code** (rectangles pleins, pas de textures) pour que la couleur d'accent soit recolorable. ✅ DÉCIDÉ (Lucas).
 
-### 10.2 Tokens de couleur (valeurs relevées à l'œil sur les captures — à ajuster par Lucas)
+### 10.2 Tokens de couleur ✅ DÉCIDÉ (Lucas : valeurs relevées à l'œil, validées telles quelles)
 
 | Token             | Usage                                   | Valeur approx.                | Personnalisable par le dev |
 | ----------------- | --------------------------------------- | ----------------------------- | -------------------------- |
@@ -632,7 +648,7 @@ Indicateur « modifié » : 🟡 petit point `accent` à gauche du label quand l
   - « Réinitialiser tout » (bouton normal) → **modal de confirmation** → toutes les options du fichier reviennent au défaut (ou à l'original pour RAW_FILE).
   - « Annuler » → ferme sans sauvegarder.
   - « Enregistrer » (bouton **primaire** couleur accent) → valide, sauvegarde, ferme.
-- **Mode de sauvegarde** 🟡 À VALIDER : les modifications sont **en attente** jusqu'à « Enregistrer ». Échap avec changements non enregistrés → modal « Enregistrer les modifications ? » [Enregistrer] [Ne pas enregistrer] [Annuler]. (Alternative : sauvegarde instantanée à chaque changement, comme Bedrock.)
+- **Mode de sauvegarde** ✅ DÉCIDÉ (Lucas) : les modifications sont **en attente** jusqu'à « Enregistrer ». Échap avec changements non enregistrés → modal « Enregistrer les modifications ? » [Enregistrer] [Ne pas enregistrer] [Annuler]. (Alternative : sauvegarde instantanée à chaque changement, comme Bedrock.)
 - Après enregistrement, si au moins une option modifiée est `requiresRestart` → toast/modal « Certains changements nécessitent un redémarrage du jeu ».
 
 **C. Modal (dialogue)**
@@ -699,7 +715,11 @@ Indicateur « modifié » : 🟡 petit point `accent` à gauche du label quand l
 
 ## 12. Config de Confee lui-même (`config/confee.toml`)
 
-Éditable via le bouton Config de Confee (écran généré par Confee — dogfooding). 🟡 À VALIDER (contenu) :
+Éditable via le bouton Config de Confee (écran généré par Confee — dogfooding).
+
+✅ DÉCIDÉ (Lucas) : cet écran (et lui seul) utilise un thème **« coffee »** déclaré dans `ConfeeSettings` : accent marron café `#8F5628`, le reste en gris à peine chauds : fonds `#33302E` / `#201E1D`, boutons `#D6D2CE` (survol `#EAE6E2`, liseré `#5C5754`), outline `#1F1D1C`, textes `#FBF8F5` / `#221F1D` / désactivé `#75706C`, toggle OFF `#8F8A86`, barre de titre `#E9E6E3` / `#221F1D`. `warning` et `error` gardent leurs valeurs par défaut. L'éditeur universel et les mods qui utilisent Confee restent sur le thème par défaut (§10.2).
+
+✅ DÉCIDÉ (Lucas, contenu) :
 
 ```toml
 [general]
@@ -714,9 +734,11 @@ backupExternalFiles = true
 fileMappings = {}
 # Mods à ignorer par l'éditeur universel
 ignoredMods = []
+# Mods dont l'écran de config est remplacé par l'éditeur Confee (§8.1)
+forceConfeeEditor = []
 ```
 
-🟡 À VALIDER (implémenté ainsi) : le modèle Confee n'a pas de type « map », donc `fileMappings` est une **liste de chaînes** `"modid=chemin"` (une entrée par fichier), éditable avec l'éditeur de liste :
+✅ DÉCIDÉ (Lucas) : le modèle Confee n'a pas de type « map », donc `fileMappings` est une **liste de chaînes** `"modid=chemin"` (une entrée par fichier), éditable avec l'éditeur de liste :
 
 ```toml
 fileMappings = ["xaerominimap=xaerominimap.txt"]
@@ -724,7 +746,7 @@ fileMappings = ["xaerominimap=xaerominimap.txt"]
 
 `injectConfigButtons` et `ignoredMods` sont marqués « redémarrage requis » (Mod Menu / Forge construisent la liste des boutons au démarrage). Scope CLIENT.
 
-✅ Implémenté (étape 7) : découverte §8.2 points 1, 3, 4, 5 (`Confee.registerExternalFile`) ; le point 2 (specs Forge) exclut pour l'instant les fichiers gérés par Forge, ils seront éditables à l'étape 8. Sur Fabric, Mod Menu garde l'écran déclaré par un mod ; limite connue : un mod qui déclare une intégration Mod Menu **sans** écran bloque aussi le bouton Confee (Mod Menu ne permet pas de faire autrement).
+✅ Implémenté (étape 7) : découverte §8.2 points 1, 3, 4, 5 (`Confee.registerExternalFile`) ; le point 2 (specs Forge) exclut pour l'instant les fichiers gérés par Forge, ils seront éditables à l'étape 8. Sur Fabric, Mod Menu garde l'écran déclaré par un mod, sauf `forceConfeeEditor` ; un mod qui déclare une intégration Mod Menu **sans** écran reçoit maintenant l'éditeur Confee (mixin, §8.1). `forceConfeeEditor` n'est **pas** « redémarrage requis ».
 
 ---
 
@@ -745,6 +767,7 @@ fileMappings = ["xaerominimap=xaerominimap.txt"]
 
 - Aucune exception de Confee ne doit faire crasher le jeu à cause d'un fichier de config : attraper, logger (`[Confee]` + mod + fichier + raison), dégrader proprement.
 - Une config Confee mal déclarée par un dev (ex. `@Slider` sans `@Range`, type non supporté) → **exception claire au démarrage en environnement de dev** (message qui dit quoi corriger), **warning + champ ignoré en production**. 🟡
+- ✅ DÉCIDÉ (Lucas) : **rapport dev** dans le log (environnement de dev uniquement) à l'enregistrement de chaque config : fichier, chaque option avec le widget choisi et ses contraintes, et les noms sans traduction (clés à copier dans `en_us.json`, lu depuis les ressources du mod, sans classe client).
 - Fichier modifié à l'extérieur pendant que l'écran est ouvert → à l'enregistrement, détecter (date de modification) et demander « Le fichier a été modifié ailleurs, écraser ? ». 🟡
 - Écriture atomique (tmp + rename) pour tous les fichiers.
 
@@ -811,12 +834,7 @@ fileMappings = ["xaerominimap=xaerominimap.txt"]
 
 ## 18. Récapitulatif des points à faire valider par Lucas
 
-1. Valeurs « d'origine » via sauvegarde pour les fichiers bruts (§8.3).
-2. Configs SERVER Forge : lecture seule en V1 ? (§8.4)
-3. Sauvegarde : en attente + bouton Enregistrer, ou instantanée ? (§10.4)
-4. Rendu par code ou textures recolorées (§10.1).
-5. HOCON en V1 ? Forge Config API Port sur Fabric en V1 ? (§7.1, §8.4)
-6. Valeurs des couleurs du tableau §10.2 (relevées à l'œil).
+Tous les points du récapitulatif ont été tranchés le 2026-11-19 (passés en ✅ dans leurs sections). Les couleurs du tableau §10.2 sont validées telles quelles.
 
 ---
 

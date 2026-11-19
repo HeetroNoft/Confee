@@ -5,8 +5,8 @@ prise, la reporter aussi dans `CONFEE_SPEC.md` (point en ✅ DÉCIDÉ, retiré d
 
 ## 1. Tests à faire
 
-- [ ] Serveurs Forge et NeoForge pour de vrai : mettre `eula=true` dans `forge/run-server/eula.txt` et
-      `testenv/neoforge/run-server/eula.txt` (sans ça, ils s'arrêtent avant de charger les mods).
+- [x] Serveurs Forge et NeoForge pour de vrai (`eula=true` mis le 2026-11-19) : les deux démarrent (`Done`), Confee
+      chargé côté serveur, aucune classe client.
 - [x] Suggestions dans un monde chargé : le script de captures crée un monde plat de test ; biomes et tags lus dans
       le monde (64 biomes, 119 tags, identiques aux fichiers en vanilla). Reste : un datapack qui ajoute un biome.
 - [ ] Jar Forge de release sur une vraie installation NeoForge 1.20.1 (le test actuel recompile les sources contre
@@ -20,20 +20,26 @@ prise, la reporter aussi dans `CONFEE_SPEC.md` (point en ✅ DÉCIDÉ, retiré d
 
 ## 2. Décisions à prendre
 
-- [ ] Commentaires écrits à la main dans les fichiers Confee : perdus à l'enregistrement. Les conserver ?
-- [ ] §18 de la spec, implémentés selon la proposition par défaut, à confirmer puis passer en ✅ :
-  - [ ] valeurs « d'origine » via la sauvegarde pour les fichiers bruts ;
-  - [ ] configs SERVER Forge en lecture seule ;
-  - [ ] sauvegarde en attente du bouton « Enregistrer » ;
-  - [ ] widgets dessinés par code ;
-  - [ ] Forge Config API Port sur Fabric ;
-  - [ ] valeurs des couleurs du thème (relevées à l'œil).
-- [ ] Clé inconnue dans un fichier Confee : conservée telle quelle, ou supprimée ?
-- [ ] Éditeur universel : chercher dans `config/<modid>/` sur un seul niveau, ou de façon récursive ?
-- [ ] API `Confee.registerExternalFile(modId, path)` pour les devs tiers : on la fait ?
-- [ ] Format de `fileMappings` : liste de chaînes `"modid=chemin"`.
-- [ ] Écriture des fichiers synchrone en V1 : OK ?
-- [ ] Liste finale des annotations V1 et des sous-sections `@Section`.
+Toutes tranchées par Lucas le 2026-11-19 et reportées dans `CONFEE_SPEC.md` (§18 vidé).
+
+- [x] Commentaires écrits à la main dans les fichiers Confee : **conservés** (édition en place, commentaires générés mis à jour).
+- [x] §18 : valeurs d'origine via la sauvegarde, configs SERVER en lecture seule, sauvegarde sur « Enregistrer »,
+      widgets par code, Forge Config API Port sur Fabric, couleurs du thème : **validés tels quels**.
+- [x] Clé inconnue dans un fichier Confee : **conservée**.
+- [x] Éditeur universel : `config/<modid>/` **récursif sans limite**.
+- [x] `Confee.registerExternalFile(modId, path)` : **validée**.
+- [x] `fileMappings` en liste de chaînes `"modid=chemin"` : **validé**.
+- [x] Écriture synchrone en V1 : **validée**.
+- [x] Liste des annotations V1 et sous-sections `@Section` : **figées**.
+- [x] Nouveau : `forceConfeeEditor` (remplacer l'écran de mods choisis par l'éditeur Confee, à chaud) — §8.1, §12.
+
+## À coder suite aux décisions
+
+- [x] `forceConfeeEditor` : Fabric (mixin Mod Menu) + Forge/NeoForge (factory enveloppée).
+- [x] Recherche récursive dans `config/<modid>/` (dossiers des mods seulement, test unitaire).
+- [x] Commentaires à la main conservés dans les fichiers Confee : marqueur `#:` / `//:` sur les commentaires générés,
+      édition en place (`ConfeeFileMerger`, tests sur les 5 formats). Supprimer les anciens `confee_testmod*` de
+      `run/config` (écrits avec `# `, ils seraient vus comme écrits à la main).
 
 ## 3. Publication
 
@@ -43,8 +49,8 @@ prise, la reporter aussi dans `CONFEE_SPEC.md` (point en ✅ DÉCIDÉ, retiré d
 - [ ] Modrinth / CurseForge : créer les projets, vérifier les slugs, fournir les tokens (variables d'environnement).
 - [ ] Type de release : `beta` par défaut, à confirmer.
 - [ ] Maven pour les devs : Modrinth Maven, ou un Maven dédié (❓) ?
-- [ ] Pages des mods : brouillon prêt dans `docs/publishing/mod-page.md` + captures en anglais dans
-      `docs/publishing/screenshots/`, à relire.
+- [ ] Pages des mods : brouillon dans `docs/publishing/mod-page.md` relu le 2026-11-19 (ligne sur l'écran des mods
+      mise à jour pour `forceConfeeEditor`) ; reste la relecture de Lucas.
 - [ ] Publication réelle (`CONFEE_PUBLISH=true`). La simulation `publish-dry` passe pour les 4 envois.
 
 ## 4. Limites connues (V1.1 / V2)
@@ -52,7 +58,7 @@ prise, la reporter aussi dans `CONFEE_SPEC.md` (point en ✅ DÉCIDÉ, retiré d
 - [ ] Widgets custom sur les fichiers bruts des autres mods.
 - [ ] Listes d'objets dans un YAML d'un autre mod (lecture seule aujourd'hui).
 - [ ] Structures imbriquées : liste de listes, objet dans un objet, map dont les valeurs sont des objets.
-- [ ] Couleurs stockées en entier (int) dans les fichiers bruts : pas de pastille ni de color picker.
+- [x] Couleurs stockées en entier (int) dans les fichiers bruts : pastille + color picker (nom de clé + plage).
 - [ ] HOCON (prévu en V1.1).
 - [ ] Autres versions de Minecraft (une branche par version) et NeoForge 1.20.2 et plus.
 - [ ] V2 : synchro serveur → client, édition des configs serveur avec permissions, presets, migrations de version
