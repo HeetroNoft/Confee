@@ -17,6 +17,11 @@ import java.lang.annotation.Target;
 @Target(ElementType.FIELD)
 public @interface Item {
 
+    /**
+     * Only these entries ({@code only = {ItemFilter.FOOD_AND_DRINKS, ItemFilter.INGREDIENTS}}); several = any of them. Empty = all.
+     */
+    fr.heetstudio.confee.api.ItemFilter[] only() default {};
+
     /** Also suggest and accept tags ({@code #minecraft:logs}); needs a String or List&lt;String&gt; field. */
     boolean tags() default false;
 }

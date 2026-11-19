@@ -255,8 +255,26 @@ public final class OptionBuilder<T> {
         return registry(fr.heetstudio.confee.core.PseudoRegistries.MOD);
     }
 
+    /**
+     * Same as {@link #item()}, limited to some entries (several = any of them): suggestions, picker and field check.
+     * <p>Example: {@code b.string("snack", "minecraft:apple").item(ItemFilter.FOOD_AND_DRINKS).build()}</p>
+     */
+    public OptionBuilder<T> item(fr.heetstudio.confee.api.ItemFilter... only) {
+        delegate.filters(java.util.List.of(only));
+        return item();
+    }
+
     public OptionBuilder<T> item() {
         return registry("minecraft:item");
+    }
+
+    /**
+     * Same as {@link #block()}, limited to some entries (several = any of them): suggestions, picker and field check.
+     * <p>Example: {@code b.string("floor", "minecraft:stone").block(ItemFilter.NATURAL_BLOCKS).build()}</p>
+     */
+    public OptionBuilder<T> block(fr.heetstudio.confee.api.ItemFilter... only) {
+        delegate.filters(java.util.List.of(only));
+        return block();
     }
 
     /**
@@ -268,11 +286,29 @@ public final class OptionBuilder<T> {
     }
 
     /**
+     * Same as {@link #entity()}, limited to some entries (several = any of them): suggestions, picker and field check.
+     * <p>Example: {@code b.string("boss", "minecraft:zombie").entity(EntityFilter.MONSTER).build()}</p>
+     */
+    public OptionBuilder<T> entity(fr.heetstudio.confee.api.EntityFilter... only) {
+        delegate.filters(java.util.List.of(only));
+        return entity();
+    }
+
+    /**
      * Entity type ID ({@code minecraft:zombie}): suggestions, spawn egg icons, picker.
      * <p>Example: {@code b.string("favoriteMob", "minecraft:axolotl").entity().build()}</p>
      */
     public OptionBuilder<T> entity() {
         return registry("minecraft:entity_type");
+    }
+
+    /**
+     * Same as {@link #biome()}, limited to some entries (several = any of them): suggestions, picker and field check.
+     * <p>Example: {@code b.string("home", "minecraft:plains").biome(BiomeFilter.OVERWORLD).build()}</p>
+     */
+    public OptionBuilder<T> biome(fr.heetstudio.confee.api.BiomeFilter... only) {
+        delegate.filters(java.util.List.of(only));
+        return biome();
     }
 
     /**
@@ -300,11 +336,29 @@ public final class OptionBuilder<T> {
     }
 
     /**
+     * Same as {@link #enchantment()}, limited to some entries (several = any of them): suggestions, picker and field check.
+     * <p>Example: {@code b.string("favorite", "minecraft:sharpness").enchantment(EnchantmentFilter.WEAPON).build()}</p>
+     */
+    public OptionBuilder<T> enchantment(fr.heetstudio.confee.api.EnchantmentFilter... only) {
+        delegate.filters(java.util.List.of(only));
+        return enchantment();
+    }
+
+    /**
      * Enchantment ID ({@code minecraft:sharpness}): enchanted book icons, picker.
      * <p>Example: {@code b.string("favorite", "minecraft:mending").enchantment().build()}</p>
      */
     public OptionBuilder<T> enchantment() {
         return registry("minecraft:enchantment");
+    }
+
+    /**
+     * Same as {@link #effect()}, limited to some entries (several = any of them): suggestions, picker and field check.
+     * <p>Example: {@code b.string("curse", "minecraft:poison").effect(EffectFilter.HARMFUL).build()}</p>
+     */
+    public OptionBuilder<T> effect(fr.heetstudio.confee.api.EffectFilter... only) {
+        delegate.filters(java.util.List.of(only));
+        return effect();
     }
 
     /**

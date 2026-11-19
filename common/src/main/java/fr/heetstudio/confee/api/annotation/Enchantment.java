@@ -17,6 +17,11 @@ import java.lang.annotation.Target;
 @Target(ElementType.FIELD)
 public @interface Enchantment {
 
+    /**
+     * Only these entries ({@code only = EnchantmentFilter.WEAPON}); several = any of them. Empty = all.
+     */
+    fr.heetstudio.confee.api.EnchantmentFilter[] only() default {};
+
     /** Also suggest and accept tags ({@code #minecraft:...}); needs a String or List&lt;String&gt; field. */
     boolean tags() default false;
 }

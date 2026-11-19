@@ -17,6 +17,11 @@ import java.lang.annotation.Target;
 @Target(ElementType.FIELD)
 public @interface Entity {
 
+    /**
+     * Only these entries ({@code only = EntityFilter.MONSTER}); several = any of them. Empty = all.
+     */
+    fr.heetstudio.confee.api.EntityFilter[] only() default {};
+
     /** Also suggest and accept tags ({@code #minecraft:...}); needs a String or List&lt;String&gt; field. */
     boolean tags() default false;
 }
