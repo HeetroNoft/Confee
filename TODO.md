@@ -50,9 +50,11 @@ Toutes tranchées par Lucas le 2026-11-19 et reportées dans `CONFEE_SPEC.md` (�
 
 - [x] Lien du dépôt dans les métadonnées (`mod_source_url` dans `gradle.properties`). Le dépôt est privé : les liens
       ne marcheront pour les joueurs qu'une fois le dépôt public.
-- [ ] Captures de référence Bedrock (`docs/ui-reference/`) : les garder si le dépôt devient public ?
-- [ ] Modrinth / CurseForge : créer les projets, vérifier les slugs, fournir les tokens (variables d'environnement).
-- [ ] Type de release : `beta` par défaut, à confirmer.
+- [x] Captures de référence Bedrock (`docs/ui-reference/`) : **retirées du dépôt public** (2026-11-19), gardées en
+      local et ignorées par Git. Reste : elles sont encore dans l'historique (commit `b0a565f`), à nettoyer avant de
+      rendre le dépôt public.
+- [x] Modrinth / CurseForge : projets créés (Modrinth `itTlrYl0`, CurseForge `1817213`, IDs dans `gradle.properties`). Reste : les tokens en variables d'environnement au moment de publier.
+- [x] Type de release : **`beta`** (validé le 2026-11-19).
 - [ ] Maven pour les devs : Modrinth Maven, ou un Maven dédié (❓) ?
 - [ ] Pages des mods : brouillon dans `docs/publishing/mod-page.md` relu le 2026-11-19 (ligne sur l'écran des mods
       mise à jour pour `forceConfeeEditor`) ; reste la relecture de Lucas.

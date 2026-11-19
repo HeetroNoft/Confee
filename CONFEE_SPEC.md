@@ -813,8 +813,11 @@ fileMappings = ["xaerominimap=xaerominimap.txt"]
 
 ✅ DÉCIDÉ / implémenté (étape 10) :
 - README développeur en **anglais** (`README.md`), `CHANGELOG.md`.
-- Publication : plugin `me.modmuss50.mod-publish-plugin` 0.8.4, **essai à blanc par défaut** ; publication réelle seulement avec `CONFEE_PUBLISH=true` et les tokens en variables d'environnement (`MODRINTH_TOKEN`, `MODRINTH_PROJECT_ID`, `CURSEFORGE_TOKEN`, `CURSEFORGE_PROJECT_ID`). Jar Fabric → Fabric + Quilt (requiert fabric-api, optionnel modmenu) ; jar Forge → Forge + NeoForge. CurseForge : client requis, serveur optionnel.
-- 🟡 À VALIDER : type de release par défaut `beta` (`release_type` dans `gradle.properties`).
+- Publication : plugin `me.modmuss50.mod-publish-plugin` 0.8.4, **essai à blanc par défaut** ; publication réelle seulement avec `CONFEE_PUBLISH=true` et les tokens en variables d'environnement (`MODRINTH_TOKEN`, `CURSEFORGE_TOKEN`). IDs des projets dans `gradle.properties` (Modrinth `itTlrYl0`, CurseForge `1817213`), surchargeables par `MODRINTH_PROJECT_ID` / `CURSEFORGE_PROJECT_ID`. Jar Fabric → Fabric + Quilt (requiert fabric-api, optionnel modmenu) ; jar Forge → Forge + NeoForge. CurseForge : client requis, serveur optionnel.
+- ✅ DÉCIDÉ (Lucas, 2026-11-19) : type de release `beta` (`release_type` dans `gradle.properties`).
+- ✅ DÉCIDÉ (Lucas, 2026-11-19) : la licence reste **LGPL-3.0** (licences « source disponible » type PolyForm Shield écartées).
+- ✅ DÉCIDÉ (Lucas, 2026-11-19) : CurseForge, distribution par des tiers **autorisée** (launchers tiers via l'API).
+- ✅ DÉCIDÉ (Lucas, 2026-11-19) : les captures Bedrock de `docs/ui-reference/` restent **en local**, hors du dépôt public (ignorées par Git).
 - Maven pour les devs : **plus tard**.
 - Slug `confee` libre sur Modrinth (vérifié). CurseForge : à vérifier par Lucas (API à clé).
 - Logo, URL du dépôt / page du mod : à fournir par Lucas (pas encore dans `fabric.mod.json` / `mods.toml`).
