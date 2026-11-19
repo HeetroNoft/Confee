@@ -61,7 +61,9 @@ Toutes tranchées par Lucas le 2026-11-19 et reportées dans `CONFEE_SPEC.md` (�
       `maven.modrinth:confee:<version>`.
 - [x] Pages des mods : remplies par Lucas sur Modrinth et CurseForge (2026-11-19), à partir de
       `docs/publishing/mod-page.md`.
-- [ ] Publication réelle (`CONFEE_PUBLISH=true`). La simulation `publish-dry` passe pour les 4 envois.
+- [x] Publication réelle de la **0.1.0 beta** (2026-11-19) : Modrinth (versions `hFtdOOSX` Fabric, `WjjCG70R`
+      Forge), CurseForge (fichiers `9704565` Fabric, `9704564` Forge), release GitHub `0.1.0+1.20.1` (pre-release,
+      les 2 jars). Reste : validation des projets par la modération Modrinth et CurseForge.
 
 ## 4. Limites connues (V1.1 / V2)
 
