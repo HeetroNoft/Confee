@@ -48,11 +48,12 @@ Toutes tranchées par Lucas le 2026-11-19 et reportées dans `CONFEE_SPEC.md` (�
 
 ## 3. Publication
 
-- [x] Lien du dépôt dans les métadonnées (`mod_source_url` dans `gradle.properties`). Le dépôt est privé : les liens
-      ne marcheront pour les joueurs qu'une fois le dépôt public.
-- [x] Captures de référence Bedrock (`docs/ui-reference/`) : **retirées du dépôt public** (2026-11-19), gardées en
-      local et ignorées par Git. Reste : elles sont encore dans l'historique (commit `b0a565f`), à nettoyer avant de
-      rendre le dépôt public.
+- [x] Lien du dépôt dans les métadonnées (`mod_source_url` dans `gradle.properties`).
+- [x] Captures de référence Bedrock (`docs/ui-reference/`) : **retirées du dépôt** (2026-11-19), gardées en local et
+      ignorées par Git ; historique réécrit pour les en retirer (force push le 2026-11-19).
+- [x] GitHub (2026-11-19) : dépôt **public**, description, site (page CurseForge), topics, `CONTRIBUTING.md`,
+      modèles d'issue et de PR, CI GitHub Actions (`./gradlew build`), protection de `1.20.1` (CI `build` + 1
+      approbation pour les PR, pas de force push ; l'admin n'est pas bloqué).
 - [x] Modrinth / CurseForge : projets créés (Modrinth `itTlrYl0`, CurseForge `1817213`, IDs dans `gradle.properties`). Reste : les tokens en variables d'environnement au moment de publier.
 - [x] Type de release : **`beta`** (validé le 2026-11-19).
 - [ ] Maven pour les devs : Modrinth Maven, ou un Maven dédié (❓) ?
