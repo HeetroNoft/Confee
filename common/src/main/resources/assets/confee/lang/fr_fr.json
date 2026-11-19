@@ -24,6 +24,8 @@
   "confee.tooltip.move_up": "Monter",
   "confee.tooltip.move_down": "Descendre",
   "confee.tooltip.save_blocked": "Corrige d'abord les champs en rouge",
+  "confee.modal.list_failed.title": "Impossible de modifier la liste",
+  "confee.modal.list_failed.message": "Le fichier n'a pas pu être modifié. Les détails sont dans le journal du jeu.",
   "confee.modal.unsaved.title": "Modifications non enregistrées",
   "confee.modal.unsaved.message": "Enregistrer les modifications avant de quitter ?",
   "confee.modal.reset_all.title": "Tout réinitialiser ?",

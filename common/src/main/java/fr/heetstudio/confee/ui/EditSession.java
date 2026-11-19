@@ -43,7 +43,12 @@ public final class EditSession {
     }
 
     public boolean isDirty() {
-        return !pending.isEmpty();
+        return !pending.isEmpty() || handle.hasUnsavedStructure();
+    }
+
+    /** Values changed on screen and not saved yet. */
+    public Map<Option<?>, Object> pendingValues() {
+        return java.util.Collections.unmodifiableMap(pending);
     }
 
     public boolean isChanged(Option<?> option) {
@@ -70,6 +75,7 @@ public final class EditSession {
 
     public void discard() {
         pending.clear();
+        handle.discard();
     }
 
     /**
@@ -87,7 +93,7 @@ public final class EditSession {
             restart |= option.requiresRestart();
         }
         pending.clear();
-        if (!changed.isEmpty()) {
+        if (!changed.isEmpty() || handle.hasUnsavedStructure()) {
             handle.fireOnChange();
             handle.save();
         }

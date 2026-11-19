@@ -11,22 +11,29 @@ import fr.heetstudio.confee.core.FileStamp;
 import fr.heetstudio.confee.core.Option;
 import fr.heetstudio.confee.core.Section;
 import fr.heetstudio.confee.format.AtomicFiles;
+import fr.heetstudio.confee.core.ListActions;
 import fr.heetstudio.confee.format.FormatException;
+import fr.heetstudio.confee.format.ListEdits;
+import fr.heetstudio.confee.format.ParsedList;
 import fr.heetstudio.confee.format.ParsedDocument;
 import fr.heetstudio.confee.format.ParsedValue;
 import fr.heetstudio.confee.format.SourceText;
 import fr.heetstudio.confee.format.FormatAdapter;
 import fr.heetstudio.confee.format.Formats;
+import fr.heetstudio.confee.format.hocon.HoconParser;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.nio.charset.CharacterCodingException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
+import java.util.function.BiFunction;
 
 /**
  * Config file of a mod that does not use Confee (spec 8), edited in place.
@@ -51,10 +58,24 @@ public final class ExternalConfig implements EditableConfig {
     private String problem;
     @Nullable
     private ConfigSchema schema;
-    @Nullable
-    private ParsedDocument document;
-    private Map<Option<?>, ParsedValue> bindings = Map.of();
-    private FileStamp stamp = FileStamp.MISSING;
+    /** The file, then the files it includes (HOCON); each with its text on disk and its original copy. */
+    private List<Member> members = List.of();
+    private Map<Option<?>, RawSchemaBuilder.Binding> bindings = Map.of();
+    /** Texts changed in memory by list changes (spec 8.2 bis), written on "Save". */
+    private final Map<Path, String> working = new LinkedHashMap<>();
+
+    /**
+     * One file of the config.
+     *
+     * @param file     the file
+     * @param document its values (from {@link #working} when changed in memory)
+     * @param diskText its text on disk
+     * @param stamp    its size and date when read
+     * @param original its copy made before Confee's first change, parsed, or null
+     */
+    private record Member(Path file, ParsedDocument document, String diskText, FileStamp stamp,
+                          @Nullable ParsedDocument original) {
+    }
 
     private ExternalConfig(String modId, Path file, Path configDir, boolean backups) {
         this.modId = modId;
@@ -83,17 +104,16 @@ public final class ExternalConfig implements EditableConfig {
         return dot < 0 ? "" : name.substring(dot + 1).toLowerCase(Locale.ROOT);
     }
 
+    /** Reads the files from disk, forgetting what was changed in memory. */
     private void read() {
+        working.clear();
         if (!isSupported(file)) {
             status = Status.UNSUPPORTED_FORMAT;
             problem = extension(file).isEmpty() ? "unknown format" : "." + extension(file);
             return;
         }
-        FormatAdapter adapter = Formats.forFile(file).orElseThrow();
         try {
-            SourceText source = SourceText.decode(Files.readAllBytes(file));
-            document = adapter.parse(source);
-            stamp = FileStamp.of(file);
+            members = load(Map.of());
         } catch (CharacterCodingException e) {
             fail("not UTF-8 text");
             return;
@@ -104,10 +124,159 @@ public final class ExternalConfig implements EditableConfig {
             fail(e.getMessage());
             return;
         }
-        RawSchemaBuilder.Result result = RawSchemaBuilder.build(document, readOriginal());
+        status = Status.OK;
+        problem = null;
+        buildSchema();
+    }
+
+    /** Reads the config, with the texts of {@code texts} in place of the files' content. */
+    private List<Member> load(Map<Path, String> texts) throws IOException, FormatException {
+        FormatAdapter adapter = Formats.forFile(file).orElseThrow();
+        SourceText main = source(file, texts);
+        if (adapter != Formats.HOCON) {
+            ParsedDocument document = adapter.parse(main);
+            return List.of(member(file, document, List.of()));
+        }
+        HoconParser.IncludeResolver resolver = (from, name) -> {
+            Path found = includedFile(from == null ? file : from, name);
+            if (found == null) {
+                return null;
+            }
+            try {
+                return new HoconParser.Source(found, source(found, texts));
+            } catch (IOException e) {
+                throw new FormatException("Cannot read the included file " + name + ": " + e.getMessage(), 1, 1);
+            }
+        };
+        List<Member> out = new ArrayList<>();
+        for (HoconParser.Member m : HoconParser.parse(file, main, resolver)) {
+            out.add(member(Objects.requireNonNull(m.file()).toAbsolutePath().normalize(), m.document(), m.prefix()));
+        }
+        return out;
+    }
+
+    /** The file of {@code include "name"} next to the including file, inside the config folder; null when missing. */
+    @Nullable
+    private Path includedFile(Path from, String name) {
+        Path base = from.toAbsolutePath().normalize().getParent();
+        for (String candidate : List.of(name, name + ".conf", name + ".json")) {
+            Path found = base.resolve(candidate).toAbsolutePath().normalize();
+            // never write outside the config folder
+            if (found.startsWith(configDir) && Files.isRegularFile(found)) {
+                return found;
+            }
+        }
+        return null;
+    }
+
+    private SourceText source(Path path, Map<Path, String> texts) throws IOException {
+        SourceText disk = SourceText.decode(Files.readAllBytes(path));
+        String text = texts.get(path);
+        return text == null ? disk : new SourceText(text, disk.bom(), disk.lineSeparator());
+    }
+
+    private Member member(Path path, ParsedDocument document, List<String> prefix) throws IOException {
+        String diskText = SourceText.decode(Files.readAllBytes(path)).text();
+        return new Member(path, document, diskText, FileStamp.of(path), readOriginal(path, prefix));
+    }
+
+    private void buildSchema() {
+        List<ParsedDocument> documents = new ArrayList<>();
+        List<ParsedDocument> originals = new ArrayList<>();
+        for (Member m : members) {
+            documents.add(m.document());
+            originals.add(m.original());
+        }
+        RawSchemaBuilder.Result result = RawSchemaBuilder.build(documents, originals, this::listActions);
         bindings = result.bindings();
         schema = new ConfigSchema(modId, readableName(), ConfigScope.CLIENT, confeeFormat(), file, Theme.DEFAULT,
                 ConfigSource.RAW_FILE, result.root());
+    }
+
+    // ------------------------------------------------------------------ list elements (spec 8.2 bis)
+
+    private ListActions listActions(List<String> path) {
+        return new ListActions() {
+            @Override
+            public boolean add(Map<Option<?>, Object> pending) {
+                return changeList(path, pending, ListEdits::duplicateLast);
+            }
+
+            @Override
+            public boolean remove(int index, Map<Option<?>, Object> pending) {
+                return changeList(path, pending, (text, list) -> ListEdits.remove(text, list, index));
+            }
+
+            @Override
+            public boolean move(int index, int delta, Map<Option<?>, Object> pending) {
+                return changeList(path, pending, (text, list) -> ListEdits.move(text, list, index, delta));
+            }
+        };
+    }
+
+    /**
+     * Keeps the values edited on screen, then changes the list, in memory only: "Save" writes the result, "Cancel"
+     * reads the files again. The schema is rebuilt (the screen opens it again).
+     */
+    private boolean changeList(List<String> path, Map<Option<?>, Object> pending,
+                               BiFunction<String, ParsedList, String> change) {
+        if (status != Status.OK || members.isEmpty()) {
+            return false;
+        }
+        try {
+            Map<Path, String> texts = editedTexts(pending);
+            List<Member> withValues = load(texts);
+            Member owner = withValues.stream().filter(m -> m.document().list(path).isPresent()).findFirst()
+                    .orElseThrow(() -> new IllegalStateException("no list " + String.join(".", path)));
+            ParsedList list = owner.document().list(path).orElseThrow();
+            texts.put(owner.file(), change.apply(owner.document().source().text(), list));
+            List<Member> changed = load(texts);
+            working.clear();
+            for (Member m : changed) {
+                if (!m.document().source().text().equals(m.diskText())) {
+                    working.put(m.file(), m.document().source().text());
+                }
+            }
+            members = changed;
+        } catch (IOException | FormatException | RuntimeException e) {
+            ConfeeLog.warn("Cannot change the list {} of {}: {}", String.join(".", path), relativePath(), e.getMessage());
+            return false;
+        }
+        buildSchema();
+        return true;
+    }
+
+    /** The text of every file with these option values written in. */
+    private Map<Path, String> editedTexts(Map<Option<?>, Object> values) {
+        List<Map<ParsedValue, Object>> changes = new ArrayList<>();
+        for (int i = 0; i < members.size(); i++) {
+            changes.add(new LinkedHashMap<>());
+        }
+        values.forEach((option, value) -> {
+            RawSchemaBuilder.Binding binding = bindings.get(option);
+            if (binding != null) {
+                changes.get(binding.file()).put(binding.value(), toFileValue(value));
+            }
+        });
+        Map<Path, String> texts = new LinkedHashMap<>();
+        FormatAdapter adapter = Formats.forFile(file).orElseThrow();
+        for (int i = 0; i < members.size(); i++) {
+            Member m = members.get(i);
+            texts.put(m.file(), m.document().edit(changes.get(i), adapter.values()));
+        }
+        return texts;
+    }
+
+    @Override
+    public boolean hasUnsavedStructure() {
+        return !working.isEmpty();
+    }
+
+    @Override
+    public void discard() {
+        if (!working.isEmpty()) {
+            read();
+        }
     }
 
     /** Closest Confee format, for the model only (the file keeps its own format). */
@@ -124,18 +293,21 @@ public final class ExternalConfig implements EditableConfig {
     private void fail(String reason) {
         status = Status.UNREADABLE;
         problem = reason;
+        members = List.of();
         ConfeeLog.warn("Cannot read {} of mod {}: {}", relativePath(), modId, reason);
     }
 
-    /** The backup made before Confee's first change, parsed; null when there is none. */
+    /** The backup of a file made before Confee's first change, parsed; null when there is none. */
     @Nullable
-    private ParsedDocument readOriginal() {
-        Path backup = backupPath();
+    private ParsedDocument readOriginal(Path path, List<String> prefix) {
+        Path backup = backupPath(path);
         if (!Files.isRegularFile(backup)) {
             return null;
         }
         try {
-            return Formats.forFile(file).orElseThrow().parse(SourceText.decode(Files.readAllBytes(backup)));
+            SourceText text = SourceText.decode(Files.readAllBytes(backup));
+            FormatAdapter adapter = Formats.forFile(file).orElseThrow();
+            return adapter == Formats.HOCON ? HoconParser.parse(text, prefix) : adapter.parse(text);
         } catch (IOException | FormatException e) {
             ConfeeLog.warn("Ignoring unreadable backup {}: {}", backup, e.getMessage());
             return null;
@@ -149,33 +321,39 @@ public final class ExternalConfig implements EditableConfig {
         return Objects.requireNonNull(schema, "file not readable");
     }
 
-    /** Surgical save of the values changed in memory (spec 7.2). */
+    /**
+     * Surgical save of the values changed in memory (spec 7.2), in the file each value comes from (an included HOCON
+     * file is written in place).
+     */
     @Override
     public void save() {
-        if (status != Status.OK || document == null) {
+        if (status != Status.OK || members.isEmpty()) {
             return;
         }
-        Map<ParsedValue, Object> changes = new LinkedHashMap<>();
-        bindings.forEach((option, parsed) -> changes.put(parsed, toFileValue(option.get())));
-        String text;
+        Map<Option<?>, Object> values = new LinkedHashMap<>();
+        bindings.keySet().forEach(option -> values.put(option, option.get()));
+        Map<Path, String> texts;
         try {
-            text = document.edit(changes, Formats.forFile(file).orElseThrow().values());
+            texts = editedTexts(values);
         } catch (IllegalArgumentException e) {
             ConfeeLog.error("Cannot save " + relativePath(), e);
             return;
         }
-        if (text.equals(document.source().text())) {
-            return;
-        }
-        try {
-            if (backups) {
-                backupOriginal();
+        for (Member m : members) {
+            String text = texts.get(m.file());
+            if (text == null || text.equals(m.diskText())) {
+                continue;
             }
-            AtomicFiles.write(file, document.source().encode(text));
-            ConfeeLog.info("Saved {} (mod {})", relativePath(), modId);
-        } catch (IOException e) {
-            ConfeeLog.error("Cannot write " + relativePath(), e);
-            return;
+            String name = relativePath(m.file(), configDir);
+            try {
+                if (backups) {
+                    backupOriginal(m.file());
+                }
+                AtomicFiles.write(m.file(), m.document().source().encode(text));
+                ConfeeLog.info("Saved {} (mod {})", name, modId);
+            } catch (IOException e) {
+                ConfeeLog.error("Cannot write " + name, e);
+            }
         }
         // positions changed: read again
         read();
@@ -187,14 +365,14 @@ public final class ExternalConfig implements EditableConfig {
     }
 
     /** Spec 8.3: copy of the original file at the first change, never overwritten afterwards. */
-    private void backupOriginal() throws IOException {
-        Path backup = backupPath();
+    private void backupOriginal(Path path) throws IOException {
+        Path backup = backupPath(path);
         if (Files.exists(backup)) {
             return;
         }
         Files.createDirectories(backup.getParent());
-        Files.copy(file, backup);
-        ConfeeLog.info("Backed up the original {} to {}", relativePath(), configDir.relativize(backup));
+        Files.copy(path, backup);
+        ConfeeLog.info("Backed up the original {} to {}", relativePath(path, configDir), configDir.relativize(backup));
     }
 
     @Override
@@ -204,38 +382,56 @@ public final class ExternalConfig implements EditableConfig {
 
     @Override
     public boolean changedOnDisk() {
-        return status == Status.OK && !FileStamp.of(file).equals(stamp);
+        return status == Status.OK && members.stream().anyMatch(m -> !FileStamp.of(m.file()).equals(m.stamp()));
     }
 
     // ------------------------------------------------------------------ original file
 
     public boolean hasBackup() {
-        return Files.isRegularFile(backupPath());
+        return members.stream().anyMatch(m -> Files.isRegularFile(backupPath(m.file())))
+                || Files.isRegularFile(backupPath());
     }
 
     /**
-     * "Reset all" for a raw file (spec 8.3): puts the original copy back.
+     * "Reset all" for a raw file (spec 8.3): puts the original copies back (the file and the files it includes).
      *
      * @return false when there is no backup or it cannot be copied
      */
     public boolean restoreOriginal() {
-        Path backup = backupPath();
-        if (!Files.isRegularFile(backup)) {
-            return false;
+        List<Path> files = new ArrayList<>();
+        files.add(file);
+        members.forEach(m -> {
+            if (!files.contains(m.file())) {
+                files.add(m.file());
+            }
+        });
+        boolean any = false;
+        for (Path path : files) {
+            Path backup = backupPath(path);
+            if (!Files.isRegularFile(backup)) {
+                continue;
+            }
+            try {
+                AtomicFiles.write(path, Files.readAllBytes(backup));
+                ConfeeLog.info("Restored the original {}", relativePath(path, configDir));
+                any = true;
+            } catch (IOException e) {
+                ConfeeLog.error("Cannot restore " + relativePath(path, configDir), e);
+                return false;
+            }
         }
-        try {
-            AtomicFiles.write(file, Files.readAllBytes(backup));
-            ConfeeLog.info("Restored the original {}", relativePath());
+        if (any) {
             read();
-            return true;
-        } catch (IOException e) {
-            ConfeeLog.error("Cannot restore " + relativePath(), e);
-            return false;
         }
+        return any;
     }
 
     public Path backupPath() {
-        Path relative = file.startsWith(configDir) ? configDir.relativize(file) : file.getFileName();
+        return backupPath(file);
+    }
+
+    private Path backupPath(Path path) {
+        Path relative = path.startsWith(configDir) ? configDir.relativize(path) : path.getFileName();
         return configDir.resolve(ConfigDiscovery.CONFEE_DIR).resolve("backups").resolve(relative);
     }
 

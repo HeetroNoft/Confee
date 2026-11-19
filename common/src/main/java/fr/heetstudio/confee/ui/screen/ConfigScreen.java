@@ -289,7 +289,10 @@ public final class ConfigScreen extends ConfeeScreen {
                 break;
             }
             Node child = children.get(i);
-            if (child instanceof Option<?> option && !option.hidden()) {
+            if (section.listActions() != null && child instanceof Section element
+                    && fr.heetstudio.confee.format.ParsedList.indexOf(element.key()) >= 0) {
+                rows.add(listElementRow(section, element, i == 0, i == children.size() - 1));
+            } else if (child instanceof Option<?> option && !option.hidden()) {
                 rows.add(createRow(option));
             } else if (child instanceof Section sub && !category.general() && hasVisibleOptions(sub)) {
                 ButtonWidget navButton = new ButtonWidget(ui, Labels.section(schema, sub), ButtonWidget.Style.NAVIGATION, () -> {
@@ -302,6 +305,80 @@ public final class ConfigScreen extends ConfeeScreen {
                 rows.add(new Row.Single(ui, navButton));
             }
         }
+        if (section.listActions() != null && !children.isEmpty()) {
+            fr.heetstudio.confee.core.ListActions actions = section.listActions();
+            rows.add(new Row.Single(ui, new ButtonWidget(ui, Component.translatable("confee.button.add"), ButtonWidget.Style.NORMAL,
+                    () -> changeList(() -> actions.add(session.pendingValues())))));
+        }
+    }
+
+    // ------------------------------------------------------------------ lists of objects / lists (spec 8.2 bis)
+
+    private Row listElementRow(Section list, Section element, boolean first, boolean last) {
+        fr.heetstudio.confee.core.ListActions actions = list.listActions();
+        int index = fr.heetstudio.confee.format.ParsedList.indexOf(element.key());
+        ButtonWidget open = new ButtonWidget(ui, Labels.section(schema, element), ButtonWidget.Style.NAVIGATION, () -> {
+            nav.add(element);
+            scroll = 0;
+            rebuildRows();
+        });
+        open.setTooltip(Labels.description(schema, element, element.path()));
+        return new Row.ListElement(ui, open, first, last,
+                () -> changeList(() -> actions.move(index, -1, session.pendingValues())),
+                () -> changeList(() -> actions.move(index, 1, session.pendingValues())),
+                () -> changeList(() -> actions.remove(index, session.pendingValues())));
+    }
+
+    /**
+     * Runs a list change (it keeps the values being edited), then opens the rebuilt file on the same category and
+     * sub-screen. The change stays in memory until "Save".
+     */
+    private void changeList(java.util.function.BooleanSupplier change) {
+        if (!change.getAsBoolean()) {
+            Modal modal = new Modal(ui, Component.translatable("confee.modal.list_failed.title"),
+                    Component.translatable("confee.modal.list_failed.message"), this::closeOverlay);
+            modal.button(Component.translatable("confee.button.ok"), true, this::closeOverlay);
+            openOverlay(modal);
+            return;
+        }
+        ConfigScreen next = new ConfigScreen(parent, handle);
+        String categoryPath = categories.isEmpty() ? "" : categories.get(Math.min(selected, categories.size() - 1)).section().path();
+        next.restore(categoryPath, nav.stream().map(Section::path).toList(), scroll);
+        minecraft.setScreen(next);
+    }
+
+    /** Opens the category and the sub-screens at these paths, as far as they still exist. */
+    private void restore(String categoryPath, List<String> navPaths, double previousScroll) {
+        for (int i = 0; i < categories.size(); i++) {
+            if (categories.get(i).section().path().equals(categoryPath)) {
+                selected = i;
+                break;
+            }
+        }
+        for (String path : navPaths) {
+            Section found = findSection(schema.root(), path);
+            if (found == null) {
+                break;
+            }
+            nav.add(found);
+        }
+        scroll = previousScroll;
+    }
+
+    @Nullable
+    private static Section findSection(Section from, String path) {
+        if (from.path().equals(path)) {
+            return from;
+        }
+        for (Node child : from.children()) {
+            if (child instanceof Section sub && (path.equals(sub.path()) || path.startsWith(sub.path() + "."))) {
+                Section found = findSection(sub, path);
+                if (found != null) {
+                    return found;
+                }
+            }
+        }
+        return null;
     }
 
     /** Spec 10.4 B: live filter on name + description of every category, grouped by category. */
@@ -396,13 +473,15 @@ public final class ConfigScreen extends ConfeeScreen {
     /** The mod's own widget: {@code @Widget}, else {@code ConfeeWidgets.forOption/forType}; null when none or broken. */
     @Nullable
     private ConfeeWidget customWidget(Option<?> option, Component name) {
-        if (schema.source() == ConfigSource.RAW_FILE) {
+        if (option.readOnly() && schema.source() == ConfigSource.RAW_FILE) {
             return null;
         }
-        // Confee configs and Forge configs ("modid:client", "modid:common"...)
+        // Confee configs, Forge configs ("modid:client", "modid:common"...) and other files ("file:modid/path")
+        String configId = handle instanceof ExternalConfig external
+                ? fr.heetstudio.confee.api.client.ConfeeWidgets.fileId(schema.modId(), external.relativePath()) : schema.id();
         java.util.function.Supplier<?> factory = option.widgetFactory();
         if (factory == null) {
-            factory = fr.heetstudio.confee.api.client.ConfeeWidgets.lookup(schema.id(), schema.modId(), option.path(), valueClass(option));
+            factory = fr.heetstudio.confee.api.client.ConfeeWidgets.lookup(configId, schema.modId(), option.path(), valueClass(option));
         }
         if (factory == null) {
             return null;
@@ -689,6 +768,65 @@ public final class ConfigScreen extends ConfeeScreen {
      *
      * @return false when the option is not shown
      */
+    /**
+     * Shows the section at this dotted path (its category, then each sub-screen down to it), like clicking the
+     * navigation rows. Used by the test mod's screenshot script.
+     */
+    public boolean openSection(String path) {
+        for (int i = 0; i < categories.size(); i++) {
+            Category category = categories.get(i);
+            String base = category.section().path();
+            if (category.general() || !(path.equals(base) || path.startsWith(base + "."))) {
+                continue;
+            }
+            List<Section> chain = new ArrayList<>();
+            Section current = category.section();
+            while (!current.path().equals(path)) {
+                Section next = null;
+                for (Node child : current.children()) {
+                    if (child instanceof Section sub && (path.equals(sub.path()) || path.startsWith(sub.path() + "."))) {
+                        next = sub;
+                        break;
+                    }
+                }
+                if (next == null) {
+                    return false;
+                }
+                chain.add(next);
+                current = next;
+            }
+            selected = i;
+            nav.clear();
+            nav.addAll(chain);
+            scroll = 0;
+            rebuildRows();
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * Runs "+ Add" ({@code add}), ▲ ({@code up}), ▼ ({@code down}) or ✕ ({@code remove}) of a list of objects / lists
+     * like its buttons do. Used by the test mod's screenshot script.
+     */
+    public boolean runListAction(String listPath, String action, int index) {
+        Section list = findSection(schema.root(), listPath);
+        if (list == null || list.listActions() == null) {
+            return false;
+        }
+        fr.heetstudio.confee.core.ListActions actions = list.listActions();
+        switch (action) {
+            case "add" -> changeList(() -> actions.add(session.pendingValues()));
+            case "up" -> changeList(() -> actions.move(index, -1, session.pendingValues()));
+            case "down" -> changeList(() -> actions.move(index, 1, session.pendingValues()));
+            case "remove" -> changeList(() -> actions.remove(index, session.pendingValues()));
+            default -> {
+                return false;
+            }
+        }
+        return true;
+    }
+
     public boolean focusOption(String path) {
         for (Row row : rows) {
             if (row instanceof OptionRow optionRow && optionRow.option.path().equals(path) && !row.widgets().isEmpty()) {
@@ -1135,6 +1273,13 @@ public final class ConfigScreen extends ConfeeScreen {
             return;
         }
         onClose();
+    }
+
+    /** Closing without saving ("Cancel", Escape then "Don't save") forgets the list changes kept in memory. */
+    @Override
+    public void onClose() {
+        session.discard();
+        super.onClose();
     }
 
     @Override

@@ -6,6 +6,7 @@ import fr.heetstudio.confee.ui.render.Draw;
 import fr.heetstudio.confee.ui.render.Icon;
 import fr.heetstudio.confee.ui.widget.ButtonWidget;
 import fr.heetstudio.confee.ui.widget.ConfeeWidget;
+import fr.heetstudio.confee.ui.widget.IconButton;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.network.chat.Component;
 import net.minecraft.util.FormattedCharSequence;
@@ -227,6 +228,56 @@ abstract class Row {
         @Override
         List<ConfeeWidget> widgets() {
             return List.of(widget);
+        }
+    }
+
+    /**
+     * Element of a list of objects / lists (spec 8.2 bis): navigation button to its sub-screen, then move up, move
+     * down and remove.
+     */
+    static final class ListElement extends Row {
+        private static final int ICON = 16;
+        private final ButtonWidget open;
+        private final IconButton up;
+        private final IconButton down;
+        private final IconButton remove;
+
+        ListElement(Ui ui, ButtonWidget open, boolean first, boolean last, Runnable onUp, Runnable onDown, Runnable onRemove) {
+            super(ui);
+            Theme t = ui.theme();
+            this.open = open;
+            this.up = new IconButton(ui, Icon.ARROW_UP, Component.translatable("confee.tooltip.move_up"), ICON, t::textOnDark, onUp);
+            this.down = new IconButton(ui, Icon.ARROW_DOWN, Component.translatable("confee.tooltip.move_down"), ICON, t::textOnDark, onDown);
+            this.remove = new IconButton(ui, Icon.CROSS, Component.translatable("confee.tooltip.remove"), ICON, t::textOnDark, onRemove);
+            up.setEnabled(!first);
+            down.setEnabled(!last);
+        }
+
+        @Override
+        int layout(int x, int y, int width) {
+            this.x = x;
+            this.y = y;
+            this.width = width;
+            int icons = 3 * (ICON + 2);
+            open.setBounds(x, y, width - icons - 2, 20);
+            int ix = x + width - icons;
+            up.setBounds(ix, y + 2, ICON, ICON);
+            down.setBounds(ix + ICON + 2, y + 2, ICON, ICON);
+            remove.setBounds(ix + 2 * (ICON + 2), y + 2, ICON, ICON);
+            return height = 20;
+        }
+
+        @Override
+        void render(GuiGraphics g, int mouseX, int mouseY, float delta) {
+            open.render(g, mouseX, mouseY, delta);
+            up.render(g, mouseX, mouseY, delta);
+            down.render(g, mouseX, mouseY, delta);
+            remove.render(g, mouseX, mouseY, delta);
+        }
+
+        @Override
+        List<ConfeeWidget> widgets() {
+            return List.of(open, up, down, remove);
         }
     }
 }

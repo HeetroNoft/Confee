@@ -16,7 +16,7 @@ public final class Section implements Node {
 
     private final String key;
     @Nullable
-    private final String displayName;
+    private String displayName;
     @Nullable
     private String comment;
     private final List<Node> children = new ArrayList<>();
@@ -24,6 +24,8 @@ public final class Section implements Node {
     @Nullable
     private String icon;
     private String path = "";
+    @Nullable
+    private ListActions listActions;
 
     /** A decoration and the index of the child it is shown before ({@code children().size()} = at the end). */
     public record Placed(int index, fr.heetstudio.confee.api.Decoration decoration) {
@@ -59,6 +61,24 @@ public final class Section implements Node {
 
     public void setComment(@Nullable String comment) {
         this.comment = comment;
+    }
+
+    /** Changes the shown name (an element of a list named after its content: "#1 · stone"). */
+    public void setDisplayName(@Nullable String displayName) {
+        this.displayName = displayName;
+    }
+
+    /**
+     * When this section is a list whose children are its elements (spec 8.2 bis): how to add, remove and move them.
+     * Null for a plain section.
+     */
+    @Nullable
+    public ListActions listActions() {
+        return listActions;
+    }
+
+    public void setListActions(@Nullable ListActions listActions) {
+        this.listActions = listActions;
     }
 
     /** Dotted path from the root ({@code ""} for the root). */

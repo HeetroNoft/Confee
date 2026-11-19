@@ -138,7 +138,8 @@ class ExternalConfigTest {
                 "file order: the sub-table comes after the parent's keys");
         Section presets = (Section) root.find("presets").orElseThrow();
         Section first = (Section) presets.children().get(0);
-        assertTrue(((Option<?>) first.children().get(0)).readOnly(), "arrays of tables are read-only");
+        // spec 8.2 bis: the elements of an array of tables are edited one by one
+        assertFalse(((Option<?>) first.children().get(0)).readOnly(), "arrays of tables are editable");
     }
 
     @Test
@@ -256,5 +257,83 @@ class ExternalConfigTest {
         assertEquals("client", ExternalConfig.readableName("examplemod", dir.resolve("examplemod-client.toml"), dir));
         assertEquals("options", ExternalConfig.readableName("sodium", dir.resolve("sodium/options.toml"), dir));
         assertEquals("sodium/options.toml", ExternalConfig.relativePath(dir.resolve("sodium/options.toml"), dir));
+    }
+
+    // ------------------------------------------------------------------ HOCON (spec 7.1, V1.1)
+
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    @Test
+    void hoconIncludedValuesAreSavedInTheIncludedFile() throws Exception {
+        Path main = file("examplemod/main.conf", "# Main settings\ninclude \"defaults\"\nspeed = 2\nlabel = ${limits.max}\n");
+        Path defaults = file("examplemod/defaults.conf", "speed = 1\nlimits {\n  max = 10\n}\n");
+        String mainText = Files.readString(main);
+        ExternalConfig cfg = ExternalConfig.open("examplemod", main, config, true);
+        assertEquals(ExternalConfig.Status.OK, cfg.status(), String.valueOf(cfg.problem()));
+        Option speed = cfg.root().findOption("speed").orElseThrow();
+        assertEquals(2L, speed.get(), "the main file's value counts");
+        Option label = cfg.root().findOption("label").orElseThrow();
+        assertTrue(label.readOnly());
+        assertEquals("${limits.max} → 10", label.get());
+        Option max = cfg.root().findOption("limits.max").orElseThrow();
+
+        EditSession session = new EditSession(cfg);
+        session.set(max, 20L);
+        session.set(speed, 3L);
+        session.commit();
+        assertEquals("speed = 1\nlimits {\n  max = 20\n}\n", Files.readString(defaults));
+        assertEquals(mainText.replace("speed = 2", "speed = 3"), Files.readString(main));
+        assertTrue(Files.exists(config.resolve("confee/backups/examplemod/defaults.conf")), "each file has its backup");
+        assertTrue(Files.exists(config.resolve("confee/backups/examplemod/main.conf")));
+        assertEquals("${limits.max} → 20", cfg.root().findOption("label").orElseThrow().get());
+    }
+
+    // ------------------------------------------------------------------ lists of objects (spec 8.2 bis)
+
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    @Test
+    void listElementsAreAddedMovedAndRemovedInMemoryUntilSave() throws Exception {
+        String text = String.join("\n",
+                "{",
+                "  \"rules\": [",
+                "    { \"name\": \"a\", \"n\": 1 },",
+                "    { \"name\": \"b\", \"n\": 2 }",
+                "  ],",
+                "  \"grid\": [[1], [2, 3]]",
+                "}",
+                "");
+        Path f = file("examplemod.json", text);
+        ExternalConfig cfg = ExternalConfig.open("examplemod", f, config, true);
+        Section rules = (Section) cfg.root().find("rules").orElseThrow();
+        assertNotNull(rules.listActions());
+        assertEquals(List.of("#1 · a", "#2 · b"), rules.children().stream().map(n -> n.displayName()).toList());
+        Section grid = (Section) cfg.root().find("grid").orElseThrow();
+        assertEquals("#2 · 2, 3", grid.children().get(1).displayName());
+
+        // a value typed on screen is kept when an element is added
+        EditSession session = new EditSession(cfg);
+        Option n = cfg.root().findOption("rules.[1].n").orElseThrow();
+        session.set(n, 5L);
+        assertTrue(rules.listActions().add(session.pendingValues()));
+        assertTrue(cfg.hasUnsavedStructure());
+        assertEquals(text, Files.readString(f), "nothing written before Save");
+        rules = (Section) cfg.root().find("rules").orElseThrow();
+        assertEquals(3, rules.children().size());
+        assertEquals(5L, cfg.root().findOption("rules.[2].n").orElseThrow().get());
+
+        assertTrue(rules.listActions().move(2, -1, Map.of()));
+        rules = (Section) cfg.root().find("rules").orElseThrow();
+        assertTrue(rules.listActions().remove(0, Map.of()));
+
+        // "Save" writes everything at once; only the list changed
+        new EditSession(cfg).commit();
+        assertEquals(text.replace("{ \"name\": \"a\", \"n\": 1 }", "{ \"name\": \"b\", \"n\": 5 }")
+                .replace("\"n\": 2 }", "\"n\": 5 }"), Files.readString(f));
+        assertFalse(cfg.hasUnsavedStructure());
+
+        // "Cancel" forgets a change kept in memory
+        Section saved = (Section) cfg.root().find("rules").orElseThrow();
+        assertTrue(saved.listActions().remove(0, Map.of()));
+        new EditSession(cfg).discard();
+        assertEquals(2, ((Section) cfg.root().find("rules").orElseThrow()).children().size());
     }
 }

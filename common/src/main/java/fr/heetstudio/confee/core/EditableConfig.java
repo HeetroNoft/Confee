@@ -22,4 +22,13 @@ public interface EditableConfig {
     default boolean changedOnDisk() {
         return false;
     }
+
+    /** Changes waiting for "Save" that are not option values: list elements added, removed or moved (spec 8.2 bis). */
+    default boolean hasUnsavedStructure() {
+        return false;
+    }
+
+    /** "Cancel": forgets the changes of {@link #hasUnsavedStructure()}. */
+    default void discard() {
+    }
 }

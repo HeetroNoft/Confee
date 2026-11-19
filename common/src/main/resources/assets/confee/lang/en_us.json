@@ -24,6 +24,8 @@
   "confee.tooltip.move_up": "Move up",
   "confee.tooltip.move_down": "Move down",
   "confee.tooltip.save_blocked": "Fix the fields marked in red first",
+  "confee.modal.list_failed.title": "Cannot change the list",
+  "confee.modal.list_failed.message": "The file could not be changed. The details are in the game log.",
   "confee.modal.unsaved.title": "Unsaved changes",
   "confee.modal.unsaved.message": "Save your changes before leaving?",
   "confee.modal.reset_all.title": "Reset all options?",
