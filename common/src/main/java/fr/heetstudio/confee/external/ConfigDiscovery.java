@@ -19,7 +19,7 @@ import java.util.stream.Stream;
  * Finds the config files of mods that do not use Confee (spec 8.2, heuristic part). Pure logic over a directory.
  * <ul>
  *   <li>{@code config/<modid>.<ext>}, {@code config/<modid>-<suffix>.<ext>}, {@code config/<modid>_<suffix>.<ext>}</li>
- *   <li>every file of {@code config/<modid>/} (one level)</li>
+ *   <li>every file of {@code config/<modid>/}, sub-folders included (any depth)</li>
  *   <li>case-insensitive; '-', '_' and no separator are equivalent; the mod's display name is tried too</li>
  *   <li>skips excluded files (Confee / loader configs), backups ({@code .bak}, {@code .old}, {@code .broken-*}),
  *       files over 1 MB and binary files</li>
@@ -53,7 +53,7 @@ public final class ConfigDiscovery {
             return result;
         }
         Path root = configDir.toAbsolutePath().normalize();
-        for (Path file : candidates(root)) {
+        for (Path file : candidates(root, mods)) {
             if (excluded.contains(file) || !isEditableCandidate(file)) {
                 continue;
             }
@@ -82,16 +82,22 @@ public final class ConfigDiscovery {
         return result;
     }
 
-    /** Files directly in config/ and one level inside its sub-folders. */
-    private static List<Path> candidates(Path root) {
+    /**
+     * Files directly in config/, and every file inside the sub-folders named after a loaded mod, at any depth.
+     * Folders of no mod are not walked (they can be large). Symbolic links are not followed (no cycles).
+     */
+    private static List<Path> candidates(Path root, Collection<ModInfo> mods) {
         List<Path> out = new ArrayList<>();
         try (Stream<Path> top = Files.list(root)) {
             for (Path entry : (Iterable<Path>) top::iterator) {
                 if (Files.isRegularFile(entry)) {
                     out.add(entry.toAbsolutePath().normalize());
-                } else if (Files.isDirectory(entry) && !entry.getFileName().toString().equalsIgnoreCase(CONFEE_DIR)) {
-                    try (Stream<Path> inner = Files.list(entry)) {
+                } else if (Files.isDirectory(entry) && !entry.getFileName().toString().equalsIgnoreCase(CONFEE_DIR)
+                        && owner(entry.getFileName().toString(), false, mods) != null) {
+                    try (Stream<Path> inner = Files.walk(entry)) {
                         inner.filter(Files::isRegularFile).map(p -> p.toAbsolutePath().normalize()).forEach(out::add);
+                    } catch (IOException | java.io.UncheckedIOException e) {
+                        ConfeeLog.warn("Cannot list the config folder {}: {}", entry.getFileName(), e.getMessage());
                     }
                 }
             }

@@ -61,6 +61,18 @@ class ExternalConfigTest {
     }
 
     @Test
+    void discoveryWalksModFoldersAtAnyDepth() throws Exception {
+        Path top = file("sodium/options.json", "{}");
+        Path deep = file("sodium/profiles/high/video.toml", "a = 1\n");
+        file("sodium/profiles/high/video.toml.bak", "a = 1\n");
+        file("unrelated/deep/inner.toml", "a = 1\n");
+
+        Map<String, List<Path>> found = ConfigDiscovery.discover(config, MODS, Set.of(), Map.of(), Set.of());
+        assertEquals(List.of(top, deep).stream().sorted().toList(), found.get("sodium"));
+        assertEquals(1, found.size(), "folders of no mod are not walked");
+    }
+
+    @Test
     void discoveryRespectsExclusionsIgnoredModsAndManualMappings() throws Exception {
         Path main = file("examplemod.toml", "a = 1\n");
         Path odd = file("weird-name.cfg", "B:x=true\n");
