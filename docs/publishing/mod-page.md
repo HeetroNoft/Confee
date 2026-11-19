@@ -18,7 +18,7 @@ Library, Utility. Environment: client and server (the server side is optional fo
 ### For players
 
 - **A Config button for mods that have none.** Open Mod Menu (Fabric/Quilt) or the mod list (Forge/NeoForge), pick
-  a mod, and edit its config file in game: TOML, JSON, JSON5, YAML, properties, INI and Forge `.cfg` files.
+  a mod, and edit its config file in game: TOML, JSON, JSON5, YAML, properties, INI and Forge .cfg files.
 - **Safe edits.** Only the values you change are rewritten; comments, order and formatting stay untouched. The
   original file is backed up first, and a broken file never crashes the game.
 - **Forge configs too.** Configs declared with Forge's config system are edited and applied while the game runs.
@@ -56,15 +56,15 @@ See the README for the API.
 
 ## Gallery (files in `screenshots/`, taken at 1280×720, GUI scale 2)
 
-| File | Caption |
-|---|---|
-| `confee-40-general-top.png` | Generated screen: banner, info block, descriptions, stepper and a custom widget |
-| `confee-29-preview-image.png` | Preview column, effect and enchantment icons, key bind field |
-| `confee-48-entity-suggestions.png` | Entity suggestions with spawn egg icons |
-| `confee-42-item-picker.png` | Searchable item picker |
-| `confee-43-color-picker.png` | Color picker |
-| `confee-51-raw-detected.png` | Editing another mod's file: item IDs recognized |
-| `confee-22-forge-client-spec.png` | A Forge config, with a widget provided by another mod |
+| File                               | Caption                                                                         |
+| ---------------------------------- | ------------------------------------------------------------------------------- |
+| `confee-40-general-top.png`        | Generated screen: banner, info block, descriptions, stepper and a custom widget |
+| `confee-29-preview-image.png`      | Preview column, effect and enchantment icons, key bind field                    |
+| `confee-48-entity-suggestions.png` | Entity suggestions with spawn egg icons                                         |
+| `confee-42-item-picker.png`        | Searchable item picker                                                          |
+| `confee-43-color-picker.png`       | Color picker                                                                    |
+| `confee-51-raw-detected.png`       | Editing another mod's file: item IDs recognized                                 |
+| `confee-22-forge-client-spec.png`  | A Forge config, with a widget provided by another mod                           |
 
 ## Before publishing
 
