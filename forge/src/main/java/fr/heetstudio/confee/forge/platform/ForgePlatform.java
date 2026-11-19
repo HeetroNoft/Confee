@@ -61,6 +61,29 @@ public final class ForgePlatform implements Platform {
     }
 
     @Override
+    public Optional<String> getModDescription(String modId) {
+        return ModList.get().getModContainerById(modId)
+                .map(container -> container.getModInfo().getDescription())
+                .map(String::strip)
+                .filter(text -> !text.isEmpty());
+    }
+
+    @Override
+    public Optional<Path> getModIcon(String modId) {
+        Optional<String> logo = ModList.get().getModContainerById(modId)
+                .flatMap(container -> container.getModInfo().getLogoFile());
+        net.minecraftforge.forgespi.language.IModFileInfo file = ModList.get().getModFileById(modId);
+        if (logo.isEmpty() || file == null) {
+            return Optional.empty();
+        }
+        try {
+            return Optional.of(file.getFile().findResource(logo.get()));
+        } catch (RuntimeException e) {
+            return Optional.empty();
+        }
+    }
+
+    @Override
     public boolean isModLoaded(String modId) {
         return ModList.get().isLoaded(modId);
     }
