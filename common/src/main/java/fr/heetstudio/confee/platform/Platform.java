@@ -56,4 +56,12 @@ public interface Platform {
     default Set<String> getLoaderConfigModIds() {
         return Set.of();
     }
+
+    /**
+     * Mods that provide their own config screen to the loader's mod list (Mod Menu entrypoint on Fabric/Quilt, screen
+     * factory registered before Confee's on Forge/NeoForge). Used to suggest values for {@code forceConfeeEditor}.
+     */
+    default Set<String> getModsWithOwnConfigScreen() {
+        return Set.of();
+    }
 }

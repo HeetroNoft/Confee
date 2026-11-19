@@ -74,6 +74,8 @@
   "config.confee.external.fileMappings.tooltip": "Files Confee could not link to their mod. One entry per file: modid=path (path relative to config/).",
   "config.confee.external.ignoredMods": "Ignored mods",
   "config.confee.external.ignoredMods.tooltip": "Mod IDs that never get a Config button from Confee.",
+  "config.confee.external.forceConfeeEditor": "Replace these mods' screens",
+  "config.confee.external.forceConfeeEditor.tooltip": "Mod IDs whose own config screen is replaced by the Confee editor. Only mods whose config files Confee finds; ignored mods are never replaced. Applies on the next click on Config.",
   "confee.file.disabled": "%s — %s",
   "confee.file.server_not_loaded": "available in a world, read-only",
   "confee.banner.server_read_only": "Server configs are shown read-only: editing them will come in a future version.",

@@ -59,6 +59,23 @@ public final class ConfeeScreens {
      */
     @Nullable
     public static Screen forMod(Screen parent, String modId) {
+        return forMod(parent, modId, ConfeeSettings.injectConfigButtons());
+    }
+
+    /**
+     * The Confee editor that replaces the mod's own screen ({@code forceConfeeEditor}), or null when Confee has nothing
+     * to edit for this mod (the caller then keeps the mod's own screen).
+     */
+    @Nullable
+    public static Screen forcedEditor(Screen parent, String modId) {
+        if (!ConfeeSettings.isConfeeEditorForced(modId)) { // false for ignored mods
+            return null;
+        }
+        return forMod(parent, modId, true);
+    }
+
+    @Nullable
+    private static Screen forMod(Screen parent, String modId, boolean includeExternal) {
         List<FileSelectScreen.Entry> entries = new ArrayList<>();
         Theme theme = Theme.DEFAULT;
         for (ConfigHandle<?> handle : configs(modId)) {
@@ -70,7 +87,7 @@ public final class ConfeeScreens {
                     Component.translatable("confee.file.source.confee"),
                     p -> new ConfigScreen(p, handle)));
         }
-        if (ConfeeSettings.injectConfigButtons()) {
+        if (includeExternal) {
             // spec 8.2 item 2: configs of the loader's own system (Forge/NeoForge specs)
             for (fr.heetstudio.confee.platform.LoaderConfig config :
                     fr.heetstudio.confee.platform.Services.PLATFORM.getLoaderConfigs(modId)) {
