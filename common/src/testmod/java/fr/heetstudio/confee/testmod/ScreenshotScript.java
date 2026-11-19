@@ -131,6 +131,8 @@ public final class ScreenshotScript {
         });
         step(15, mc -> {
             scale(mc, 2);
+            // pickers open on their default style (the styles remembered by a previous run are forgotten)
+            fr.heetstudio.confee.ConfeeSettings.pickerStylesValue().set(List.of());
             fileSelect = ConfeeScreens.forMod(mc.screen, ConfeeTestmod.MOD_ID);
             mc.setScreen(fileSelect);
         });
@@ -310,6 +312,34 @@ public final class ScreenshotScript {
             type(mc, "sp");
         });
         shot("50-effect-picker");
+        step(5, mc -> {
+            key(mc, GLFW.GLFW_KEY_ESCAPE, 0);
+            config(mc).focusOption("favoriteMod");
+        });
+        step(5, mc -> clickRightEdge(mc));
+        // @ModId: the installed mods with their logos, as a list by default
+        shot("50b-mod-picker");
+        step(5, mc -> key(mc, GLFW.GLFW_KEY_TAB, 0));
+        shot("50d-mod-picker-detailed");
+        step(5, mc -> key(mc, GLFW.GLFW_KEY_TAB, 0));
+        shot("50e-mod-picker-grid");
+        step(5, mc -> {
+            key(mc, GLFW.GLFW_KEY_TAB, 0); // back to the list: remembered for the next mod picker
+            key(mc, GLFW.GLFW_KEY_ESCAPE, 0);
+            config(mc).focusOption("reward");
+        });
+        step(5, mc -> clickRightEdge(mc));
+        // @Picker(styles = {LIST, DETAILED}): no grid button
+        shot("50f-item-picker-list");
+        step(5, mc -> {
+            key(mc, GLFW.GLFW_KEY_ESCAPE, 0);
+            config(mc).focusOption("favoriteMod");
+            for (int i = 0; i < 20; i++) {
+                key(mc, GLFW.GLFW_KEY_BACKSPACE, 0);
+            }
+            type(mc, "m");
+        });
+        shot("50c-mod-suggestions");
         step(5, mc -> key(mc, GLFW.GLFW_KEY_ESCAPE, 0));
         step(15, mc -> mc.setScreen(ConfeeTestmod.themed.createScreen(fileSelect)));
         shot("10-themed");
@@ -377,6 +407,25 @@ public final class ScreenshotScript {
         shot("28-properties");
         step(15, mc -> mc.setScreen(ConfeeScreens.forMod(fileSelect, "confee")));
         shot("20-confee-settings");
+        // ignoredMods: "+ Add", then the mod picker (only the mods the universal editor handles)
+        step(10, mc -> {
+            key(mc, GLFW.GLFW_KEY_TAB, GLFW.GLFW_MOD_CONTROL);
+            config(mc).focusOption("external.ignoredMods");
+            key(mc, GLFW.GLFW_KEY_ENTER, 0);
+        });
+        step(5, mc -> clickRightEdge(mc));
+        shot("20b-ignored-mods-picker");
+        step(5, mc -> {
+            key(mc, GLFW.GLFW_KEY_ESCAPE, 0);
+            config(mc).focusOption("external.forceConfeeEditor");
+            key(mc, GLFW.GLFW_KEY_ENTER, 0);
+        });
+        step(5, mc -> clickRightEdge(mc));
+        shot("20c-force-editor-picker");
+        step(5, mc -> {
+            key(mc, GLFW.GLFW_KEY_ESCAPE, 0);
+            mc.setScreen(ConfeeScreens.forMod(fileSelect, "confee")); // drops the two empty entries (not saved)
+        });
 
         if (forge()) {
             forgeSteps();

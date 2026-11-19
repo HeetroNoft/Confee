@@ -22,6 +22,9 @@ import fr.heetstudio.confee.api.annotation.EnabledIf;
 import fr.heetstudio.confee.api.annotation.Hidden;
 import fr.heetstudio.confee.api.annotation.Key;
 import fr.heetstudio.confee.api.annotation.MaxLength;
+import fr.heetstudio.confee.api.annotation.ModId;
+import fr.heetstudio.confee.api.annotation.Picker;
+import fr.heetstudio.confee.api.PickerStyle;
 import fr.heetstudio.confee.api.annotation.Multiline;
 import fr.heetstudio.confee.api.annotation.Name;
 import fr.heetstudio.confee.api.annotation.Pattern;
@@ -164,6 +167,8 @@ public class AnnotatedTestConfig {
     @Block
     public List<String> blacklist = new ArrayList<>(List.of("minecraft:dirt", "minecraft:sand"));
 
+    @fr.heetstudio.confee.api.annotation.Reorderable
+    @Description("@Reorderable: ▲ ▼ to change the order.")
     public List<Integer> numbers = new ArrayList<>(List.of(1, 2, 3));
 
     @AllowDuplicates
@@ -185,6 +190,18 @@ public class AnnotatedTestConfig {
     @MaxLength(16)
     @Description("@Pattern + @MaxLength(16) on a list: lower-case names only.")
     public List<String> playerNames = new ArrayList<>(List.of("steve", "alex"));
+
+    @ModId
+    @Description("@ModId: installed mods with their logos, and a mod picker.")
+    public String favoriteMod = "minecraft";
+
+    @ModId
+    public List<String> companionMods = new ArrayList<>(List.of("minecraft"));
+
+    @fr.heetstudio.confee.api.annotation.Item
+    @Picker(styles = {PickerStyle.LIST, PickerStyle.DETAILED}, defaultStyle = PickerStyle.LIST)
+    @Description("@Picker(styles = {LIST, DETAILED}): the item picker as a list, no grid.")
+    public String reward = "minecraft:diamond";
 
     @Comment("List of enum values")
     public List<Difficulty> allowedDifficulties = new ArrayList<>(List.of(Difficulty.EASY, Difficulty.NORMAL));

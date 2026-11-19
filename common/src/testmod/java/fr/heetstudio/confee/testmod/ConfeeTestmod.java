@@ -4,6 +4,7 @@ import fr.heetstudio.confee.ConfeeLog;
 import fr.heetstudio.confee.api.Confee;
 import fr.heetstudio.confee.api.ConfeeConfig;
 import fr.heetstudio.confee.api.ConfigValue;
+import fr.heetstudio.confee.api.PickerStyle;
 import fr.heetstudio.confee.api.Preview;
 import fr.heetstudio.confee.api.builder.CategoryBuilder;
 import fr.heetstudio.confee.api.builder.ConfigBuilder;
@@ -85,7 +86,7 @@ public final class ConfeeTestmod {
                 .description("Check boxes: several values of an enum.").build();
         b.header("Collections");
         b.list("blacklist", String.class, List.of("minecraft:dirt", "minecraft:sand")).block().build();
-        b.list("numbers", Integer.class, List.of(1, 2, 3)).build();
+        b.list("numbers", Integer.class, List.of(1, 2, 3)).reorderable().description("@Reorderable: ▲ ▼ to change the order.").build();
         b.list("diceRolls", Integer.class, List.of(6, 6, 1)).allowDuplicates()
                 .description("@AllowDuplicates: the same value may appear twice.").build();
         b.sortedList("labels", String.class, List.of("alpha", "beta")).maxSize(5).ignoreCase()
@@ -94,6 +95,10 @@ public final class ConfeeTestmod {
                 .description("@Size(min = 1), @Range(1 ~ 64) on a list: each stack size, at least one.").build();
         b.list("playerNames", String.class, List.of("steve", "alex")).pattern("[a-z0-9_]+").maxLength(16)
                 .description("@Pattern + @MaxLength(16) on a list: lower-case names only.").build();
+        b.modId("favoriteMod", "minecraft").description("@ModId: installed mods with their logos, and a mod picker.").build();
+        b.modList("companionMods", "minecraft").build();
+        b.item("reward", "minecraft:diamond").pickerStyles(PickerStyle.LIST, PickerStyle.DETAILED).picker(PickerStyle.LIST)
+                .description("@Picker(styles = {LIST, DETAILED}): the item picker as a list, no grid.").build();
         b.list("allowedDifficulties", AnnotatedTestConfig.Difficulty.class,
                 List.of(AnnotatedTestConfig.Difficulty.EASY, AnnotatedTestConfig.Difficulty.NORMAL)).comment("List of enum values").build();
         b.map("biomeWeights", Integer.class, Map.of("desert", 3, "plains", 10)).comment("Key -> value map").build();
