@@ -56,6 +56,43 @@ public final class FabricPlatform implements Platform {
     }
 
     @Override
+    public Collection<String> getTopLevelModIds() {
+        return FabricLoader.getInstance().getAllMods().stream()
+                .filter(mod -> mod.getContainingMod().isEmpty() && !isChildModule(mod.getMetadata()))
+                .map(mod -> mod.getMetadata().getId())
+                .collect(Collectors.toUnmodifiableList());
+    }
+
+    /**
+     * Modules that belong to another mod even when loaded on their own (in a development environment): Fabric API
+     * modules, and mods that name a parent the way Mod Menu reads it ({@code "custom": {"modmenu": {"parent": ...}}}).
+     */
+    private static boolean isChildModule(net.fabricmc.loader.api.metadata.ModMetadata meta) {
+        if (meta.containsCustomValue("fabric-api:module-lifecycle") && !meta.getId().equals("fabric-api")) {
+            return true;
+        }
+        if (!meta.containsCustomValue("modmenu")) {
+            return false;
+        }
+        net.fabricmc.loader.api.metadata.CustomValue modmenu = meta.getCustomValue("modmenu");
+        return modmenu.getType() == net.fabricmc.loader.api.metadata.CustomValue.CvType.OBJECT
+                && modmenu.getAsObject().containsKey("parent");
+    }
+
+    @Override
+    public Optional<String> getModDescription(String modId) {
+        return FabricLoader.getInstance().getModContainer(modId)
+                .map(mod -> mod.getMetadata().getDescription())
+                .filter(text -> !text.isBlank());
+    }
+
+    @Override
+    public Optional<Path> getModIcon(String modId) {
+        return FabricLoader.getInstance().getModContainer(modId)
+                .flatMap(mod -> mod.getMetadata().getIconPath(64).flatMap(mod::findPath));
+    }
+
+    @Override
     public boolean isModLoaded(String modId) {
         return FabricLoader.getInstance().isModLoaded(modId);
     }
