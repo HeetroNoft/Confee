@@ -820,6 +820,7 @@ fileMappings = ["xaerominimap=xaerominimap.txt"]
 - Logo, URL du dépôt / page du mod : à fournir par Lucas (pas encore dans `fabric.mod.json` / `mods.toml`).
 
 ✅ Cohabitation (§15), vérifiée automatiquement en jeu (script de captures, mods en dev uniquement) : Mod Menu, Cloth Config et Minecraft gardent leur propre écran ; YACL n'a pas d'écran et Confee ne lui en ajoute pas ; Fabric et Forge. **Configured** n'est pas sur Modrinth → à tester à la main dans une instance CurseForge.
+✅ DÉCIDÉ (Lucas, 2026-11-19) : **Configured gagne** pour les mods à config Forge/NeoForge. Sous Forge/NeoForge, Confee enregistre ses écrans en dernier (à l'ouverture du premier écran, après l'initialisation client de tous les mods) : Configured, ou tout mod qui enregistre un écran pendant son initialisation, garde le sien ; Confee l'enveloppe seulement (`forceConfeeEditor` marche toujours). Vérifié avec Configured 2.2.3 sur Fabric et NeoForge (sur NeoForge en dev : `-PwithConfigured` dans `testenv/neoforge`).
 
 ---
 

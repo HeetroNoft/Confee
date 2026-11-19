@@ -12,8 +12,10 @@ prise, la reporter aussi dans `CONFEE_SPEC.md` (point en ✅ DÉCIDÉ, retiré d
 - [ ] Jar Forge de release sur une vraie installation NeoForge 1.20.1 (le test actuel recompile les sources contre
       NeoForge, ce n'est pas le jar de release).
 - [x] Fabric sans Mod Menu (`-PnoModMenu`) : tous les écrans s'ouvrent via l'API, aucune erreur.
-- [ ] Cohabitation avec Configured (Mod Menu, Cloth Config et YACL déjà vérifiés). Configured (MrCrayfish) n'est que
-      sur CurseForge : déposer son jar dans `fabric/run/mods` / `forge/run/mods` puis lancer le jeu.
+- [x] Cohabitation avec Configured 2.2.3 (2026-11-19) : Fabric (jar dans `fabric/run-shots/mods`) et NeoForge
+      (`-PwithConfigured` dans `testenv/neoforge`, le jar de release doit être désobfusqué en dev ; Forge dev 47.1.3 <
+      47.1.47 requis par Configured). Pas de crash, pas de bouton en double, aucun écran écrasé. Décision : Configured
+      garde les mods à config Forge (Confee enregistre ses écrans en dernier et l'enveloppe seulement).
 - [x] Vrais fichiers de config de `fabric/run/config` (dont ZombiesBreakBuild, Biome Replacer) : 19 fichiers, 7 formats,
       lus et réécrits à l'identique (`FormatCorpusTest`). Reste : édition en jeu à la main.
 - [x] Tests unitaires du détecteur d'IDs (`RegistryDetectorTest`, registres simulés).
