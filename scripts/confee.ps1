@@ -22,6 +22,20 @@ param(
 $ErrorActionPreference = 'Stop'
 $root = Split-Path -Parent $PSScriptRoot
 
+# Local secrets (publishing tokens) from .env, see .env.example. A variable already set in the shell wins.
+$dotEnv = Join-Path $root '.env'
+if (Test-Path $dotEnv) {
+    foreach ($line in Get-Content $dotEnv) {
+        if ($line -match '^\s*([A-Za-z_][A-Za-z0-9_]*)\s*=\s*(.*?)\s*$') {
+            $name = $Matches[1]
+            $value = $Matches[2] -replace '^"(.*)"$', '$1' -replace "^'(.*)'$", '$1'
+            if (-not [Environment]::GetEnvironmentVariable($name)) {
+                [Environment]::SetEnvironmentVariable($name, $value)
+            }
+        }
+    }
+}
+
 $tasks = [ordered]@{
     'fabric'        = @(':fabric:runTestmodClient', 'Minecraft client on Fabric with Mod Menu and the test mods')
     'forge'         = @(':forge:runTestmodClient', 'Minecraft client on Forge with the test mods')
@@ -107,11 +121,9 @@ try {
     Pop-Location
 }
 
-if ($Task -eq 'publish-dry' -and $code -eq 0) {
-    Write-Host "`nDry run only. To really publish (both sites, both jars):" -ForegroundColor Yellow
-    Write-Host '  $env:MODRINTH_TOKEN="..."'
-    Write-Host '  $env:CURSEFORGE_TOKEN="..."'
-    Write-Host '  $env:CONFEE_PUBLISH="true"; .\scripts\confee.ps1 publish-dry'
+if ($Task -eq 'publish-dry' -and $code -eq 0 -and $env:CONFEE_PUBLISH -ne 'true') {
+    Write-Host "`nDry run only. To really publish (both sites, both jars): put the tokens in .env (see .env.example)," -ForegroundColor Yellow
+    Write-Host '  then run: $env:CONFEE_PUBLISH="true"; .\scripts\confee.ps1 publish-dry'
 }
 
 if ($Task -eq 'jars' -and $code -eq 0) {
