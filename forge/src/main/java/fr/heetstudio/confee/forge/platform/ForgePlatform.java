@@ -82,4 +82,16 @@ public final class ForgePlatform implements Platform {
                 .map(name -> dir.resolve(name).toAbsolutePath().normalize())
                 .collect(Collectors.toUnmodifiableSet());
     }
+
+    private static final java.util.Set<String> OWN_CONFIG_SCREENS = java.util.concurrent.ConcurrentHashMap.newKeySet();
+
+    /** Recorded by the client setup when a mod registered its own screen factory before Confee. */
+    public static void markOwnConfigScreen(String modId) {
+        OWN_CONFIG_SCREENS.add(modId);
+    }
+
+    @Override
+    public java.util.Set<String> getModsWithOwnConfigScreen() {
+        return java.util.Set.copyOf(OWN_CONFIG_SCREENS);
+    }
 }
