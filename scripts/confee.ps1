@@ -109,8 +109,8 @@ try {
 
 if ($Task -eq 'publish-dry' -and $code -eq 0) {
     Write-Host "`nDry run only. To really publish (both sites, both jars):" -ForegroundColor Yellow
-    Write-Host '  $env:MODRINTH_TOKEN="..."; $env:MODRINTH_PROJECT_ID="..."'
-    Write-Host '  $env:CURSEFORGE_TOKEN="..."; $env:CURSEFORGE_PROJECT_ID="..."'
+    Write-Host '  $env:MODRINTH_TOKEN="..."'
+    Write-Host '  $env:CURSEFORGE_TOKEN="..."'
     Write-Host '  $env:CONFEE_PUBLISH="true"; .\scripts\confee.ps1 publish-dry'
 }
 
