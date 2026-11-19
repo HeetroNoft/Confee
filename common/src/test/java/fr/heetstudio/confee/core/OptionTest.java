@@ -255,4 +255,74 @@ class OptionTest {
                 () -> list(OptionType.STRING, List.of("a", "a")).build());
         assertTrue(defaults.getMessage().contains("Fix: remove the duplicates"), defaults.getMessage());
     }
+
+    @Test
+    void modIdNeedsTextAndHasNoTags() {
+        Option<String> mod = Option.<String>builder("m", OptionType.STRING).defaultValue("sodium")
+                .registry(PseudoRegistries.MOD).build();
+        assertEquals(PseudoRegistries.MOD, mod.registry());
+        IllegalStateException identifier = assertThrows(IllegalStateException.class,
+                () -> Option.<String>builder("m", OptionType.IDENTIFIER).registry(PseudoRegistries.MOD).build());
+        assertTrue(identifier.getMessage().contains("is not a ResourceLocation"), identifier.getMessage());
+        IllegalStateException tags = assertThrows(IllegalStateException.class, () -> Option.<String>builder("m", OptionType.STRING)
+                .defaultValue("").registry(PseudoRegistries.MOD).allowTags(true).build());
+        assertTrue(tags.getMessage().contains("mods have no tags"), tags.getMessage());
+    }
+
+    @Test
+    void replaceableModsComeFromTheirSource() {
+        PseudoRegistries.register(PseudoRegistries.REPLACEABLE_MOD, () -> List.of("sodium", "iris"));
+        assertEquals(List.of("sodium", "iris"), List.copyOf(PseudoRegistries.ids(PseudoRegistries.REPLACEABLE_MOD)));
+        assertTrue(PseudoRegistries.isModList(PseudoRegistries.REPLACEABLE_MOD));
+        assertFalse(PseudoRegistries.isPseudo("minecraft:item"));
+    }
+
+    @Test
+    void pickerStylesResolveAndMistakesAreExplained() {
+        Option<String> item = Option.<String>builder("i", OptionType.STRING).defaultValue("minecraft:stone")
+                .registry("minecraft:item").build();
+        assertEquals(fr.heetstudio.confee.api.PickerStyle.GRID, Pickers.defaultStyle(item, "minecraft:item"));
+        assertEquals(Pickers.ALL, Pickers.allowed(item));
+        Option<String> mod = Option.<String>builder("m", OptionType.STRING).defaultValue("sodium")
+                .registry(PseudoRegistries.MOD).build();
+        assertEquals(fr.heetstudio.confee.api.PickerStyle.LIST, Pickers.defaultStyle(mod, PseudoRegistries.MOD));
+
+        Option<String> listOnly = Option.<String>builder("i", OptionType.STRING).defaultValue("minecraft:stone")
+                .registry("minecraft:item")
+                .pickerStyles(List.of(fr.heetstudio.confee.api.PickerStyle.LIST, fr.heetstudio.confee.api.PickerStyle.DETAILED))
+                .build();
+        assertEquals(fr.heetstudio.confee.api.PickerStyle.LIST, Pickers.defaultStyle(listOnly, "minecraft:item"),
+                "AUTO (grid) is not allowed: the first allowed style");
+        assertEquals(fr.heetstudio.confee.api.PickerStyle.DETAILED,
+                Pickers.initial(listOnly, "minecraft:item", fr.heetstudio.confee.api.PickerStyle.DETAILED));
+        assertEquals(fr.heetstudio.confee.api.PickerStyle.LIST,
+                Pickers.initial(listOnly, "minecraft:item", fr.heetstudio.confee.api.PickerStyle.GRID),
+                "a remembered style the dev does not allow is ignored");
+
+        IllegalStateException noPicker = assertThrows(IllegalStateException.class, () -> Option.<String>builder("s", OptionType.STRING)
+                .defaultValue("").pickerDefault(fr.heetstudio.confee.api.PickerStyle.LIST).build());
+        assertTrue(noPicker.getMessage().contains("needs an ID option that has a picker"), noPicker.getMessage());
+        IllegalStateException notAllowed = assertThrows(IllegalStateException.class, () -> Option.<String>builder("i", OptionType.STRING)
+                .defaultValue("minecraft:stone").registry("minecraft:item")
+                .pickerStyles(List.of(fr.heetstudio.confee.api.PickerStyle.LIST))
+                .pickerDefault(fr.heetstudio.confee.api.PickerStyle.GRID).build());
+        assertTrue(notAllowed.getMessage().contains("is not in the allowed styles"), notAllowed.getMessage());
+        IllegalStateException auto = assertThrows(IllegalStateException.class, () -> Option.<String>builder("i", OptionType.STRING)
+                .defaultValue("minecraft:stone").registry("minecraft:item")
+                .pickerStyles(List.of(fr.heetstudio.confee.api.PickerStyle.AUTO)).build());
+        assertTrue(auto.getMessage().contains("AUTO is not a picker style"), auto.getMessage());
+    }
+
+    @Test
+    void reorderableIsForListsAndNotWithSorted() {
+        Option<List<Object>> plain = list(OptionType.STRING, List.of()).build();
+        assertFalse(plain.reorderable(), "no move buttons by default");
+        assertTrue(list(OptionType.STRING, List.of()).reorderable(true).build().reorderable());
+        IllegalStateException onText = assertThrows(IllegalStateException.class, () -> Option.<String>builder("s", OptionType.STRING)
+                .defaultValue("").reorderable(true).build());
+        assertTrue(onText.getMessage().contains("only allowed on List options"), onText.getMessage());
+        IllegalStateException withSorted = assertThrows(IllegalStateException.class,
+                () -> list(OptionType.STRING, List.of()).reorderable(true).sorted(true).build());
+        assertTrue(withSorted.getMessage().contains("cannot be used together"), withSorted.getMessage());
+    }
 }

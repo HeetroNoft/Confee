@@ -36,17 +36,18 @@ public final class AnnotationConfigs {
     private static final String RESOURCE_LOCATION = "net.minecraft.resources.ResourceLocation";
 
     /** Typed shortcuts → registry. */
-    private static final Map<Class<? extends java.lang.annotation.Annotation>, String> REGISTRY_SHORTCUTS = Map.of(
-            fr.heetstudio.confee.api.annotation.Item.class, "minecraft:item",
-            fr.heetstudio.confee.api.annotation.Block.class, "minecraft:block",
-            fr.heetstudio.confee.api.annotation.Entity.class, "minecraft:entity_type",
-            fr.heetstudio.confee.api.annotation.Biome.class, "minecraft:worldgen/biome",
-            fr.heetstudio.confee.api.annotation.Dimension.class, "minecraft:dimension",
-            fr.heetstudio.confee.api.annotation.Structure.class, "minecraft:worldgen/structure",
-            fr.heetstudio.confee.api.annotation.Enchantment.class, "minecraft:enchantment",
-            fr.heetstudio.confee.api.annotation.Effect.class, "minecraft:mob_effect",
-            fr.heetstudio.confee.api.annotation.Sound.class, "minecraft:sound_event",
-            fr.heetstudio.confee.api.annotation.Fluid.class, "minecraft:fluid");
+    private static final Map<Class<? extends java.lang.annotation.Annotation>, String> REGISTRY_SHORTCUTS = Map.ofEntries(
+            Map.entry(fr.heetstudio.confee.api.annotation.Item.class, "minecraft:item"),
+            Map.entry(fr.heetstudio.confee.api.annotation.Block.class, "minecraft:block"),
+            Map.entry(fr.heetstudio.confee.api.annotation.Entity.class, "minecraft:entity_type"),
+            Map.entry(fr.heetstudio.confee.api.annotation.Biome.class, "minecraft:worldgen/biome"),
+            Map.entry(fr.heetstudio.confee.api.annotation.Dimension.class, "minecraft:dimension"),
+            Map.entry(fr.heetstudio.confee.api.annotation.Structure.class, "minecraft:worldgen/structure"),
+            Map.entry(fr.heetstudio.confee.api.annotation.Enchantment.class, "minecraft:enchantment"),
+            Map.entry(fr.heetstudio.confee.api.annotation.Effect.class, "minecraft:mob_effect"),
+            Map.entry(fr.heetstudio.confee.api.annotation.Sound.class, "minecraft:sound_event"),
+            Map.entry(fr.heetstudio.confee.api.annotation.Fluid.class, "minecraft:fluid"),
+            Map.entry(fr.heetstudio.confee.api.annotation.ModId.class, PseudoRegistries.MOD));
     private static final Map<Class<?>, OptionType> LIST_ELEMENTS = Map.of(
             String.class, OptionType.STRING,
             Integer.class, OptionType.INT,
@@ -416,6 +417,9 @@ public final class AnnotationConfigs {
         if (size != null) {
             builder.size(size.min(), size.max());
         }
+        if (field.isAnnotationPresent(fr.heetstudio.confee.api.annotation.Reorderable.class)) {
+            builder.reorderable(true);
+        }
         if (field.isAnnotationPresent(fr.heetstudio.confee.api.annotation.Sorted.class)) {
             builder.sorted(true);
         }
@@ -450,6 +454,11 @@ public final class AnnotationConfigs {
                 throw new IllegalArgumentException("tags (#namespace:path) do not fit in a ResourceLocation. Fix: use a String or List<String> field");
             }
             builder.allowTags(true);
+        }
+        fr.heetstudio.confee.api.annotation.Picker picker = field.getAnnotation(fr.heetstudio.confee.api.annotation.Picker.class);
+        if (picker != null) {
+            builder.pickerStyles(List.of(picker.styles()));
+            builder.pickerDefault(picker.defaultStyle());
         }
         fr.heetstudio.confee.api.annotation.Preview preview = field.getAnnotation(fr.heetstudio.confee.api.annotation.Preview.class);
         if (preview != null) {

@@ -72,6 +72,9 @@ public final class Option<T> implements Node, ConfigValue<T> {
     private final java.util.function.Supplier<?> widgetFactory;
     private final WidgetHint widgetHint;
     private final boolean allowDuplicates;
+    private final boolean reorderable;
+    private final List<fr.heetstudio.confee.api.PickerStyle> pickerStyles;
+    private final fr.heetstudio.confee.api.PickerStyle pickerDefault;
     private final int minSize;
     private final int maxSize;
     private final boolean sorted;
@@ -114,6 +117,9 @@ public final class Option<T> implements Node, ConfigValue<T> {
         this.objectFields = b.objectFields == null ? List.of() : List.copyOf(b.objectFields);
         this.widgetHint = b.widgetHint;
         this.allowDuplicates = b.allowDuplicates;
+        this.reorderable = b.reorderable;
+        this.pickerStyles = List.copyOf(b.pickerStyles);
+        this.pickerDefault = b.pickerDefault;
         this.minSize = b.minSize;
         this.maxSize = b.maxSize;
         this.sorted = b.sorted;
@@ -415,6 +421,21 @@ public final class Option<T> implements Node, ConfigValue<T> {
         return widgetHint;
     }
 
+    /** Picker styles allowed by the dev ({@code @Picker(styles)}), empty = all, see {@link Pickers}. */
+    public List<fr.heetstudio.confee.api.PickerStyle> pickerStyles() {
+        return pickerStyles;
+    }
+
+    /** Picker style chosen by the dev ({@code AUTO} = the default of the kind of entry), see {@link Pickers}. */
+    public fr.heetstudio.confee.api.PickerStyle pickerDefault() {
+        return pickerDefault;
+    }
+
+    /** For a list or a list of objects: the screen shows the ▲ ▼ move buttons ({@code @Reorderable}). False by default. */
+    public boolean reorderable() {
+        return reorderable;
+    }
+
     /** For a list: whether the same value may appear twice ({@code @AllowDuplicates}). False by default. */
     public boolean allowDuplicates() {
         return allowDuplicates;
@@ -619,6 +640,9 @@ public final class Option<T> implements Node, ConfigValue<T> {
         private List<ObjectField> objectFields;
         private WidgetHint widgetHint = WidgetHint.AUTO;
         private boolean allowDuplicates;
+        private boolean reorderable;
+        private List<fr.heetstudio.confee.api.PickerStyle> pickerStyles = List.of();
+        private fr.heetstudio.confee.api.PickerStyle pickerDefault = fr.heetstudio.confee.api.PickerStyle.AUTO;
         private int minSize;
         private int maxSize = Integer.MAX_VALUE;
         private boolean sorted;
@@ -785,6 +809,24 @@ public final class Option<T> implements Node, ConfigValue<T> {
             return this;
         }
 
+        /** For a list or a list of objects: show the ▲ ▼ move buttons. */
+        public Builder<T> reorderable(boolean reorderable) {
+            this.reorderable = reorderable;
+            return this;
+        }
+
+        /** Picker styles the player can choose (empty = all). */
+        public Builder<T> pickerStyles(List<fr.heetstudio.confee.api.PickerStyle> styles) {
+            this.pickerStyles = List.copyOf(styles);
+            return this;
+        }
+
+        /** Picker style shown first ({@code AUTO} = default of the kind of entry). */
+        public Builder<T> pickerDefault(fr.heetstudio.confee.api.PickerStyle style) {
+            this.pickerDefault = Objects.requireNonNull(style);
+            return this;
+        }
+
         /** For a list: number of values allowed ({@code 0 <= min <= max}). */
         public Builder<T> size(int min, int max) {
             this.minSize = min;
@@ -852,11 +894,19 @@ public final class Option<T> implements Node, ConfigValue<T> {
             boolean textual = type == OptionType.IDENTIFIER || type == OptionType.STRING
                     || (type == OptionType.LIST && elementType == OptionType.STRING);
             listProblems(problems);
+            pickerProblems(problems);
             if (widgetHint == WidgetHint.MULTILINE && type != OptionType.STRING) {
                 problems.add("@Multiline / multiline() is only allowed on String options");
             }
             if (registry != null && !textual) {
                 problems.add("@Registry, @Item and @Block need a ResourceLocation, String or List<String> value");
+            }
+            if (PseudoRegistries.isModList(String.valueOf(registry)) && type == OptionType.IDENTIFIER) {
+                problems.add("@ModId / modId() needs a String or List<String> field: a mod ID such as \"sodium\" is not"
+                        + " a ResourceLocation");
+            }
+            if (allowTags && PseudoRegistries.isModList(String.valueOf(registry))) {
+                problems.add("mods have no tags. Fix: remove tags from @ModId / modId()");
             }
             if (allowTags && registry == null) {
                 problems.add("tags need a registry. Fix: use @Registry(..., tags = true) or a shortcut such as @Item(tags = true)");
@@ -910,6 +960,24 @@ public final class Option<T> implements Node, ConfigValue<T> {
             return option;
         }
 
+        /** Mistakes in the picker styles (spec 14). */
+        private void pickerProblems(List<String> problems) {
+            boolean customized = !pickerStyles.isEmpty() || pickerDefault != fr.heetstudio.confee.api.PickerStyle.AUTO;
+            if (customized && !Pickers.hasPicker(registry)) {
+                problems.add("@Picker / picker() needs an ID option that has a picker: @Item, @Block, @Entity, @Enchantment,"
+                        + " @Effect, @Fluid or @ModId (or .item(), .block(), .modId()...)");
+            }
+            if (pickerStyles.contains(fr.heetstudio.confee.api.PickerStyle.AUTO)) {
+                problems.add("AUTO is not a picker style. Fix: @Picker(styles = ...) takes GRID, LIST and/or DETAILED;"
+                        + " AUTO is only for defaultStyle");
+            }
+            if (!pickerStyles.isEmpty() && pickerDefault != fr.heetstudio.confee.api.PickerStyle.AUTO
+                    && !pickerStyles.contains(pickerDefault)) {
+                problems.add("the default picker style " + pickerDefault + " is not in the allowed styles " + pickerStyles
+                        + ". Fix: add it to @Picker(styles) / pickerStyles(), or change defaultStyle");
+            }
+        }
+
         /** Mistakes in the list options (spec 14): what is wrong and how to fix it. */
         private void listProblems(List<String> problems) {
             boolean list = type == OptionType.LIST;
@@ -923,6 +991,13 @@ public final class Option<T> implements Node, ConfigValue<T> {
             if (minSize < 0 || maxSize < minSize) {
                 problems.add("invalid size: min " + minSize + ", max " + maxSize
                         + ". Fix: 0 <= min <= max, e.g. @Size(min = 1, max = 10)");
+            }
+            if (reorderable && !list && type != OptionType.OBJECT_LIST) {
+                problems.add("@Reorderable / reorderable() is only allowed on List options and lists of objects" + where);
+            }
+            if (reorderable && sorted) {
+                problems.add("@Reorderable and @Sorted cannot be used together: a sorted list keeps its own order."
+                        + " Fix: keep one of them");
             }
             if (sorted && !list) {
                 problems.add("@Sorted / sorted() is only allowed on List options" + where);

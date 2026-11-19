@@ -128,9 +128,22 @@ public final class DevReport {
             if (option.sorted()) {
                 parts.add("sorted");
             }
+            if (option.reorderable()) {
+                parts.add("reorderable");
+            }
         }
-        if (option.registry() != null) {
+        if (option.registry() != null && PseudoRegistries.isModList(option.registry())) {
+            parts.add("installed mods (logos, mod picker)");
+        } else if (option.registry() != null) {
             parts.add("registry " + option.registry() + (option.allowTags() ? " + #tags" : ""));
+        }
+        if (Pickers.hasPicker(option.registry())) {
+            String def = Pickers.defaultStyle(option, option.registry()).name().toLowerCase(Locale.ROOT);
+            List<String> others = new ArrayList<>();
+            for (fr.heetstudio.confee.api.PickerStyle s : Pickers.allowed(option)) {
+                others.add(s.name().toLowerCase(Locale.ROOT));
+            }
+            parts.add("picker " + def + (others.size() > 1 ? " (also " + String.join(", ", others) + ")" : " only"));
         }
         if (option.unit() != null) {
             parts.add("unit " + option.unit());
