@@ -27,17 +27,20 @@ public final class Formats {
     public static final FormatAdapter PROPERTIES = new PropertiesAdapter();
     public static final FormatAdapter INI = new IniAdapter();
     public static final FormatAdapter CFG = new CfgAdapter();
+    public static final FormatAdapter HOCON = new fr.heetstudio.confee.format.hocon.HoconAdapter();
 
-    private static final Map<String, FormatAdapter> BY_EXTENSION = Map.of(
-            "toml", TOML,
-            "json", JSON,
-            "jsonc", JSONC,
-            "json5", JSON5,
-            "yml", YAML,
-            "yaml", YAML,
-            "properties", PROPERTIES,
-            "ini", INI,
-            "cfg", CFG);
+    private static final Map<String, FormatAdapter> BY_EXTENSION = Map.ofEntries(
+            Map.entry("toml", TOML),
+            Map.entry("json", JSON),
+            Map.entry("jsonc", JSONC),
+            Map.entry("json5", JSON5),
+            Map.entry("yml", YAML),
+            Map.entry("yaml", YAML),
+            Map.entry("properties", PROPERTIES),
+            Map.entry("ini", INI),
+            Map.entry("cfg", CFG),
+            Map.entry("conf", HOCON),
+            Map.entry("hocon", HOCON));
 
     private Formats() {
     }
