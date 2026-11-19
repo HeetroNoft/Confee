@@ -459,6 +459,69 @@ public final class ScreenshotScript {
         step(15, mc -> mc.setScreen(ConfeeScreens.openExternal(rawSelect, "confee_rawmod",
                 mc.gameDirectory.toPath().resolve("config/confee_rawmod-server.properties"))));
         shot("28-properties");
+        // spec 8.2 bis: lists of objects and lists of lists of other mods' files, element by element
+        step(15, mc -> mc.setScreen(ConfeeScreens.openExternal(rawSelect, "confee_rawmod",
+                mc.gameDirectory.toPath().resolve("config/confee_rawmod/spawns.json"))));
+        step(5, mc -> config(mc).openSection("spawns"));
+        shot("60-raw-list-of-objects");
+        step(5, mc -> config(mc).openSection("spawns.[0]"));
+        shot("61-raw-list-element");
+        step(5, mc -> {
+            config(mc).focusOption("spawns.[0].weight");
+            type(mc, "5");
+        });
+        step(5, mc -> config(mc).openSection("spawns.[0].night"));
+        shot("62-raw-object-in-element");
+        // "+ Add" copies the last element; the weight typed above is kept
+        step(5, mc -> config(mc).runListAction("spawns", "add", 0));
+        step(5, mc -> config(mc).openSection("spawns"));
+        shot("63-raw-list-added");
+        step(5, mc -> config(mc).runListAction("spawns", "up", 2));
+        step(5, mc -> config(mc).runListAction("spawns", "remove", 0));
+        shot("64-raw-list-moved-removed");
+        step(5, mc -> config(mc).openSection("waves"));
+        shot("65-raw-list-of-lists");
+        step(5, mc -> {
+            key(mc, GLFW.GLFW_KEY_ESCAPE, 0);
+            key(mc, GLFW.GLFW_KEY_ENTER, 0);
+        });
+        step(10, mc -> logLines(mc.gameDirectory.toPath().resolve("config/confee_rawmod/spawns.json"),
+                "mob", "weight", "waves"));
+        step(15, mc -> mc.setScreen(ConfeeScreens.openExternal(rawSelect, "confee_rawmod",
+                mc.gameDirectory.toPath().resolve("config/confee_rawmod/kits.yml"))));
+        step(5, mc -> config(mc).openSection("kits"));
+        shot("66-raw-yaml-list-of-mappings");
+        step(5, mc -> config(mc).openSection("kits.[0]"));
+        shot("67-raw-yaml-element");
+        step(15, mc -> mc.setScreen(ConfeeScreens.openExternal(rawSelect, "confee_rawmod", rawFile(mc))));
+        step(5, mc -> config(mc).openSection("presets"));
+        shot("68-raw-toml-array-of-tables");
+        // a widget given by another mod to a value of this file (ConfeeWidgets.fileId)
+        step(15, mc -> mc.setScreen(ConfeeScreens.openExternal(rawSelect, "confee_rawmod",
+                mc.gameDirectory.toPath().resolve("config/confee_rawmod/spawns.json"))));
+        step(5, mc -> config(mc).openSection("spawns.[1]"));
+        shot("69-raw-custom-widget");
+        // HOCON (V1.1): includes, substitutions, concatenations, lists of objects
+        step(15, mc -> mc.setScreen(ConfeeScreens.openExternal(rawSelect, "confee_rawmod",
+                mc.gameDirectory.toPath().resolve("config/confee_rawmod/server.conf"))));
+        shot("70-hocon-general");
+        step(5, mc -> config(mc).openSection("server"));
+        shot("71-hocon-server");
+        step(5, mc -> {
+            config(mc).openSection("network");
+            config(mc).focusOption("network.port");
+            type(mc, "0");
+        });
+        shot("72-hocon-included");
+        step(5, mc -> {
+            key(mc, GLFW.GLFW_KEY_ESCAPE, 0);
+            key(mc, GLFW.GLFW_KEY_ENTER, 0);
+        });
+        step(10, mc -> logLines(mc.gameDirectory.toPath().resolve("config/confee_rawmod/network.conf"), "port"));
+        step(15, mc -> mc.setScreen(ConfeeScreens.openExternal(rawSelect, "confee_rawmod",
+                mc.gameDirectory.toPath().resolve("config/confee_rawmod/server.conf"))));
+        step(5, mc -> config(mc).openSection("server"));
+        shot("73-hocon-after-save");
         step(15, mc -> mc.setScreen(ConfeeScreens.forMod(fileSelect, "confee")));
         shot("20-confee-settings");
         // ignoredMods: "+ Add", then the mod picker (only the mods the universal editor handles)

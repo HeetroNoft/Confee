@@ -12,5 +12,8 @@ public final class ConfeeTestmodClient {
         ConfeeWidgets.forOption(ConfeeTestmod.MOD_ID + ":builder", "temperature", TemperatureWidget::new);
         // a companion mod can also give widgets to the Forge config of another mod
         ConfeeWidgets.forOption("confee_rawmod:client", "zoom", GaugeWidget::new);
+        // ...and to a file of a mod that does not use Confee at all (here the second spawn of a JSON file)
+        ConfeeWidgets.forOption(ConfeeWidgets.fileId("confee_rawmod", "confee_rawmod/spawns.json"), "spawns.[1].weight",
+                WeightWidget::new);
     }
 }

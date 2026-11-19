@@ -1,0 +1,16 @@
+# Starter kits of the raw test mod
+kits:
+  # Given on the first join
+  - name: starter
+    cooldown: 0
+    items:
+      - minecraft:stone_sword
+      - minecraft:bread
+  - name: miner
+    cooldown: 3600
+    items:
+      - minecraft:iron_pickaxe
+grid:
+  - - 1
+    - 2
+  - - 3

@@ -1,0 +1,21 @@
+{
+  // Mobs of the arena, edited element by element (spec 8.2 bis)
+  "spawns": [
+    {
+      // The usual one
+      "mob": "minecraft:zombie",
+      "weight": 10,
+      "biomes": ["minecraft:plains", "minecraft:forest"],
+      "night": { "enabled": true, "bonus": 1.5 }
+    },
+    {
+      "mob": "minecraft:skeleton",
+      "weight": 5,
+      "biomes": ["minecraft:desert"],
+      "night": { "enabled": false, "bonus": 1.0 }
+    }
+  ],
+  // Mobs per wave, wave by wave
+  "waves": [[3, 5, 8], [10, 12]],
+  "debug": false
+}
