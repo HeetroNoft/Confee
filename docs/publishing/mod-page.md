@@ -18,7 +18,7 @@ Library, Utility. Environment: client and server (the server side is optional fo
 ### For players
 
 - **A Config button for mods that have none.** Open Mod Menu (Fabric/Quilt) or the mod list (Forge/NeoForge), pick
-  a mod, and edit its config file in game: TOML, JSON, JSON5, YAML, properties, INI and Forge .cfg files.
+  a mod, and edit its config file in game: TOML, JSON, JSON5, YAML, HOCON, properties, INI and Forge .cfg files.
 - **Safe edits.** Only the values you change are rewritten; comments, order and formatting stay untouched. The
   original file is backed up first, and a broken file never crashes the game.
 - **Forge configs too.** Configs declared with Forge's config system are edited and applied while the game runs.

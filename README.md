@@ -404,6 +404,14 @@ If your widget throws, it is replaced by a message and the game keeps running.
 Widgets also work for Forge configs (`ForgeConfigSpec`) shown by Confee: their config ID is `modid:client`,
 `modid:common` or `modid:server`, so a companion mod can give a nicer widget to another mod's setting.
 
+They also work for the files Confee's editor opens for mods that do not use Confee. Their config ID is
+`ConfeeWidgets.fileId("othermod", "<path from the config folder>")`; numbers are `Long` or `Double`, and an element of
+a list is a `[n]` path segment:
+
+```java
+ConfeeWidgets.forOption(ConfeeWidgets.fileId("othermod", "othermod/spawns.json"), "spawns.[0].weight", WeightWidget::new);
+```
+
 ### Using a config
 
 ```java
@@ -500,7 +508,7 @@ Confee gives a **Config** button to mods that have no config screen, when their 
 
 **Formats it can edit:**
 
-- TOML, JSON, JSONC, JSON5, YAML, properties, INI, and Forge legacy `.cfg`.
+- TOML, JSON, JSONC, JSON5, YAML, HOCON (`.conf`, included files too), properties, INI, and Forge legacy `.cfg`.
 - Forge/NeoForge config specs (`ForgeConfigSpec`) are edited through Forge itself: real defaults, ranges, comments and translations. Changes apply while the game runs. Server configs are read-only for now.
 
 **How files are changed:**

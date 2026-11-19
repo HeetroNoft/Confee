@@ -67,11 +67,19 @@ Toutes tranchées par Lucas le 2026-11-19 et reportées dans `CONFEE_SPEC.md` (�
 
 ## 4. Limites connues (V1.1 / V2)
 
-- [ ] Widgets custom sur les fichiers bruts des autres mods.
-- [ ] Listes d'objets dans un YAML d'un autre mod (lecture seule aujourd'hui).
-- [ ] Structures imbriquées : liste de listes, objet dans un objet, map dont les valeurs sont des objets.
+- [x] Widgets custom sur les fichiers bruts des autres mods (2026-11-19) : `ConfeeWidgets.fileId(modid, chemin)`
+      (ajout à l'API, rien de cassé), testé en jeu (capture Fabric 69, `WeightWidget` du mod de test).
+- [x] Listes d'objets dans un YAML d'un autre mod (2026-11-19) : éditables élément par élément.
+- [x] Structures imbriquées (2026-11-19) : listes d'objets, listes de listes, listes mixtes, objets dans les éléments,
+      à toute profondeur, en JSON/JSON5, YAML et TOML (tableaux en ligne et `[[x]]`). Un sous-écran par élément
+      (fil d'Ariane, Retour), ▲ ▼ ✕ et « + Ajouter » (copie du dernier élément), en mémoire jusqu'à « Enregistrer ».
+      Testé : unitaires (`NestedStructuresTest`, `ExternalConfigTest`), corpus réel, captures Fabric 60 à 68.
+      Reste : ajouter un élément à une liste vide (pas de modèle à copier).
 - [x] Couleurs stockées en entier (int) dans les fichiers bruts : pastille + color picker (nom de clé + plage).
-- [ ] HOCON (prévu en V1.1).
-- [ ] Autres versions de Minecraft (une branche par version) et NeoForge 1.20.2 et plus.
+- [x] HOCON (2026-11-19) : spec complète (chemins, concaténation, substitutions affichées en lecture seule avec leur
+      valeur, `include` édité dans le fichier inclus, clés en double fusionnées), `HoconTest`, `ExternalConfigTest`,
+      2 vrais fichiers (Croptopia, Server Browser), captures Fabric 70 à 73.
 - [ ] V2 : synchro serveur → client, édition des configs serveur avec permissions, presets, migrations de version
       de config.
+
+- [ ] Autres versions de Minecraft (une branche par version) et NeoForge 1.20.2 et plus.

@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.2.0 (Minecraft 1.20.1, not released yet)
+
+- Universal editor: lists of objects, lists of lists and mixed lists in other mods' JSON, JSON5, YAML and TOML files (inline arrays and `[[arrays of tables]]`) are now editable, at any depth: each element opens in its own screen, with move up / move down / remove buttons and "+ Add" (a copy of the last element). Changes stay in memory until "Save".
+- Universal editor: HOCON files (`.conf`, `.hocon`). Values written behind a substitution (`${...}`) are shown read-only with what they resolve to; values of included files are edited in those files.
+- API: your own widgets (`ConfeeWidgets.forOption` / `forType`) also work for the files Confee's editor opens for mods that do not use Confee, with `ConfeeWidgets.fileId(modId, pathInConfig)` as config ID.
+
 ## 0.1.0 (Minecraft 1.20.1)
 
 First version.

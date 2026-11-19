@@ -362,6 +362,12 @@ Confee:
 
 ✅ DÉCIDÉ : HOCON reporté en **V1.1** (2 fichiers `.conf` sur ~1 900 configs réelles observées).
 ✅ DÉCIDÉ (Lucas) : en V1.1, **spec HOCON complète**, substitutions `${}`, `include` et concaténation de valeurs compris, éditables.
+✅ DÉCIDÉ (Lucas, 2026-11-19) et implémenté (`format/hocon`) :
+- **Substitution** (`a = ${b}`, `${?ENV}`) : `a` en lecture seule, affiché « `${b} → valeur` » ; `b` reste éditable là où il est écrit. `+=` : lecture seule.
+- **Concaténation** sans substitution (`foo bar`, `"a" b`, `[1] [2]`) : éditée comme une seule valeur, réécrite en un seul texte (sans guillemets si possible) ou une seule liste ; avec une substitution : lecture seule.
+- **`include`** (`"x"`, `file()`, `required()`) : les valeurs du fichier inclus sont éditées **dans ce fichier**, avec sa propre copie d'origine ; fichier cherché à côté du fichier qui l'inclut (`x`, `x.conf`, `x.json`), jamais hors de `config/` ; `url()` et `classpath()` ignorés ; un `required()` introuvable rend le fichier illisible.
+- **Clés en double** : les objets fusionnent, une autre valeur remplace la précédente ; seule la valeur qui compte est affichée et éditée.
+- Listes d'objets : comme les autres formats (§8.3, sous-écran par élément).
 
 ✅ DÉCIDÉ (validé par Lucas) : SERVER Forge grisé hors d'un monde / lecture seule dans un monde ; ordre Client, Common, Server.
 
@@ -443,7 +449,8 @@ Si plusieurs fichiers → **écran de sélection de fichier** d'abord (cf. §10.
 - Les configs Confee ne sont jamais devinées (le mod déclare ce qu'il veut).
 - ✅ DÉCIDÉ (Lucas, V1.1) : **couleurs stockées en entier** dans les fichiers bruts → pastille + color picker si le **nom de la clé** contient `color`, `colour`, `couleur` ou `tint` (insensible à la casse) **et** si la valeur est entre 0 et `0xFFFFFFFF` (les ARGB négatifs, entiers signés, sont acceptés). RGB si la valeur ≤ `0xFFFFFF`, ARGB sinon. Réécrite sous forme d'entier, en signé si l'original était négatif.
 - ✅ DÉCIDÉ (Lucas, V1.1) : **structures imbriquées** (liste de listes, objet dans un objet, map dont les valeurs sont des objets) et **listes d'objets YAML** des autres mods → éditables dans un **sous-écran** par objet ou liste, avec fil d'Ariane et bouton Retour, sans limite de profondeur.
-- ✅ Widgets custom sur les **configs Forge** (`ForgeConfigSpec`) : `ConfeeWidgets.forOption("modid:client", chemin, …)` / `forType(modid, …)` ; ids de config Forge = `modid:client`, `modid:common`, `modid:server`. Pas sur les fichiers bruts.
+- ✅ Widgets custom sur les **configs Forge** (`ForgeConfigSpec`) : `ConfeeWidgets.forOption("modid:client", chemin, …)` / `forType(modid, …)` ; ids de config Forge = `modid:client`, `modid:common`, `modid:server`.
+- ✅ DÉCIDÉ (Lucas, 2026-11-19) et implémenté : widgets custom aussi sur les **fichiers bruts** : id `file:<modid>/<chemin depuis config/>` (`ConfeeWidgets.fileId(modid, chemin)`), chemins avec `[n]` pour les éléments de liste, nombres en `Long` / `Double` ; `forType(modid, …)` s'applique aussi aux fichiers de ce mod.
 
 ### 8.3 Fichier brut (`RAW_FILE`) : inférence des types
 
@@ -456,7 +463,13 @@ Si plusieurs fichiers → **écran de sélection de fichier** d'abord (cf. §10.
 | `#RRGGBB` / `0xAARRGGBB`        | STRING (affiché avec pastille couleur) 🟡 | Champ texte + aperçu                                     |
 | liste de scalaires              | LIST                                      | Éditeur de liste                                         |
 | table / objet                   | Section                                   | Catégorie (ou sous-section)                              |
-| liste d'objets, valeur complexe | —                                         | Affichée en lecture seule + bouton « Ouvrir le fichier » |
+| liste d'objets / de listes / mixte ✅ | Section « liste »                    | Un sous-écran par élément (`#n · contenu`), ▲ ▼ ✕, « + Ajouter » |
+| valeur complexe (date, `null`…) | —                                         | Affichée en lecture seule + bouton « Ouvrir le fichier » |
+
+✅ Implémenté (2026-11-19, V1.1) — structures imbriquées des autres mods (§8.2 bis) :
+- JSON/JSON5, YAML et TOML (tableaux en ligne et tableaux de tables `[[x]]`) ; chaque élément est un sous-écran, à toute profondeur ; un scalaire ou une liste de scalaires dans une liste a aussi son sous-écran.
+- Valeurs : édition chirurgicale comme ailleurs. « + Ajouter » copie le **dernier élément** (le fichier ne dit pas à quoi ressemble un élément vide) ; ✕ retire l'élément et les commentaires juste au-dessus de lui ; ▲ ▼ échangent deux éléments avec leurs commentaires. Tout reste en mémoire jusqu'à « Enregistrer » ; « Annuler » relit le fichier.
+- Limite : une liste vide ne peut pas recevoir d'élément (pas de modèle).
 
 - Les **commentaires** situés juste au-dessus d'une clé (ou en fin de ligne) deviennent la **description/tooltip** de l'option.
 - Pour le Forge legacy `.cfg`, utiliser le préfixe de type (`B:` bool, `I:` int, `D:` double, `S:` string) et les commentaires `# Min: / Max:` s'ils existent pour proposer des bornes.
@@ -589,7 +602,7 @@ Toutes les dimensions sont en **pixels GUI** (respecter le GUI scale vanilla). P
 | **Champ texte / nombre**  | Label au-dessus. Fond `panelBgDeep`, contour clair 1 px, texte blanc. Erreur : contour `error` + message sous le champ.                                                                                                                                                                                                                  | Validation à la frappe ; valeur invalide non appliquée. Champs nombre : seuls chiffres, `-`, `.`.                               |
 | **Éditeur de liste**      | Label au-dessus, liste d'entrées (champ texte + bouton ✕), bouton « + Ajouter » en bas.                                                                                                                                                                                                                                                  | Ajout, suppression, réordonnancement 🟡.                                                                                        |
 | **Éditeur de map** ✅      | Label au-dessus, une ligne par entrée : champ clé + valeur (toggle / dropdown / champ) + ✕, bouton « + Ajouter ». | Clé vide ou en double → erreur, bloque « Enregistrer ». |
-| **Liste d'objets** ✅      | Une carte par élément (`#n`, ▲▼✕), un champ par propriété, « + Ajouter » crée un élément avec les valeurs par défaut. | Fichiers des autres mods : lecture seule (YAML) ou via la map aplatie (properties). |
+| **Liste d'objets** ✅      | Une carte par élément (`#n`, ▲▼✕), un champ par propriété, « + Ajouter » crée un élément avec les valeurs par défaut. | Fichiers des autres mods : un sous-écran par élément (§8.3), ou via la map aplatie (properties). |
 | **Texte multi-ligne** ✅   | Zone de texte ~ 58 px de haut, même style que le champ texte. | Entrée = nouvelle ligne ; Tab sort du champ. |
 | **Autocomplétion** ✅      | Liste sous le champ (au-dessus s'il n'y a pas la place), 6 suggestions max, la sélection en `accent`. | ↑↓, Tab/Entrée pour accepter, Échap pour fermer. |
 | **Couleur**               | Champ texte hex + pastille d'aperçu. ✅ Clic sur la pastille → **color picker** : carré saturation/luminosité, barre de teinte, barre d'alpha (si `alpha`), champ hex, ancienne/nouvelle couleur. | Appliqué en direct ; Annuler / Échap remet l'ancienne couleur. |
@@ -699,7 +712,7 @@ Indicateur « modifié » : 🟡 petit point `accent` à gauche du label quand l
 - **Éléments décoratifs** (`Decoration`) : titre, séparateur, texte (info / avertissement / simple), image, bouton d'action (exécuté côté client, exception attrapée). Placés à leur rang parmi les options ; jamais écrits dans le fichier ; `visibleIf` possible.
 - **Icônes** : catégories (sidebar) et sous-sections (ligne de navigation) : ID d'item ou texture.
 - **Mise en page** (`Layout`) : largeur max du panneau (200–1000), largeur de l'aperçu (100–400), sidebar `AUTO`/`HIDDEN`, bannière en haut des options, fond en texture répétée.
-- **Widgets du mod** : `@Widget(Classe)` sur le champ, ou `ConfeeWidgets.forOption(configId, chemin, fabrique)` / `forType(modId, type, fabrique)` depuis l'init client. Ordre de priorité : `@Widget` > `forOption` > `forType`. Seulement pour les configs Confee (pas l'éditeur universel).
+- **Widgets du mod** : `@Widget(Classe)` sur le champ, ou `ConfeeWidgets.forOption(configId, chemin, fabrique)` / `forType(modId, type, fabrique)` depuis l'init client. Ordre de priorité : `@Widget` > `forOption` > `forType`. Configs Confee, configs Forge et fichiers bruts (`ConfeeWidgets.fileId`).
 - Thème : tous les tokens (§11).
 
 ---
