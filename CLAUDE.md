@@ -95,4 +95,4 @@ Gradle 8.8 doit tourner sur un JDK 17 ou 21. Le `~/.gradle/gradle.properties` de
 - Package : `fr.heetstudio.confee`. Licence : LGPL-3.0. Auteur affiché : Heet.
 - Git : **une branche par version MC** (`1.20.1`, …), pas de `main`. Pas de Stonecutter.
 - Commits : **Conventional Commits** en anglais (`feat(ui): ...`, `fix(fabric): ...`, `docs: ...`, `build: ...`, `test: ...`), découpés par domaine (scope = module ou paquet : `core`, `format`, `api`, `ui`, `external`, `fabric`, `forge`…).
-- Pas de remote GitHub configuré pour l'instant : ne pas pousser sans que Lucas donne le dépôt.
+- Remote : `origin` = github.com/HeetroNoft/Confee (privé pour l'instant). Ne pousser que si Lucas le demande. CI GitHub Actions (`.github/workflows/build.yml`) : `./gradlew build` à chaque push et pull request.
