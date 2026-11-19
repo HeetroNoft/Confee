@@ -1,4 +1,4 @@
-# Confee
+![Confee logo](https://media.forgecdn.net/attachments/description/null/description_42cb4097-d757-476c-8bd4-a7d4f31dfa50.png)
 
 Config library for Minecraft mods, with generated Bedrock-style config screens, plus an in-game editor for the config
 files of mods that do not use it.
