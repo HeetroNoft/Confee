@@ -2,6 +2,7 @@ package fr.heetstudio.confee.format.json;
 
 import fr.heetstudio.confee.core.ConfigSchema;
 import fr.heetstudio.confee.core.Option;
+import fr.heetstudio.confee.format.CommentMarker;
 import fr.heetstudio.confee.format.ConfigTree;
 import fr.heetstudio.confee.format.ParsedDocument;
 import fr.heetstudio.confee.format.TextScalars;
@@ -52,7 +53,7 @@ public final class JsonConfigWriter {
                 out.append(inner).append(JsonValues.string(leaf.option().key(), '"')).append(": ")
                         .append(value(leaf.option()));
             } else if (item instanceof ConfigTree.Raw raw) {
-                comment(raw.comment(), inner);
+                comment(raw.comment(), inner, true);
                 out.append(inner).append(raw.text());
             } else if (item instanceof ConfigTree.Group sub) {
                 comment(sub.comment, inner);
@@ -68,11 +69,17 @@ public final class JsonConfigWriter {
     }
 
     private void comment(@Nullable String text, String indent) {
+        comment(text, indent, false);
+    }
+
+    /** @param carried a comment of an unknown key, written again as it was (spec 5.3) */
+    private void comment(@Nullable String text, String indent, boolean carried) {
         if (!json5 || text == null) {
             return;
         }
         for (String line : text.split("\r?\n", -1)) {
-            out.append(indent).append(line.isEmpty() ? "//" : "// " + line).append(nl);
+            out.append(indent).append(carried ? CommentMarker.carried("//", line) : CommentMarker.generated("//", line))
+                    .append(nl);
         }
     }
 

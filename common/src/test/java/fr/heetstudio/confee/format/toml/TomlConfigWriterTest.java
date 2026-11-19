@@ -48,7 +48,7 @@ class TomlConfigWriterTest {
     @Test
     void writesCommentedFileInDeclarationOrder() {
         String expected = String.join("\n",
-                "# Show the mod HUD",
+                "#: Show the mod HUD",
                 "showHud = true",
                 "",
                 "particleCount = 20",
@@ -57,13 +57,13 @@ class TomlConfigWriterTest {
                 "",
                 "tint = \"#2D7DD2\"",
                 "",
-                "# Dash settings",
+                "#: Dash settings",
                 "[dash]",
-                "# Dash distance, in blocks",
-                "# Range: 1.0 ~ 10.0",
+                "#: Dash distance, in blocks",
+                "#: Range: 1.0 ~ 10.0",
                 "distance = 4.0",
                 "",
-                "# Allowed: EASY, NORMAL, HARD",
+                "#: Allowed: EASY, NORMAL, HARD",
                 "difficulty = \"NORMAL\"",
                 "");
         assertEquals(expected, TomlConfigWriter.write(schema(), "\n", null));

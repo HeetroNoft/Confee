@@ -37,6 +37,14 @@ public interface FormatAdapter {
         return null;
     }
 
+    /**
+     * Line comment prefix used in Confee files ({@code #}, {@code //}), or null when the format has no comments (JSON).
+     */
+    @Nullable
+    default String commentPrefix() {
+        return null;
+    }
+
     /** Writes a whole Confee config file (spec 7.3). */
     @FunctionalInterface
     interface ConfigWriter {

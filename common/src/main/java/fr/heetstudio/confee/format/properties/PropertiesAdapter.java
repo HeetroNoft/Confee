@@ -2,6 +2,7 @@ package fr.heetstudio.confee.format.properties;
 
 import fr.heetstudio.confee.core.ConfigSchema;
 import fr.heetstudio.confee.core.Option;
+import fr.heetstudio.confee.format.CommentMarker;
 import fr.heetstudio.confee.format.ConfigTree;
 import fr.heetstudio.confee.format.FormatAdapter;
 import fr.heetstudio.confee.format.ParsedDocument;
@@ -41,6 +42,11 @@ public final class PropertiesAdapter implements FormatAdapter {
     @Override
     public ValueWriter values() {
         return PropertiesValues.INSTANCE;
+    }
+
+    @Override
+    public String commentPrefix() {
+        return "#";
     }
 
     @Override
@@ -110,7 +116,9 @@ public final class PropertiesAdapter implements FormatAdapter {
                 }
                 out.append(nl);
                 if (value.comment() != null) {
-                    comment(out, value.comment(), nl);
+                    for (String line : value.comment().split("\r?\n", -1)) {
+                        out.append(CommentMarker.carried("#", line)).append(nl);
+                    }
                 }
                 out.append(source, value.entryStart(), value.end()).append(nl);
             }
@@ -160,7 +168,7 @@ public final class PropertiesAdapter implements FormatAdapter {
 
     private static void comment(StringBuilder out, String text, String nl) {
         for (String line : text.split("\r?\n", -1)) {
-            out.append(line.isEmpty() ? "#" : "# " + line).append(nl);
+            out.append(CommentMarker.generated("#", line)).append(nl);
         }
     }
 }

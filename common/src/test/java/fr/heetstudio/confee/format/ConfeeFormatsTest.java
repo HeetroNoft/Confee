@@ -153,4 +153,116 @@ class ConfeeFormatsTest {
         ConfeeRegistry.clear();
         assertEquals(3, declare(format, "unk").count().get());
     }
+
+    // ------------------------------------------------------------------ hand-written comments (spec 5.3)
+
+    private static String prefix(ConfigFormat format) {
+        return format == ConfigFormat.JSON5 ? "//" : "#";
+    }
+
+    /** Inserts {@code line} right above the line that declares {@code key}. */
+    private static String insertAbove(String text, String key, String line) {
+        java.util.regex.Matcher m = java.util.regex.Pattern
+                .compile("(?m)^([ \\t]*)\"?" + java.util.regex.Pattern.quote(key) + "\"?\\s*[:=]").matcher(text);
+        assertTrue(m.find(), key + " not found in\n" + text);
+        return text.substring(0, m.start()) + m.group(1) + line + "\n" + text.substring(m.start());
+    }
+
+    private static List<String> changedLines(String before, String after) {
+        List<String> a = List.of(before.split("\n", -1));
+        List<String> b = List.of(after.split("\n", -1));
+        assertEquals(a.size(), b.size(), "line count changed:\n" + after);
+        List<String> out = new java.util.ArrayList<>();
+        for (int i = 0; i < a.size(); i++) {
+            if (!a.get(i).equals(b.get(i))) {
+                out.add(a.get(i) + " -> " + b.get(i));
+            }
+        }
+        return out;
+    }
+
+    @ParameterizedTest
+    @EnumSource(value = ConfigFormat.class, names = {"TOML", "JSON5", "YAML", "PROPERTIES"})
+    void generatedCommentsCarryTheMarker(ConfigFormat format) throws Exception {
+        declare(format, "mark");
+        String text = Files.readString(dir.resolve("mark." + format.extension()));
+        assertTrue(text.contains(prefix(format) + ": A flag"), text);
+        assertTrue(text.contains(prefix(format) + ": Range: 0 ~ 10"), text);
+    }
+
+    @ParameterizedTest
+    @EnumSource(ConfigFormat.class)
+    void saveWithoutChangesLeavesTheFileIdentical(ConfigFormat format) throws Exception {
+        Values v = declare(format, "same");
+        Path file = dir.resolve("same." + format.extension());
+        String text = Files.readString(file);
+        if (format != ConfigFormat.JSON) {
+            text = insertAbove(text, "count", prefix(format) + " my own note");
+            text = text + prefix(format) + " trailing note\n";
+        }
+        Files.writeString(file, text);
+        byte[] before = Files.readAllBytes(file);
+        v.handle().reload();
+        v.handle().save();
+        assertArrayEquals(before, Files.readAllBytes(file), Files.readString(file));
+    }
+
+    @ParameterizedTest
+    @EnumSource(value = ConfigFormat.class, names = {"TOML", "JSON5", "YAML", "PROPERTIES"})
+    void handWrittenCommentsStayAndOnlyTheValueChanges(ConfigFormat format) throws Exception {
+        Values v = declare(format, "hand");
+        Path file = dir.resolve("hand." + format.extension());
+        String text = insertAbove(Files.readString(file), "count", prefix(format) + " my own note");
+        text = insertAbove(text, "flag", prefix(format) + " about the flag");
+        Files.writeString(file, text);
+        v.handle().reload();
+        v.count().set(3);
+        v.handle().save();
+        String saved = Files.readString(file);
+        assertTrue(saved.contains(prefix(format) + " my own note"), saved);
+        assertTrue(saved.contains(prefix(format) + " about the flag"), saved);
+        List<String> changed = changedLines(text, saved);
+        assertEquals(1, changed.size(), changed.toString());
+        assertTrue(changed.get(0).contains("5") && changed.get(0).contains("3"), changed.toString());
+    }
+
+    @ParameterizedTest
+    @EnumSource(value = ConfigFormat.class, names = {"TOML", "JSON5", "YAML", "PROPERTIES"})
+    void outdatedGeneratedCommentsAreRewritten(ConfigFormat format) throws Exception {
+        Values v = declare(format, "old");
+        Path file = dir.resolve("old." + format.extension());
+        String p = prefix(format);
+        String text = Files.readString(file).replace(p + ": A flag", p + ": An outdated description");
+        text = insertAbove(text, "flag", p + " kept");
+        Files.writeString(file, text);
+        v.handle().reload();
+        v.handle().save();
+        String saved = Files.readString(file);
+        assertTrue(saved.contains(p + ": A flag"), saved);
+        assertFalse(saved.contains("outdated"), saved);
+        assertTrue(saved.contains(p + " kept"), saved);
+        assertEquals(1, changedLines(text, saved).size(), saved);
+    }
+
+    @ParameterizedTest
+    @EnumSource(value = ConfigFormat.class, names = {"TOML", "JSON5", "YAML", "PROPERTIES"})
+    void handWrittenCommentsSurviveANewOption(ConfigFormat format) throws Exception {
+        Values v = declare(format, "grow");
+        Path file = dir.resolve("grow." + format.extension());
+        String p = prefix(format);
+        String text = insertAbove(Files.readString(file), "count", p + " my own note");
+        text = insertAbove(text, format == ConfigFormat.PROPERTIES ? "cat.ratio" : "ratio", p + " ratio note");
+        // the new option is not in the file yet
+        text = text.replaceFirst("(?m)^\\s*\"?flag\"?\\s*[:=].*\\R", "");
+        Files.writeString(file, text);
+        ConfeeRegistry.clear();
+        Values again = declare(format, "grow");
+        again.handle().save();
+        String saved = Files.readString(file);
+        assertTrue(saved.contains(p + " my own note"), saved);
+        assertTrue(saved.contains(p + " ratio note"), saved);
+        assertTrue(saved.contains("flag"), saved);
+        ConfeeRegistry.clear();
+        assertEquals(5, declare(format, "grow").count().get());
+    }
 }

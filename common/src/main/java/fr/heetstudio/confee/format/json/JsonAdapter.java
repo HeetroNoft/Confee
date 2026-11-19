@@ -45,6 +45,12 @@ public final class JsonAdapter implements FormatAdapter {
 
     @Override
     @Nullable
+    public String commentPrefix() {
+        return json5 ? "//" : null;
+    }
+
+    @Override
+    @Nullable
     public ConfigWriter configWriter() {
         return confeeFormat ? (schema, lineSeparator, previous) -> JsonConfigWriter.write(schema, lineSeparator, previous, json5) : null;
     }

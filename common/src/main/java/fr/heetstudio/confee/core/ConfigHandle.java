@@ -135,6 +135,14 @@ public final class ConfigHandle<T> implements ConfeeConfig<T>, EditableConfig {
         String lineSeparator = previousSource != null ? previousSource.lineSeparator() : "\n";
         String text = java.util.Objects.requireNonNull(adapter.configWriter(), "no config writer")
                 .write(schema, lineSeparator, previous);
+        if (previous != null) {
+            // hand-written comments, blank lines and key order of the file are kept (spec 5.3)
+            text = fr.heetstudio.confee.format.ConfeeFileMerger.merge(adapter, schema, previous, text);
+            if (text.equals(previous.source().text())) {
+                stamp = FileStamp.of(schema.filePath());
+                return; // nothing changed: the file is left untouched
+            }
+        }
         byte[] bytes = previousSource != null ? previousSource.encode(text) : text.getBytes(StandardCharsets.UTF_8);
         try {
             AtomicFiles.write(schema.filePath(), bytes);

@@ -28,6 +28,11 @@ public final class TomlAdapter implements FormatAdapter {
     }
 
     @Override
+    public String commentPrefix() {
+        return "#";
+    }
+
+    @Override
     public ConfigWriter configWriter() {
         return TomlConfigWriter::write;
     }

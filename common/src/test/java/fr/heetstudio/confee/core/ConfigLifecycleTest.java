@@ -57,18 +57,18 @@ class ConfigLifecycleTest {
         Example ex = example();
         assertNull(ex.config().get());
         String expected = String.join("\n",
-                "# Example config",
+                "#: Example config",
                 "",
-                "# Show the mod HUD",
+                "#: Show the mod HUD",
                 "showHud = true",
                 "",
                 "blacklist = []",
                 "",
                 "[dash]",
-                "# Range: 1.0 ~ 10.0",
+                "#: Range: 1.0 ~ 10.0",
                 "distance = 4.0",
                 "",
-                "# Allowed: EASY, NORMAL, HARD",
+                "#: Allowed: EASY, NORMAL, HARD",
                 "difficulty = \"NORMAL\"",
                 "");
         assertEquals(expected, Files.readString(file()));

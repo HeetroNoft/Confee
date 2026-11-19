@@ -2,6 +2,7 @@ package fr.heetstudio.confee.format.yaml;
 
 import fr.heetstudio.confee.core.ConfigSchema;
 import fr.heetstudio.confee.core.Option;
+import fr.heetstudio.confee.format.CommentMarker;
 import fr.heetstudio.confee.format.ConfigTree;
 import fr.heetstudio.confee.format.ParsedDocument;
 import fr.heetstudio.confee.format.TextScalars;
@@ -49,7 +50,7 @@ public final class YamlConfigWriter {
                 out.append(indent).append(key(option.key())).append(':');
                 value(ConfigTree.portable(option, option.get()), indent);
             } else if (item instanceof ConfigTree.Raw raw) {
-                comment(raw.comment(), indent);
+                comment(raw.comment(), indent, true);
                 out.append(indent).append(raw.text()).append(nl);
             } else if (item instanceof ConfigTree.Group sub) {
                 comment(sub.comment, indent);
@@ -120,11 +121,17 @@ public final class YamlConfigWriter {
     }
 
     private void comment(@Nullable String text, String indent) {
+        comment(text, indent, false);
+    }
+
+    /** @param carried a comment of an unknown key, written again as it was (spec 5.3) */
+    private void comment(@Nullable String text, String indent, boolean carried) {
         if (text == null) {
             return;
         }
         for (String line : text.split("\r?\n", -1)) {
-            out.append(indent).append(line.isEmpty() ? "#" : "# " + line).append(nl);
+            out.append(indent).append(carried ? CommentMarker.carried("#", line) : CommentMarker.generated("#", line))
+                    .append(nl);
         }
     }
 

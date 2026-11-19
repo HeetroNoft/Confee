@@ -152,9 +152,9 @@ class AnnotationConfigsTest {
         Path file = dir.resolve("annotated.toml");
         assertTrue(Files.exists(file));
         String text = Files.readString(file);
-        assertTrue(text.contains("# Annotated test config"), text);
+        assertTrue(text.contains("#: Annotated test config"), text);
         assertTrue(text.contains("[dash]"), text);
-        assertTrue(text.contains("# Range: 1.0 ~ 10.0"), text);
+        assertTrue(text.contains("#: Range: 1.0 ~ 10.0"), text);
         assertTrue(text.contains("tint = \"#802D7DD2\""), text);
         assertTrue(text.contains("[advanced]"), text);
 

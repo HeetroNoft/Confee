@@ -28,6 +28,11 @@ public final class YamlAdapter implements FormatAdapter {
     }
 
     @Override
+    public String commentPrefix() {
+        return "#";
+    }
+
+    @Override
     public ConfigWriter configWriter() {
         return YamlConfigWriter::write;
     }

@@ -5,6 +5,7 @@ import fr.heetstudio.confee.core.Node;
 import fr.heetstudio.confee.core.Option;
 import fr.heetstudio.confee.core.OptionType;
 import fr.heetstudio.confee.core.Section;
+import fr.heetstudio.confee.format.CommentMarker;
 import fr.heetstudio.confee.format.ParsedDocument;
 import fr.heetstudio.confee.format.ParsedValue;
 import org.jetbrains.annotations.Nullable;
@@ -168,7 +169,7 @@ public final class TomlConfigWriter {
                 out.append(nl);
             }
             if (value.comment() != null) {
-                comment(value.comment());
+                carriedComment(value.comment());
             }
             out.append(text, value.entryStart(), value.end()).append(nl);
             first = false;
@@ -184,7 +185,13 @@ public final class TomlConfigWriter {
 
     private void comment(String text) {
         for (String line : text.split("\r?\n", -1)) {
-            out.append(line.isEmpty() ? "#" : "# " + line).append(nl);
+            out.append(CommentMarker.generated("#", line)).append(nl);
+        }
+    }
+
+    private void carriedComment(String text) {
+        for (String line : text.split("\r?\n", -1)) {
+            out.append(CommentMarker.carried("#", line)).append(nl);
         }
     }
 
@@ -193,16 +200,19 @@ public final class TomlConfigWriter {
     /** Range / allowed values hint (spec 7.3), or null. */
     @Nullable
     static String hint(Option<?> option) {
-        Number min = option.min();
-        Number max = option.max();
+        boolean eachValue = option.elementMin() != null || option.elementMax() != null;
+        Number min = eachValue ? option.elementMin() : option.min();
+        Number max = eachValue ? option.elementMax() : option.max();
+        OptionType numberType = eachValue && option.elementType() != null ? option.elementType() : option.type();
+        String suffix = eachValue ? " (each value)" : "";
         if (min != null && max != null) {
-            return "Range: " + number(min, option.type()) + " ~ " + number(max, option.type());
+            return "Range: " + number(min, numberType) + " ~ " + number(max, numberType) + suffix;
         }
         if (min != null) {
-            return "Range: >= " + number(min, option.type());
+            return "Range: >= " + number(min, numberType) + suffix;
         }
         if (max != null) {
-            return "Range: <= " + number(max, option.type());
+            return "Range: <= " + number(max, numberType) + suffix;
         }
         List<?> allowed = option.allowedValues();
         if (allowed == null && option.type() == OptionType.ENUM && option.enumClass() != null) {
