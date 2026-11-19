@@ -1,0 +1,13 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "fr.heetstudio.confee.fabric.mixin",
+  "compatibilityLevel": "JAVA_17",
+  "plugin": "fr.heetstudio.confee.fabric.mixin.ConfeeMixinPlugin",
+  "client": [
+    "ModMenuMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

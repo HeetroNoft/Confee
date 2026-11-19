@@ -59,4 +59,15 @@ public final class FabricPlatform implements Platform {
     public boolean isModLoaded(String modId) {
         return FabricLoader.getInstance().isModLoaded(modId);
     }
+
+    /** Mods with a {@code modmenu} entrypoint (read from the metadata: the entrypoints are not instantiated). */
+    @Override
+    public java.util.Set<String> getModsWithOwnConfigScreen() {
+        if (!FabricLoader.getInstance().isModLoaded("modmenu")) {
+            return java.util.Set.of();
+        }
+        return FabricLoader.getInstance().getEntrypointContainers("modmenu", Object.class).stream()
+                .map(container -> container.getProvider().getMetadata().getId())
+                .collect(Collectors.toCollection(java.util.TreeSet::new));
+    }
 }
