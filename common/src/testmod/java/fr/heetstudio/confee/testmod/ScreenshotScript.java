@@ -547,6 +547,7 @@ public final class ScreenshotScript {
         if (forge()) {
             forgeSteps();
         }
+        realFileSteps();
         worldSteps();
 
         step(15, mc -> {
@@ -564,8 +565,91 @@ public final class ScreenshotScript {
     }
 
     /**
+     * Real config files of other mods, edited in game like a player would (spec 8, 15): for each file put in
+     * {@code config/confee_rawmod/real/} (copies of real files, never part of the repository), opens it in the
+     * universal editor, types one character in its first text or number value, saves with Escape then Enter, and
+     * checks that the file is exactly the original with only that value changed.
+     */
+    private void realFileSteps() {
+        Path dir = Path.of("config", "confee_rawmod", "real");
+        if (!Files.isDirectory(dir)) {
+            return;
+        }
+        List<Path> files;
+        try (java.util.stream.Stream<Path> walk = Files.list(dir)) {
+            files = walk.filter(Files::isRegularFile).sorted().toList();
+        } catch (IOException e) {
+            ConfeeLog.warn("[testmod] cannot list {}", dir);
+            return;
+        }
+        for (Path file : files) {
+            String[] expected = new String[1];
+            String[] optionPath = new String[1];
+            step(10, mc -> {
+                expected[0] = null;
+                Path path = mc.gameDirectory.toPath().resolve(file);
+                try {
+                    var adapter = fr.heetstudio.confee.format.Formats.forFile(path).orElseThrow();
+                    var source = fr.heetstudio.confee.format.SourceText.decode(Files.readAllBytes(path));
+                    var doc = adapter.parse(source);
+                    for (var value : doc.values()) {
+                        boolean simplePath = value.path().stream().noneMatch(s -> s.contains(".") || s.startsWith("[") || s.isEmpty());
+                        Object edited = !value.editable() || !simplePath ? null
+                                : value.kind() == fr.heetstudio.confee.format.ValueKind.STRING ? value.value() + "1"
+                                : value.kind() == fr.heetstudio.confee.format.ValueKind.INTEGER && Math.abs((Long) value.value()) < 100_000_000L
+                                ? Long.parseLong(value.value() + "1") : null;
+                        if (edited != null) {
+                            expected[0] = doc.edit(java.util.Map.of(value, edited), adapter.values());
+                            optionPath[0] = String.join(".", value.path());
+                            break;
+                        }
+                    }
+                } catch (Exception e) {
+                    ConfeeLog.warn("[testmod] real file {}: cannot prepare: {}", file.getFileName(), e.getMessage());
+                }
+                if (expected[0] == null) {
+                    ConfeeLog.info("[testmod] real file {}: no text or number value to edit", file.getFileName());
+                    return;
+                }
+                mc.setScreen(ConfeeScreens.openExternal(rawSelect, "confee_rawmod", path));
+                int dot = optionPath[0].lastIndexOf('.');
+                if (dot > 0) {
+                    config(mc).openSection(optionPath[0].substring(0, dot));
+                }
+            });
+            step(5, mc -> {
+                if (expected[0] == null) {
+                    return;
+                }
+                if (!config(mc).focusOption(optionPath[0])) {
+                    ConfeeLog.warn("[testmod] real file {}: option {} not shown", file.getFileName(), optionPath[0]);
+                    expected[0] = null;
+                    return;
+                }
+                type(mc, "1");
+                key(mc, GLFW.GLFW_KEY_ESCAPE, 0);
+                key(mc, GLFW.GLFW_KEY_ENTER, 0);
+            });
+            step(10, mc -> {
+                if (expected[0] == null) {
+                    return;
+                }
+                try {
+                    String now = fr.heetstudio.confee.format.SourceText.decode(
+                            Files.readAllBytes(mc.gameDirectory.toPath().resolve(file))).text();
+                    ConfeeLog.info("[testmod] real file {}: {} edited in game, file {}", file.getFileName(), optionPath[0],
+                            now.equals(expected[0]) ? "OK (only that value changed)" : "DIFFERENT from the expected text");
+                } catch (IOException e) {
+                    ConfeeLog.warn("[testmod] real file {}: cannot read back", file.getFileName());
+                }
+            });
+        }
+    }
+
+    /**
      * Spec 10.8: in a world, world registries (biomes) and tags come from the world itself. Creates a flat creative
-     * world "confee-test" (deleted first), compares with the lists read from the files, then leaves the world.
+     * world "confee-test" (deleted first) with a data pack that adds a biome, compares with the lists read from the
+     * files, then leaves the world.
      */
     private void worldSteps() {
         String biomes = "minecraft:worldgen/biome";
@@ -576,6 +660,24 @@ public final class ScreenshotScript {
             ConfeeLog.info("[testmod] outside a world: {} biomes, {} biome tags", offWorld[0], offWorld[1]);
             Path save = mc.gameDirectory.toPath().resolve("saves/confee-test");
             deleteTree(save);
+            // a data pack of the world that adds a biome: only the world knows it
+            try {
+                Path pack = save.resolve("datapacks/confee_test_pack");
+                Files.createDirectories(pack.resolve("data/confee_pack/worldgen/biome"));
+                Files.writeString(pack.resolve("pack.mcmeta"),
+                        "{\"pack\": {\"pack_format\": 15, \"description\": \"Confee test biome\"}}");
+                Files.writeString(pack.resolve("data/confee_pack/worldgen/biome/glow_meadow.json"), String.join("\n",
+                        "{",
+                        "  \"has_precipitation\": true, \"temperature\": 0.8, \"downfall\": 0.4,",
+                        "  \"effects\": {\"sky_color\": 7907327, \"fog_color\": 12638463, \"water_color\": 4159204,",
+                        "    \"water_fog_color\": 329011},",
+                        "  \"spawners\": {}, \"spawn_costs\": {}, \"carvers\": {}, \"features\": []",
+                        "}"));
+            } catch (IOException e) {
+                ConfeeLog.warn("[testmod] cannot write the test data pack: {}", e.getMessage());
+            }
+            ConfeeLog.info("[testmod] data pack biome outside a world: {}",
+                    fr.heetstudio.confee.ui.RegistryEntries.ids(biomes).contains("confee_pack:glow_meadow"));
             String name = "confee-test";
             mc.createWorldOpenFlows().createFreshLevel(name,
                     new net.minecraft.world.level.LevelSettings(name, net.minecraft.world.level.GameType.CREATIVE, false,
@@ -592,6 +694,8 @@ public final class ScreenshotScript {
             int inWorldTags = fr.heetstudio.confee.ui.RegistryEntries.tags(biomes).size();
             ConfeeLog.info("[testmod] in a world: {} biomes, {} biome tags (files: {}, {})", inWorld, inWorldTags,
                     offWorld[0], offWorld[1]);
+            ConfeeLog.info("[testmod] data pack biome in the world: {}",
+                    fr.heetstudio.confee.ui.RegistryEntries.ids(biomes).contains("confee_pack:glow_meadow"));
             mc.setScreen(ConfeeTestmod.annotated.createScreen(null));
         });
         step(10, mc -> {
