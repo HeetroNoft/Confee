@@ -330,6 +330,31 @@ public List<String> spawnBiomes = new ArrayList<>(List.of("minecraft:plains", "#
 b.list("spawnBiomes", String.class, List.of("minecraft:plains")).biome().tags().build();
 ```
 
+### Filters
+
+`@Entity`, `@Item`, `@Block`, `@Effect`, `@Enchantment` and `@Biome` take `only = ...` to limit the IDs to what the
+game already groups (several filters = any of them). The suggestions and the picker only offer these IDs, and the
+screen shows an error on a value outside them. The file is not checked when it is loaded: at that time the registries
+are not complete yet (mods' items, biomes of the world).
+
+| Filter | Values | From |
+|---|---|---|
+| `EntityFilter` (`@Entity`) | `MONSTER`, `CREATURE`, `AMBIENT`, `AXOLOTLS`, `UNDERGROUND_WATER_CREATURE`, `WATER_CREATURE`, `WATER_AMBIENT`, `MISC`, `LIVING` | spawn category of the entity type; `LIVING` = has attributes |
+| `ItemFilter` (`@Item`, `@Block`) | `BUILDING_BLOCKS`, `COLORED_BLOCKS`, `NATURAL_BLOCKS`, `FUNCTIONAL_BLOCKS`, `REDSTONE_BLOCKS`, `TOOLS_AND_UTILITIES`, `COMBAT`, `FOOD_AND_DRINKS`, `INGREDIENTS`, `SPAWN_EGGS`, `BLOCKS` | creative tabs (mods' items included); `BLOCKS` = places a block |
+| `EffectFilter` (`@Effect`) | `BENEFICIAL`, `HARMFUL`, `NEUTRAL` | effect category |
+| `EnchantmentFilter` (`@Enchantment`) | `ARMOR`, `ARMOR_FEET`, `ARMOR_LEGS`, `ARMOR_CHEST`, `ARMOR_HEAD`, `WEAPON`, `DIGGER`, `FISHING_ROD`, `TRIDENT`, `BREAKABLE`, `BOW`, `WEARABLE`, `CROSSBOW`, `VANISHABLE`, `TREASURE`, `CURSE` | enchantment category, treasure / curse |
+| `BiomeFilter` (`@Biome`) | `OVERWORLD`, `NETHER`, `END` | biome tags `is_overworld`, `is_nether`, `is_end` |
+
+```java
+@Entity(only = EntityFilter.MONSTER)
+public String boss = "minecraft:zombie";
+
+@Item(only = {ItemFilter.FOOD_AND_DRINKS, ItemFilter.INGREDIENTS})
+public List<String> snacks = new ArrayList<>(List.of("minecraft:apple"));
+
+b.string("boss", "minecraft:zombie").entity(EntityFilter.MONSTER).build();
+```
+
 ### Layout and decorations
 
 ```java
