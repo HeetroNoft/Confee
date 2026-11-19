@@ -1,6 +1,8 @@
 package fr.heetstudio.confee.format.toml;
 
 import fr.heetstudio.confee.format.FormatException;
+import fr.heetstudio.confee.format.Nested;
+import fr.heetstudio.confee.format.ParsedList;
 import fr.heetstudio.confee.format.ParsedDocument;
 import fr.heetstudio.confee.format.ParsedTable;
 import fr.heetstudio.confee.format.ParsedValue;
@@ -37,6 +39,15 @@ public final class TomlParser {
     private final Map<List<String>, Integer> arrayTableCounts = new HashMap<>();
     private List<String> currentTable = List.of();
     private boolean currentTableRepeated;
+    private final Nested nested = new Nested();
+    /** Where values and inline tables go: the document, or {@link #nested} inside list elements (spec 8.2 bis). */
+    private List<ParsedValue> valueSink = values;
+    private List<ParsedTable> tableSink = tables;
+    /** Headers in document order: offset of their first comment line, of the '[', and resolved path. */
+    private final List<Header> headers = new ArrayList<>();
+
+    private record Header(int commentStart, int start, List<String> path, boolean array) {
+    }
 
     private TomlParser(String text) {
         this.s = text;
@@ -45,7 +56,8 @@ public final class TomlParser {
     public static ParsedDocument parse(SourceText source) throws FormatException {
         TomlParser parser = new TomlParser(source.text());
         parser.parseDocument();
-        return new ParsedDocument(source, parser.values, parser.tables);
+        parser.recordArraysOfTables();
+        return new ParsedDocument(source, parser.values, parser.tables, false, parser.nested);
     }
 
     public static ParsedDocument parse(String text) throws FormatException {
@@ -56,6 +68,7 @@ public final class TomlParser {
 
     private void parseDocument() throws FormatException {
         List<String> pendingComment = new ArrayList<>();
+        int commentStart = -1;
         while (!eof()) {
             skipSpaces();
             if (eof()) {
@@ -65,9 +78,13 @@ public final class TomlParser {
             if (c == '\n' || c == '\r') {
                 consumeNewline();
                 pendingComment.clear();
+                commentStart = -1;
                 continue;
             }
             if (c == '#') {
+                if (commentStart < 0) {
+                    commentStart = pos;
+                }
                 pendingComment.add(readComment());
                 consumeEndOfLine();
                 continue;
@@ -75,14 +92,16 @@ public final class TomlParser {
             String comment = pendingComment.isEmpty() ? null : String.join("\n", pendingComment);
             pendingComment.clear();
             if (c == '[') {
-                parseTableHeader(comment);
+                parseTableHeader(comment, commentStart < 0 ? pos : commentStart);
             } else {
                 parseKeyValueLine(comment);
             }
+            commentStart = -1;
         }
     }
 
-    private void parseTableHeader(@Nullable String comment) throws FormatException {
+    private void parseTableHeader(@Nullable String comment, int commentStart) throws FormatException {
+        int headerStart = pos;
         boolean array = s.startsWith("[[", pos);
         pos += array ? 2 : 1;
         skipSpaces();
@@ -93,6 +112,7 @@ public final class TomlParser {
         tables.add(null);
 
         List<String> resolved = resolveHeader(key, array);
+        headers.add(new Header(commentStart, headerStart, resolved, array));
         currentTable = resolved;
         currentTableRepeated = array || isInsideArrayTable(resolved);
         tables.set(tableIndex, new ParsedTable(resolved, comment, currentTableRepeated, false));
@@ -141,8 +161,8 @@ public final class TomlParser {
 
         int tableIndex = -1;
         if (!eof() && peek() == '{') {
-            tableIndex = tables.size();
-            tables.add(new ParsedTable(path, comment, currentTableRepeated, true));
+            tableIndex = tableSink.size();
+            tableSink.add(new ParsedTable(path, comment, currentTableRepeated, true));
         }
         int firstNested = values.size();
         Raw raw = parseValue(path, true);
@@ -156,7 +176,7 @@ public final class TomlParser {
 
         if (tableIndex >= 0) {
             if (inline != null) {
-                tables.set(tableIndex, new ParsedTable(path, join(comment, inline), currentTableRepeated, true));
+                tableSink.set(tableIndex, new ParsedTable(path, join(comment, inline), currentTableRepeated, true));
             }
             return;
         }
@@ -170,9 +190,10 @@ public final class TomlParser {
         if (!definedValues.add(path)) {
             throw errorAt("Duplicate key '" + String.join(".", path) + "'", raw.start);
         }
-        boolean editable = !currentTableRepeated && (raw.kind.isScalar() || raw.kind == ValueKind.LIST);
-        values.add(new ParsedValue(path, raw.kind, raw.value, raw.start, raw.end, comment, editable,
-                raw.style, raw.elementKind, entryStart, currentTable));
+        // values in arrays of tables ([[x]]) are edited one element at a time (spec 8.2 bis)
+        boolean editable = raw.kind.isScalar() || raw.kind == ValueKind.LIST;
+        valueSink.add(new ParsedValue(path, raw.kind, raw.value, raw.start, raw.end, comment, editable,
+                raw.style, raw.elementKind, entryStart, valueSink == values ? currentTable : path.subList(0, path.size() - 1)));
     }
 
     // ------------------------------------------------------------------ keys
@@ -273,7 +294,7 @@ public final class TomlParser {
                 return new Raw(ValueKind.STRING, value, start, pos, style, null);
             }
             case '[':
-                return parseArray(path);
+                return parseArray(path, record);
             case '{':
                 return parseInlineTable(path, record);
             default:
@@ -281,7 +302,8 @@ public final class TomlParser {
         }
     }
 
-    private Raw parseArray(List<String> path) throws FormatException {
+    /** @param record whether a list of objects / lists records its elements (spec 8.2 bis) */
+    private Raw parseArray(List<String> path, boolean record) throws FormatException {
         int start = pos;
         pos++;
         List<Object> items = new ArrayList<>();
@@ -341,8 +363,135 @@ public final class TomlParser {
         TomlStyle.ArrayStyle style = new TomlStyle.ArrayStyle(multiline, spaceInside, trailingComma,
                 elementIndent, closingIndent, elementStringStyle, elementIntegerStyle);
         List<Object> value = Collections.unmodifiableList(items);
+        if (!simple && record) {
+            recordElements(path, start);
+            pos = end;
+        }
         return new Raw(simple ? ValueKind.LIST : ValueKind.COMPLEX, value, start, end, style,
                 simple ? elementKind : null);
+    }
+
+    /**
+     * Second reading of an array of inline tables / arrays / mixed values: records each element with its position
+     * (spec 8.2 bis).
+     */
+    private void recordElements(List<String> path, int open) throws FormatException {
+        List<ParsedValue> savedValues = valueSink;
+        List<ParsedTable> savedTables = tableSink;
+        valueSink = nested.values();
+        tableSink = nested.tables();
+        try {
+            pos = open + 1;
+            List<ParsedList.Item> items = new ArrayList<>();
+            String lead = null;
+            while (true) {
+                int before = pos;
+                skipWhitespaceCommentsNewlines();
+                if (lead == null) {
+                    lead = s.substring(before, pos);
+                }
+                if (peek() == ']') {
+                    break;
+                }
+                List<String> itemPath = concat(path, List.of(ParsedList.segment(items.size())));
+                int start = pos;
+                int itemStart = leadingStart(before, pos, !items.isEmpty());
+                if (peek() == '{') {
+                    tableSink.add(new ParsedTable(itemPath, null, false, true));
+                    parseInlineTable(itemPath, true);
+                } else {
+                    Raw item = parseValue(itemPath, true);
+                    if (!nested.hasList(itemPath)) {
+                        boolean editable = item.kind.isScalar() || item.kind == ValueKind.LIST;
+                        valueSink.add(new ParsedValue(itemPath, item.kind, item.value, item.start, item.end, null,
+                                editable, item.style, item.elementKind, -1, path));
+                    }
+                }
+                items.add(new ParsedList.Item(itemStart, start, pos));
+                skipWhitespaceCommentsNewlines();
+                if (peek() == ',') {
+                    pos++;
+                }
+            }
+            String indent = lead == null || lead.isEmpty() || !lead.isBlank() ? " " : lead;
+            nested.lists().add(new ParsedList(path, open, pos + 1, items, "," + indent, "[]"));
+        } finally {
+            valueSink = savedValues;
+            tableSink = savedTables;
+        }
+    }
+
+    /** Start of the comment lines before an element (a comment on the previous element's line stays with it). */
+    private int leadingStart(int from, int element, boolean afterElement) {
+        int k = from;
+        if (afterElement) {
+            int c = from;
+            while (c < element && (s.charAt(c) == ' ' || s.charAt(c) == '\t')) {
+                c++;
+            }
+            if (c < element && s.charAt(c) == '#') {
+                while (k < element && s.charAt(k) != '\n') {
+                    k++;
+                }
+            }
+        }
+        while (k < element && Character.isWhitespace(s.charAt(k))) {
+            k++;
+        }
+        return k;
+    }
+
+    /**
+     * Arrays of tables ({@code [[x]]}): each element runs from its header (and the comment lines just above it) to
+     * the last line before the next header that is not one of its sub-tables (spec 8.2 bis).
+     */
+    private void recordArraysOfTables() {
+        Map<List<String>, List<ParsedList.Item>> lists = new LinkedHashMap<>();
+        for (int h = 0; h < headers.size(); h++) {
+            Header header = headers.get(h);
+            if (!header.array) {
+                continue;
+            }
+            int next = s.length();
+            for (int k = h + 1; k < headers.size(); k++) {
+                Header other = headers.get(k);
+                if (!startsWith(other.path, header.path)) {
+                    next = other.commentStart;
+                    break;
+                }
+            }
+            int end = contentEndBefore(next);
+            List<String> listPath = header.path.subList(0, header.path.size() - 1);
+            lists.computeIfAbsent(List.copyOf(listPath), k -> new ArrayList<>())
+                    .add(new ParsedList.Item(header.commentStart, header.start, Math.max(end, header.start)));
+        }
+        String newline = s.contains("\r\n") ? "\r\n" : "\n";
+        lists.forEach((path, items) -> nested.lists().add(new ParsedList(path, items.get(0).start(),
+                items.get(items.size() - 1).end(), items, newline + newline, "")));
+    }
+
+    private static boolean startsWith(List<String> path, List<String> prefix) {
+        return path.size() >= prefix.size() && path.subList(0, prefix.size()).equals(prefix);
+    }
+
+    /** End of the last line before {@code offset} that is neither blank nor a comment. */
+    private int contentEndBefore(int offset) {
+        int e = offset;
+        while (true) {
+            while (e > 0 && Character.isWhitespace(s.charAt(e - 1))) {
+                e--;
+            }
+            int lineStart = e;
+            while (lineStart > 0 && s.charAt(lineStart - 1) != '\n') {
+                lineStart--;
+            }
+            String line = s.substring(lineStart, e).trim();
+            if (line.startsWith("#")) {
+                e = lineStart;
+                continue;
+            }
+            return e;
+        }
     }
 
     /** Whitespace between the previous line break and {@code offset}, or "" if other text precedes. */
@@ -380,7 +529,7 @@ public final class TomlParser {
             List<String> childPath = concat(path, key);
             boolean childIsTable = !eof() && peek() == '{';
             if (record && childIsTable) {
-                tables.add(new ParsedTable(childPath, null, currentTableRepeated, true));
+                tableSink.add(new ParsedTable(childPath, null, currentTableRepeated, true));
             }
             Raw child = parseValue(childPath, record);
             putNested(map, key, child.value);

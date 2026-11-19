@@ -20,6 +20,9 @@ public final class ParsedDocument {
     private final List<ParsedTable> tables;
     private final Map<List<String>, ParsedValue> byPath = new HashMap<>();
     private final boolean looselyTyped;
+    private final List<ParsedValue> nestedValues;
+    private final List<ParsedTable> nestedTables;
+    private final Map<List<String>, ParsedList> lists = new HashMap<>();
 
     public ParsedDocument(SourceText source, List<ParsedValue> values, List<ParsedTable> tables) {
         this(source, values, tables, false);
@@ -30,12 +33,28 @@ public final class ParsedDocument {
      *                     a number may be meant as text, see {@link #rawText(ParsedValue)}
      */
     public ParsedDocument(SourceText source, List<ParsedValue> values, List<ParsedTable> tables, boolean looselyTyped) {
+        this(source, values, tables, looselyTyped, Nested.EMPTY);
+    }
+
+    /**
+     * @param nested what is inside the elements of lists of objects, lists of lists and mixed lists
+     */
+    public ParsedDocument(SourceText source, List<ParsedValue> values, List<ParsedTable> tables, boolean looselyTyped,
+                          Nested nested) {
+        this.nestedValues = List.copyOf(nested.values());
+        this.nestedTables = List.copyOf(nested.tables());
+        for (ParsedList list : nested.lists()) {
+            lists.put(list.path(), list);
+        }
         this.looselyTyped = looselyTyped;
         this.source = source;
         this.values = List.copyOf(values);
         this.tables = List.copyOf(tables);
         for (ParsedValue value : this.values) {
             // a key repeated in the same section (INI): the first occurrence is the editable one
+            byPath.putIfAbsent(value.path(), value);
+        }
+        for (ParsedValue value : nestedValues) {
             byPath.putIfAbsent(value.path(), value);
         }
     }
@@ -60,6 +79,25 @@ public final class ParsedDocument {
 
     public List<ParsedTable> tables() {
         return tables;
+    }
+
+    /** Values inside the elements of {@link #lists()} (paths with {@code [n]} segments), in document order. */
+    public List<ParsedValue> nestedValues() {
+        return nestedValues;
+    }
+
+    /** Objects inside the elements of {@link #lists()}. */
+    public List<ParsedTable> nestedTables() {
+        return nestedTables;
+    }
+
+    /** Lists edited element by element (objects, lists, mixed), at any depth. */
+    public java.util.Collection<ParsedList> lists() {
+        return Collections.unmodifiableCollection(lists.values());
+    }
+
+    public Optional<ParsedList> list(List<String> path) {
+        return Optional.ofNullable(lists.get(path));
     }
 
     public Optional<ParsedValue> find(List<String> path) {

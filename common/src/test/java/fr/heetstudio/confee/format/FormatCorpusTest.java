@@ -71,8 +71,9 @@ class FormatCorpusTest {
                             value.joinedPath() + ": expected " + changed + ", got " + reparsed.value());
                     assertEquals(value.kind(), reparsed.kind(), value.joinedPath() + " kind");
                 }
+                checkNested(adapter, source, doc);
                 stat[0]++;
-            } catch (AssertionError | RuntimeException e) {
+            } catch (AssertionError | RuntimeException | FormatException e) {
                 stat[2]++;
                 failures.add(file + ": " + e.getMessage());
             }
@@ -82,6 +83,39 @@ class FormatCorpusTest {
         unreadable.forEach(u -> System.out.println("  unreadable: " + u));
         failures.forEach(f -> System.out.println("  FAILED: " + f));
         assertTrue(failures.isEmpty(), failures.size() + " files failed, see the output");
+    }
+
+    /**
+     * Spec 8.2 bis: every value inside list elements accepts a one-value edit, and every list accepts adding, removing
+     * and moving an element (the result must still parse, with one element more or less).
+     */
+    private static void checkNested(FormatAdapter adapter, SourceText source, ParsedDocument doc) throws FormatException {
+        String text = source.text();
+        for (ParsedValue value : doc.nestedValues()) {
+            Object changed = value.editable() ? changed(value) : null;
+            if (changed == null) {
+                continue;
+            }
+            String out = doc.edit(Map.of(value, changed), adapter.values());
+            ParsedDocument again = adapter.parse(new SourceText(out, source.bom(), source.lineSeparator()));
+            ParsedValue reparsed = again.find(value.path()).orElseThrow(() -> new AssertionError("lost " + value.joinedPath()));
+            assertTrue(ParsedDocument.sameValue(reparsed.value(), changed), value.joinedPath() + " nested edit");
+        }
+        for (ParsedList list : doc.lists()) {
+            int n = list.items().size();
+            String name = String.join(".", list.path());
+            assertEquals(n + 1, size(adapter, source, ListEdits.duplicateLast(text, list), list), name + " add");
+            if (n > 1) {
+                assertEquals(n - 1, size(adapter, source, ListEdits.remove(text, list, 0), list), name + " remove first");
+                assertEquals(n - 1, size(adapter, source, ListEdits.remove(text, list, n - 1), list), name + " remove last");
+                assertEquals(n, size(adapter, source, ListEdits.move(text, list, 0, 1), list), name + " move");
+            }
+        }
+    }
+
+    private static int size(FormatAdapter adapter, SourceText source, String text, ParsedList list) throws FormatException {
+        ParsedDocument doc = adapter.parse(new SourceText(text, source.bom(), source.lineSeparator()));
+        return doc.list(list.path()).map(l -> l.items().size()).orElse(0);
     }
 
     private static Object changed(ParsedValue value) {

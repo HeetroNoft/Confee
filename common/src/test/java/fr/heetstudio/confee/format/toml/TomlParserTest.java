@@ -132,14 +132,16 @@ class TomlParserTest {
     }
 
     @Test
-    void arraysOfTablesAreReadOnly() throws FormatException {
+    void arraysOfTablesAreEditedElementByElement() throws FormatException {
         ParsedDocument doc = TomlParser.parse(SAMPLE);
         ParsedValue first = get(doc, "products", "[0]", "name");
         ParsedValue second = get(doc, "products", "[1]", "name");
         assertEquals("Hammer", first.value());
         assertEquals("Nail", second.value());
-        assertFalse(first.editable());
+        // spec 8.2 bis: each element of an array of tables is edited in its own screen
+        assertTrue(first.editable());
         assertTrue(doc.tables().stream().filter(ParsedTable::repeated).count() >= 2);
+        assertEquals(2, doc.list(java.util.List.of("products")).orElseThrow().items().size());
     }
 
     @Test

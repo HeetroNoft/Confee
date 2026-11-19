@@ -1,6 +1,8 @@
 package fr.heetstudio.confee.format.yaml;
 
 import fr.heetstudio.confee.format.FormatException;
+import fr.heetstudio.confee.format.Nested;
+import fr.heetstudio.confee.format.ParsedList;
 import fr.heetstudio.confee.format.ListStyle;
 import fr.heetstudio.confee.format.ParsedDocument;
 import fr.heetstudio.confee.format.ParsedTable;
@@ -60,6 +62,10 @@ public final class YamlParser {
     private final List<ParsedTable> tables = new ArrayList<>();
     private final Set<List<String>> seen = new HashSet<>();
     private final List<String> pendingComment = new ArrayList<>();
+    private final Nested nested = new Nested();
+    /** Where values and mappings go: the document, or {@link #nested} inside the elements of a list (spec 8.2 bis). */
+    private List<ParsedValue> valueSink = values;
+    private List<ParsedTable> tableSink = tables;
 
     private YamlParser(String text) {
         this.s = text;
@@ -83,7 +89,7 @@ public final class YamlParser {
     public static ParsedDocument parse(SourceText source) throws FormatException {
         YamlParser parser = new YamlParser(source.text());
         parser.parseDocument();
-        return new ParsedDocument(source, parser.values, parser.tables, true);
+        return new ParsedDocument(source, parser.values, parser.tables, true, parser.nested);
     }
 
     // ------------------------------------------------------------------ structure
@@ -236,17 +242,17 @@ public final class YamlParser {
                 i = next + 1;
                 Scalar scalar = inlineValue(valueLine.start + valueLine.indent, valueLine.end);
                 String inlineNext = trailingComment(scalar.end, valueLine.end);
-                values.add(new ParsedValue(childPath, scalar.kind, scalar.value, scalar.start, scalar.end,
+                valueSink.add(new ParsedValue(childPath, scalar.kind, scalar.value, scalar.start, scalar.end,
                         join(comment, inlineNext), scalar.editable, scalar.style, scalar.elementKind, keyStart, path));
                 return;
             }
             if (next >= 0 && lines.get(next).indent > indent) {
-                tables.add(new ParsedTable(childPath, comment, false, false));
+                tableSink.add(new ParsedTable(childPath, comment, false, false));
                 parseMapping(lines.get(next).indent, childPath);
                 return;
             }
             // no value: null, read-only
-            values.add(new ParsedValue(childPath, ValueKind.COMPLEX, "", p, p, comment, false, null, null, keyStart, path));
+            valueSink.add(new ParsedValue(childPath, ValueKind.COMPLEX, "", p, p, comment, false, null, null, keyStart, path));
             return;
         }
         Scalar scalar = inlineValue(p, line.end);
@@ -261,7 +267,7 @@ public final class YamlParser {
         String inline = trailingComment(scalar.end, line.end);
         Object value = editable ? scalar.value : s.substring(scalar.start, end).replaceAll("\\s+", " ").trim();
         ValueKind kind = editable ? scalar.kind : ValueKind.COMPLEX;
-        values.add(new ParsedValue(childPath, kind, value, scalar.start, end, join(comment, inline), editable,
+        valueSink.add(new ParsedValue(childPath, kind, value, scalar.start, end, join(comment, inline), editable,
                 scalar.style, editable ? scalar.elementKind : null, keyStart, path));
     }
 
@@ -281,6 +287,7 @@ public final class YamlParser {
 
     private void parseBlockList(int column, List<String> path, List<String> tablePath, int keyStart, @Nullable String comment)
             throws FormatException {
+        int firstLine = i;
         List<Object> items = new ArrayList<>();
         List<Scalar> scalars = new ArrayList<>();
         List<Object> objects = new ArrayList<>();
@@ -366,15 +373,161 @@ public final class YamlParser {
         }
         if (simple) {
             ScalarStyle elementStyle = scalars.isEmpty() ? null : (ScalarStyle) scalars.get(0).style;
-            values.add(new ParsedValue(path, ValueKind.LIST, Collections.unmodifiableList(items), start, end, comment, true,
+            valueSink.add(new ParsedValue(path, ValueKind.LIST, Collections.unmodifiableList(items), start, end, comment, true,
                     new BlockListStyle(column, elementStyle), elementKind, keyStart, tablePath));
-        } else if (objectsOk && !objects.isEmpty() && scalars.isEmpty()) {
+            return;
+        }
+        // elements one by one, for the editor of other mods' files (spec 8.2 bis)
+        int endLine = i;
+        boolean inElement = valueSink != values;
+        List<String> savedComment = new ArrayList<>(pendingComment);
+        int[] mark = nested.mark();
+        try {
+            i = firstLine;
+            structuredList(column, path, endLine);
+        } catch (FormatException e) {
+            nested.truncate(mark);
+        } finally {
+            i = endLine;
+            pendingComment.clear();
+            pendingComment.addAll(savedComment);
+        }
+        if (inElement) {
+            // Confee's own files never have lists inside list elements: nothing else to record
+            return;
+        }
+        if (objectsOk && !objects.isEmpty() && scalars.isEmpty()) {
             values.add(new ParsedValue(path, ValueKind.COMPLEX, Collections.unmodifiableList(objects), start, end, comment,
                     false, null, null, keyStart, tablePath));
         } else {
             values.add(new ParsedValue(path, ValueKind.COMPLEX, s.substring(start, end).replaceAll("\\s+", " ").trim(),
                     start, end, comment, false, null, null, keyStart, tablePath));
         }
+    }
+
+    /**
+     * Reads the elements of a block list one by one into {@link #nested}: scalars, lists ({@code - - a} or an indented
+     * list) and mappings ({@code - key: value} with the other keys aligned under the first one, or an indented
+     * mapping), at any depth.
+     */
+    private void structuredList(int column, List<String> path, int endLine) throws FormatException {
+        List<ParsedValue> savedValues = valueSink;
+        List<ParsedTable> savedTables = tableSink;
+        valueSink = nested.values();
+        tableSink = nested.tables();
+        try {
+            List<ParsedList.Item> items = new ArrayList<>();
+            int listStart = -1;
+            pendingComment.clear();
+            // comment lines between the key and the first element describe the first element
+            int above = i;
+            while (above > 0 && lines.get(above - 1).comment()) {
+                above--;
+            }
+            int commentStart = above < i ? lines.get(above).start + lines.get(above).indent : -1;
+            for (int k = above; k < i; k++) {
+                pendingComment.add(commentText(lines.get(k).text));
+            }
+            while (i < endLine) {
+                Line line = lines.get(i);
+                if (line.blank()) {
+                    pendingComment.clear();
+                    commentStart = -1;
+                    i++;
+                    continue;
+                }
+                if (line.comment()) {
+                    pendingComment.add(commentText(line.text));
+                    if (commentStart < 0) {
+                        commentStart = line.start + line.indent;
+                    }
+                    i++;
+                    continue;
+                }
+                if (line.indent != column || !isSequenceItem(line.text)) {
+                    throw errorAt("Unexpected line in a list", line.start + line.indent);
+                }
+                int dash = line.start + column;
+                int itemStart = commentStart >= 0 ? commentStart : dash;
+                commentStart = -1;
+                if (listStart < 0) {
+                    listStart = itemStart;
+                }
+                List<String> itemPath = concat(path, ParsedList.segment(items.size()));
+                String comment = takeComment();
+                int p = dash + 1;
+                while (p < line.end && s.charAt(p) == ' ') {
+                    p++;
+                }
+                if (p >= line.end || s.charAt(p) == '#') {
+                    // "-" alone: the element is on the next, more indented lines
+                    i++;
+                    int next = nextContent(i);
+                    if (next < 0 || next >= endLine || lines.get(next).indent <= column) {
+                        valueSink.add(new ParsedValue(itemPath, ValueKind.COMPLEX, "", p, p, comment, false, null, null, -1, path));
+                    } else if (isSequenceItem(lines.get(next).text)) {
+                        i = next;
+                        parseBlockList(lines.get(next).indent, itemPath, path, -1, comment);
+                    } else {
+                        tableSink.add(new ParsedTable(itemPath, comment, false, false));
+                        i = next;
+                        parseMapping(lines.get(next).indent, itemPath);
+                    }
+                } else {
+                    char c = s.charAt(p);
+                    int inner = p - line.start;
+                    Line shifted = new Line(line.start, line.end, inner, s.substring(p, line.end).stripTrailing());
+                    if (c == '-' && isSequenceItem(shifted.text)) {
+                        // "- - a": a list in a list
+                        lines.set(i, shifted);
+                        parseBlockList(inner, itemPath, path, -1, comment);
+                    } else if (c != '"' && c != '\'' && c != '[' && c != '{' && keyColon(p, line.end) >= 0) {
+                        // "- key: value": a mapping whose keys are aligned on the first one
+                        lines.set(i, shifted);
+                        tableSink.add(new ParsedTable(itemPath, comment, false, false));
+                        parseMapping(inner, itemPath);
+                    } else {
+                        Scalar scalar = inlineValue(p, line.end);
+                        int end = scalar.end;
+                        boolean editable = scalar.editable;
+                        i++;
+                        int next = nextContent(i);
+                        if (next >= 0 && next < endLine && lines.get(next).indent > column) {
+                            end = consumeDeeperThan(column);
+                            editable = false;
+                        }
+                        String inline = trailingComment(scalar.end, line.end);
+                        Object value = editable ? scalar.value : s.substring(scalar.start, end).replaceAll("\\s+", " ").trim();
+                        valueSink.add(new ParsedValue(itemPath, editable ? scalar.kind : ValueKind.COMPLEX, value, scalar.start,
+                                end, join(comment, inline), editable, scalar.style, editable ? scalar.elementKind : null, -1, path));
+                    }
+                }
+                if (i > endLine) {
+                    throw errorAt("List element past the end of the list", dash);
+                }
+                items.add(new ParsedList.Item(itemStart, dash, contentEndBefore(i)));
+            }
+            if (items.isEmpty()) {
+                return;
+            }
+            String newline = SourceText.detectLineSeparator(s);
+            nested.lists().add(new ParsedList(path, listStart, items.get(items.size() - 1).end(), items,
+                    newline + " ".repeat(column), "[]"));
+        } finally {
+            valueSink = savedValues;
+            tableSink = savedTables;
+        }
+    }
+
+    /** End offset of the last line with content before line {@code index}. */
+    private int contentEndBefore(int index) {
+        for (int k = index - 1; k >= 0; k--) {
+            Line line = lines.get(k);
+            if (!line.blank() && !line.comment()) {
+                return line.start + line.indent + line.text.length();
+            }
+        }
+        return 0;
     }
 
     /** End offset of the last {@link #mappingItem}. */

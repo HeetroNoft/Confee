@@ -89,7 +89,7 @@ class TomlEditTest {
         assertThrows(IllegalArgumentException.class, () -> edit(SAMPLE, "ratio", 2L));
         assertThrows(IllegalArgumentException.class, () -> edit(SAMPLE, "title", 3L));
         assertThrows(IllegalArgumentException.class, () -> edit(SAMPLE, "date", "2000-01-01"));
-        assertThrows(IllegalArgumentException.class, () -> edit(SAMPLE, "products.[0].name", "Saw"));
+        assertThrows(IllegalArgumentException.class, () -> edit(SAMPLE, "products.[0].name", 3L));
         assertThrows(IllegalArgumentException.class, () -> edit(SAMPLE, "mixed", List.of(1L)));
     }
 

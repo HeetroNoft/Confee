@@ -2,6 +2,8 @@ package fr.heetstudio.confee.format.json;
 
 import fr.heetstudio.confee.format.FormatException;
 import fr.heetstudio.confee.format.ListStyle;
+import fr.heetstudio.confee.format.Nested;
+import fr.heetstudio.confee.format.ParsedList;
 import fr.heetstudio.confee.format.ParsedDocument;
 import fr.heetstudio.confee.format.ParsedTable;
 import fr.heetstudio.confee.format.ParsedValue;
@@ -37,6 +39,10 @@ public final class JsonParser {
     private final List<ParsedValue> values = new ArrayList<>();
     private final List<ParsedTable> tables = new ArrayList<>();
     private final Set<List<String>> seen = new HashSet<>();
+    private final Nested nested = new Nested();
+
+    /** Where the values read are recorded. */
+    private enum Sink { MAIN, NESTED, NONE }
     /** Offset of a same-line comment already attached to the previous value. */
     private int consumedComment = -1;
 
@@ -52,7 +58,7 @@ public final class JsonParser {
     public static ParsedDocument parse(SourceText source, boolean json5) throws FormatException {
         JsonParser parser = new JsonParser(source.text(), json5);
         parser.parseDocument();
-        return new ParsedDocument(source, parser.values, parser.tables);
+        return new ParsedDocument(source, parser.values, parser.tables, false, parser.nested);
     }
 
     private record Raw(ValueKind kind, Object value, int start, int end, @Nullable Object style,
@@ -65,11 +71,11 @@ public final class JsonParser {
             return;
         }
         if (peek() == '{') {
-            parseObject(List.of(), true);
+            parseObject(List.of(), Sink.MAIN);
         } else {
             // a root array or scalar: shown read-only
             int start = pos;
-            Raw raw = parseValue(List.of(), false);
+            Raw raw = parseValue(List.of(), Sink.NONE);
             values.add(new ParsedValue(List.of("value"), raw.kind == ValueKind.LIST ? ValueKind.COMPLEX : raw.kind,
                     raw.value, start, raw.end, comment, false, raw.style, null, -1, List.of()));
         }
@@ -79,8 +85,11 @@ public final class JsonParser {
         }
     }
 
-    /** @param record whether leaves are recorded as values (false inside arrays) */
-    private Map<String, Object> parseObject(List<String> path, boolean record) throws FormatException {
+    /** @param sink where the leaves are recorded */
+    private Map<String, Object> parseObject(List<String> path, Sink sink) throws FormatException {
+        boolean record = sink != Sink.NONE;
+        List<ParsedValue> valueSink = sink == Sink.MAIN ? values : nested.values();
+        List<ParsedTable> tableSink = sink == Sink.MAIN ? tables : nested.tables();
         expect('{');
         Map<String, Object> map = new LinkedHashMap<>();
         while (true) {
@@ -102,24 +111,24 @@ public final class JsonParser {
                 throw errorAt("Duplicate key '" + key + "'", keyStart);
             }
             if (!eof() && peek() == '{') {
-                int tableIndex = tables.size();
+                int tableIndex = tableSink.size();
                 if (record) {
-                    tables.add(new ParsedTable(childPath, comment, false, false));
+                    tableSink.add(new ParsedTable(childPath, comment, false, false));
                 }
-                map.put(key, parseObject(childPath, record));
+                map.put(key, parseObject(childPath, sink));
                 if (record) {
                     String inline = sameLineComment();
                     if (inline != null) {
-                        tables.set(tableIndex, new ParsedTable(childPath, join(comment, inline), false, false));
+                        tableSink.set(tableIndex, new ParsedTable(childPath, join(comment, inline), false, false));
                     }
                 }
             } else {
-                Raw raw = parseValue(childPath, record);
+                Raw raw = parseValue(childPath, sink);
                 map.put(key, raw.value);
                 if (record) {
                     String inline = sameLineComment();
                     boolean editable = raw.kind.isScalar() || raw.kind == ValueKind.LIST;
-                    values.add(new ParsedValue(childPath, raw.kind, raw.value, raw.start, raw.end, join(comment, inline),
+                    valueSink.add(new ParsedValue(childPath, raw.kind, raw.value, raw.start, raw.end, join(comment, inline),
                             editable, raw.style, raw.elementKind, keyStart, path));
                 }
             }
@@ -153,7 +162,7 @@ public final class JsonParser {
         return s.substring(start, pos);
     }
 
-    private Raw parseValue(List<String> path, boolean record) throws FormatException {
+    private Raw parseValue(List<String> path, Sink sink) throws FormatException {
         if (eof()) {
             throw error("Expected a value");
         }
@@ -164,11 +173,11 @@ public final class JsonParser {
             return new Raw(ValueKind.STRING, value, start, pos, new StringStyle(c), null);
         }
         if (c == '{') {
-            Map<String, Object> map = parseObject(path, false);
+            Map<String, Object> map = parseObject(path, sink);
             return new Raw(ValueKind.COMPLEX, map, start, pos, null, null);
         }
         if (c == '[') {
-            return parseArray();
+            return parseArray(path, sink);
         }
         if (s.startsWith("true", pos) && boundary(pos + 4)) {
             pos += 4;
@@ -190,7 +199,8 @@ public final class JsonParser {
         return i >= s.length() || !(Character.isLetterOrDigit(s.charAt(i)) || s.charAt(i) == '_');
     }
 
-    private Raw parseArray() throws FormatException {
+    /** @param sink where a list of objects / lists records its elements (spec 8.2 bis), NONE to only read it */
+    private Raw parseArray(List<String> path, Sink sink) throws FormatException {
         int open = pos;
         pos++;
         List<Object> items = new ArrayList<>();
@@ -208,7 +218,7 @@ public final class JsonParser {
             if (firstElement < 0) {
                 firstElement = pos;
             }
-            Raw item = parseValue(List.of(), false);
+            Raw item = parseValue(List.of(), Sink.NONE);
             raws.add(item);
             items.add(item.value);
             trailingComma = false;
@@ -235,8 +245,87 @@ public final class JsonParser {
         }
         Object elementStyle = simple && !raws.isEmpty() ? raws.get(0).style : null;
         ListStyle style = ListStyle.detect(s, open, close, firstElement, trailingComma, elementStyle);
+        if (!simple && sink != Sink.NONE) {
+            int after = pos;
+            recordElements(path, open);
+            pos = after;
+        }
         return new Raw(simple ? ValueKind.LIST : ValueKind.COMPLEX, Collections.unmodifiableList(items), open, pos, style,
                 simple ? elementKind : null);
+    }
+
+    /**
+     * Second reading of a list of objects / lists / mixed values: records each element with its position, so that it
+     * can be edited in its own screen (spec 8.2 bis).
+     */
+    private void recordElements(List<String> path, int open) throws FormatException {
+        pos = open + 1;
+        List<ParsedList.Item> items = new ArrayList<>();
+        String lead = null;
+        while (true) {
+            int before = pos;
+            String comment = skipIgnored();
+            if (lead == null) {
+                lead = s.substring(before, pos);
+            }
+            if (peek() == ']') {
+                break;
+            }
+            List<String> itemPath = concat(path, ParsedList.segment(items.size()));
+            int start = pos;
+            int itemStart = leadingStart(before, pos, !items.isEmpty());
+            if (peek() == '{') {
+                int tableIndex = nested.tables().size();
+                nested.tables().add(new ParsedTable(itemPath, comment, false, false));
+                parseObject(itemPath, Sink.NESTED);
+                String inline = sameLineComment();
+                if (inline != null) {
+                    nested.tables().set(tableIndex, new ParsedTable(itemPath, join(comment, inline), false, false));
+                }
+            } else {
+                Raw item = parseValue(itemPath, Sink.NESTED);
+                if (!nested.hasList(itemPath)) {
+                    // a scalar or a list of scalars (a list of lists records itself)
+                    String inline = sameLineComment();
+                    boolean editable = item.kind.isScalar() || item.kind == ValueKind.LIST;
+                    nested.values().add(new ParsedValue(itemPath, item.kind, item.value, item.start, item.end,
+                            join(comment, inline), editable, item.style, item.elementKind, -1, path));
+                }
+            }
+            items.add(new ParsedList.Item(itemStart, start, pos));
+            skipIgnored();
+            if (peek() == ',') {
+                pos++;
+            }
+        }
+        String indent = lead == null || lead.isEmpty() || !lead.isBlank() ? " " : lead;
+        nested.lists().add(new ParsedList(path, open, pos + 1, items, "," + indent, "[]"));
+    }
+
+    /**
+     * Start of the comments between {@code from} and the element at {@code element}: the element takes them along
+     * when it is moved or removed. A comment on the line of the previous element stays with it.
+     */
+    private int leadingStart(int from, int element, boolean afterElement) {
+        int k = from;
+        if (afterElement) {
+            int c = from;
+            while (c < element && (s.charAt(c) == ' ' || s.charAt(c) == '\t')) {
+                c++;
+            }
+            if (s.startsWith("//", c)) {
+                k = lineEnd(c);
+            } else if (s.startsWith("/*", c)) {
+                int close = s.indexOf("*/", c + 2);
+                if (close >= 0 && close < element && s.substring(c, close).indexOf('\n') < 0) {
+                    k = close + 2;
+                }
+            }
+        }
+        while (k < element && Character.isWhitespace(s.charAt(k))) {
+            k++;
+        }
+        return k;
     }
 
     private Raw parseNumber() throws FormatException {
