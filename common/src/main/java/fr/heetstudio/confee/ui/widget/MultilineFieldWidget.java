@@ -34,6 +34,10 @@ public class MultilineFieldWidget extends ConfeeWidget {
             super(ui.font(), 0, 0, 100, HEIGHT, Component.empty(), label);
         }
 
+        double scroll() {
+            return scrollAmount();
+        }
+
         @Override
         protected void renderBackground(GuiGraphics g) {
             Theme t = ui.theme();
@@ -118,7 +122,11 @@ public class MultilineFieldWidget extends ConfeeWidget {
 
     @Override
     public boolean mouseScrolled(double mx, double my, double delta) {
-        return box.mouseScrolled(mx, my, delta);
+        // the vanilla box always takes the wheel, even when its text fits or it is already at the top / bottom: the
+        // wheel then goes to the option panel, so the screen keeps scrolling when the mouse passes over the box
+        double before = box.scroll();
+        box.mouseScrolled(mx, my, delta);
+        return box.scroll() != before;
     }
 
     @Override
