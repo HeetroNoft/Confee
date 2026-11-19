@@ -9,8 +9,11 @@ prise, la reporter aussi dans `CONFEE_SPEC.md` (point en ✅ DÉCIDÉ, retiré d
       chargé côté serveur, aucune classe client.
 - [x] Suggestions dans un monde chargé : le script de captures crée un monde plat de test ; biomes et tags lus dans
       le monde (64 biomes, 119 tags, identiques aux fichiers en vanilla). Reste : un datapack qui ajoute un biome.
-- [ ] Jar Forge de release sur une vraie installation NeoForge 1.20.1 (le test actuel recompile les sources contre
-      NeoForge, ce n'est pas le jar de release).
+- [x] Jar Forge de release sur une vraie installation NeoForge 1.20.1 (2026-11-19) : installateur officiel NeoForge
+      47.1.106 (serveur `--installServer` + client `--installClient` isolé), seul `confee-0.1.0+1.20.1-forge.jar` dans
+      `mods`. Serveur : `Done`, Confee chargé côté serveur. Client : écran Confee ouvert depuis la liste des mods,
+      option modifiée + Enregistrer (une seule ligne change), bouton Config ajouté à NeoForge, `forge-client.toml`
+      modifié en jeu (une seule ligne change), aucune erreur `[Confee]`.
 - [x] Fabric sans Mod Menu (`-PnoModMenu`) : tous les écrans s'ouvrent via l'API, aucune erreur.
 - [x] Cohabitation avec Configured 2.2.3 (2026-11-19) : Fabric (jar dans `fabric/run-shots/mods`) et NeoForge
       (`-PwithConfigured` dans `testenv/neoforge`, le jar de release doit être désobfusqué en dev ; Forge dev 47.1.3 <
