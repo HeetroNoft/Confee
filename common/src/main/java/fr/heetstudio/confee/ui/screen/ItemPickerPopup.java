@@ -49,12 +49,21 @@ final class ItemPickerPopup implements Overlay {
     private int visibleRows;
 
     ItemPickerPopup(Ui ui, Component title, String registry, String current, Consumer<String> onPick, Runnable onClose) {
+        this(ui, title, registry, current, java.util.Set.of(), onPick, onClose);
+    }
+
+    /** @param hidden IDs not offered (already in the list being edited) */
+    ItemPickerPopup(Ui ui, Component title, String registry, String current, java.util.Set<String> hidden,
+                    Consumer<String> onPick, Runnable onClose) {
         this.ui = ui;
         this.title = title;
         this.onPick = onPick;
         this.onClose = onClose;
         this.registry = registry;
         for (String id : fr.heetstudio.confee.ui.RegistryEntries.ids(registry)) {
+            if (hidden.contains(id) && !id.equals(current)) {
+                continue;
+            }
             Component name = fr.heetstudio.confee.ui.RegistryIcons.name(registry, id);
             String path = id.substring(id.indexOf(':') + 1);
             all.add(new Entry(id, name == null ? path : name.getString(),

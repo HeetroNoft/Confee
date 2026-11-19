@@ -29,6 +29,9 @@ import java.util.function.Function;
 /**
  * List editor (spec 10.3): one text field (or a dropdown for enums) per entry with ▲ ▼ (reorder) and ✕ (remove),
  * "+ Add" at the bottom. The list is only applied when every entry is valid.
+ * <p>List options (spec 6.1): values already in the list are not suggested nor offered by "+ Add" and the picker
+ * (unless {@code @AllowDuplicates}); {@code @Size} greys out "+ Add" / ✕ at the bounds; {@code @Sorted} hides the
+ * arrows; {@code @Range} / {@code @Pattern} / {@code @MaxLength} on the list show an error on the field of the value.</p>
  * <p>Internal: may change without notice.</p>
  */
 final class ListRow extends OptionRow {
@@ -49,6 +52,9 @@ final class ListRow extends OptionRow {
     @Nullable
     private final String registry;
     private final Runnable closeOverlay;
+    /** How many entries hold each value (duplicate key), rebuilt only when the list changes (not every frame). */
+    @Nullable
+    private java.util.Map<Object, Integer> usedCache;
 
     private final class Entry {
         @Nullable
@@ -76,13 +82,16 @@ final class ListRow extends OptionRow {
                         ? ValueText.number(value) : String.valueOf(value), 32767, numericFilter(), s -> edited());
                 dropdown = null;
                 if (suggester != null) {
-                    field.setSuggester(suggester);
+                    // values already in the list are not suggested again (unless the list allows duplicates)
+                    field.setSuggester(option.allowDuplicates() ? suggester
+                            : text -> withoutUsed(suggester.apply(text), this));
                 }
                 if (fr.heetstudio.confee.ui.RegistryIcons.hasIcons(registry)) {
                     TextFieldWidget f = field;
                     field.setIconRegistry(registry);
+                    Entry self = this;
                     field.setPickerAction(() -> overlays.accept(new ItemPickerPopup(ui, name, registry, f.text(),
-                            f::setTextAndNotify, closeOverlay)), Component.translatable("confee.tooltip.pick"));
+                            usedIds(self), f::setTextAndNotify, closeOverlay)), Component.translatable("confee.tooltip.pick"));
                 }
             }
             up = new IconButton(ui, Icon.ARROW_UP, Component.translatable("confee.tooltip.move_up"), 14,
@@ -147,6 +156,8 @@ final class ListRow extends OptionRow {
             entries.add(new Entry(element));
         }
         shownList = current();
+        usedCache = null;
+        updateButtons();
     }
 
     /** Re-reads every entry; applies the list only when all are valid. */
@@ -160,15 +171,18 @@ final class ListRow extends OptionRow {
                 continue;
             }
             ValueText.Parsed parsed = ValueText.parseElement(option, entry.field.text());
-            Validated<?> check = parsed.ok() ? ((Option) option).validate(List.of(parsed.value())) : null;
+            // one value at a time: @Range / @Pattern / @MaxLength (the size and duplicates are about the whole list)
+            Validated<Object> check = parsed.ok() ? option.validateElement(parsed.value()) : null;
             if (!parsed.ok() || check == null || !check.isOk()) {
                 entry.field.setError(problemText.apply(parsed.ok() ? ValueText.Problem.INVALID : parsed.problem()));
                 ok = false;
             } else {
                 entry.field.setError(null);
-                values.add(((List<?>) check.value()).get(0));
+                values.add(check.value());
             }
         }
+        usedCache = null;
+        updateButtons();
         if (ok) {
             List<Object> list = List.copyOf(values);
             ((EditSession) session).set((Option) option, list);
@@ -176,10 +190,91 @@ final class ListRow extends OptionRow {
         }
     }
 
-    private void addEntry() {
+    /** @Size: "+ Add" greyed out at the maximum, ✕ at the minimum; "+ Add" also when every enum value is used. */
+    private void updateButtons() {
+        boolean room = entries.size() < option.maxSize();
+        if (room && isEnumList() && !option.allowDuplicates()) {
+            room = usedCounts().size() < option.enumClass().getEnumConstants().length;
+        }
+        add.setEnabled(room);
+        boolean removable = entries.size() > option.minSize();
+        for (Entry entry : entries) {
+            entry.remove.setEnabled(removable);
+        }
+    }
+
+    /** Duplicate key of an entry: its trimmed text (lower case with @IgnoreCase), or its enum value. */
+    private Object keyOf(Entry entry) {
+        return entry.field != null ? textKey(entry.field.text()) : entry.enumValue;
+    }
+
+    private Object textKey(String text) {
+        return option.duplicateKey(text.trim());
+    }
+
+    private java.util.Map<Object, Integer> usedCounts() {
+        if (usedCache == null) {
+            usedCache = new java.util.HashMap<>();
+            for (Entry entry : entries) {
+                usedCache.merge(keyOf(entry), 1, Integer::sum);
+            }
+        }
+        return usedCache;
+    }
+
+    /** Whether another entry than {@code self} holds the value with this key. */
+    private boolean usedByOther(Object key, @Nullable Entry self) {
+        int count = usedCounts().getOrDefault(key, 0);
+        return count - (self != null && key.equals(keyOf(self)) ? 1 : 0) > 0;
+    }
+
+    private List<String> withoutUsed(List<String> suggestions, Entry entry) {
+        return suggestions.stream().filter(s -> !usedByOther(textKey(s), entry)).toList();
+    }
+
+    /** IDs the picker does not offer: the values of the other entries. */
+    private java.util.Set<String> usedIds(Entry self) {
+        if (option.allowDuplicates()) {
+            return java.util.Set.of();
+        }
+        java.util.Set<String> ids = new java.util.HashSet<>();
+        for (Entry entry : entries) {
+            if (entry != self && entry.field != null) {
+                ids.add(entry.field.text().trim());
+            }
+        }
+        return ids;
+    }
+
+    /** First value of the new entry: one that is not in the list yet (unless the list allows duplicates). */
+    private Object initialValue() {
         OptionType type = option.elementType();
-        Object initial = isEnumList() ? option.enumClass().getEnumConstants()[0]
-                : type == OptionType.BOOLEAN ? "false" : type != null && type.isNumeric() ? "0" : "";
+        java.util.function.Predicate<Object> used = key -> !option.allowDuplicates() && usedByOther(key, null);
+        if (isEnumList()) {
+            Object[] constants = option.enumClass().getEnumConstants();
+            for (Object constant : constants) {
+                if (!used.test(constant)) {
+                    return constant;
+                }
+            }
+            return constants[0];
+        }
+        if (type == OptionType.BOOLEAN) {
+            return used.test("false") && !used.test("true") ? "true" : "false";
+        }
+        if (type != null && type.isNumeric()) {
+            // start at the lower @Range bound of the values when there is one
+            long n = option.elementMin() != null ? (long) Math.ceil(option.elementMin().doubleValue()) : 0;
+            while (used.test(Long.toString(n)) || used.test(n + ".0")) {
+                n++;
+            }
+            return Long.toString(n);
+        }
+        return "";
+    }
+
+    private void addEntry() {
+        Object initial = initialValue();
         Entry entry = new Entry(initial);
         entries.add(entry);
         edited();
@@ -232,14 +327,15 @@ final class ListRow extends OptionRow {
         int cw = width - DOT_GUTTER;
         layoutSubtitle(width);
         int cy = y + headerHeight();
-        int buttons = 3 * 14 + 2 * GAP;
+        int arrows = option.sorted() ? 0 : 2;
+        int buttons = (arrows + 1) * 14 + arrows * GAP;
         for (Entry entry : entries) {
             entry.input().setBounds(cx, cy, cw - buttons - GAP, TextFieldWidget.HEIGHT);
             int bx = cx + cw - buttons;
             int by = cy + (TextFieldWidget.HEIGHT - 14) / 2;
             entry.up.setBounds(bx, by, 14, 14);
             entry.down.setBounds(bx + 14 + GAP, by, 14, 14);
-            entry.remove.setBounds(bx + 2 * (14 + GAP), by, 14, 14);
+            entry.remove.setBounds(bx + arrows * (14 + GAP), by, 14, 14);
             cy += TextFieldWidget.HEIGHT;
             if (entry.error() != null) {
                 cy += 11;
@@ -263,8 +359,10 @@ final class ListRow extends OptionRow {
         reset.render(g, mouseX, mouseY, delta);
         for (Entry entry : entries) {
             entry.input().render(g, mouseX, mouseY, delta);
-            entry.up.render(g, mouseX, mouseY, delta);
-            entry.down.render(g, mouseX, mouseY, delta);
+            if (!option.sorted()) {
+                entry.up.render(g, mouseX, mouseY, delta);
+                entry.down.render(g, mouseX, mouseY, delta);
+            }
             entry.remove.render(g, mouseX, mouseY, delta);
             if (entry.error() != null) {
                 ConfeeWidget input = entry.input();
@@ -280,8 +378,10 @@ final class ListRow extends OptionRow {
         list.add(reset);
         for (Entry entry : entries) {
             list.add(entry.input());
-            list.add(entry.up);
-            list.add(entry.down);
+            if (!option.sorted()) {
+                list.add(entry.up);
+                list.add(entry.down);
+            }
             list.add(entry.remove);
         }
         list.add(add);
