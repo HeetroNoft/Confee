@@ -18,3 +18,8 @@ logs/
 
 # Bedrock Edition reference screenshots (Mojang): local only, never in the public repository
 /docs/ui-reference/
+
+# Local secrets (publishing tokens): never committed, see .env.example
+.env
+.env.*
+!.env.example
