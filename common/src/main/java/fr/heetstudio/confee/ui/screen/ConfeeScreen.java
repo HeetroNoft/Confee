@@ -98,10 +98,11 @@ public abstract class ConfeeScreen extends Screen {
         int my = covered ? -10_000 : mouseY;
         renderContent(g, mx, my, delta);
         if (focus != null && overlay == null) {
-            g.pose().pushPose();
-            g.pose().translate(0, 0, 300);
+            g.pose().pushMatrix();
+            // drawn above what is already on screen (no depth since 1.21.6)
+            g.nextStratum();
             focus.renderFloating(g, mouseX, mouseY, delta);
-            g.pose().popPose();
+            g.pose().popMatrix();
         }
         if (overlay != null) {
             overlay.render(g, mouseX, mouseY, delta);
@@ -172,8 +173,9 @@ public abstract class ConfeeScreen extends Screen {
         }
         int x = pos[0];
         int y = pos[1];
-        g.pose().pushPose();
-        g.pose().translate(0, 0, 800);
+        g.pose().pushMatrix();
+        // drawn above what is already on screen (no depth since 1.21.6)
+        g.nextStratum();
         // fades in (opacity only, no movement); text alpha stays above the 4/255 the font treats as opaque
         Draw.rect(g, x + 2, y + 2, w, h, Draw.withAlpha(0x80000000, alpha));
         Draw.rect(g, x, y, w, h, Draw.withAlpha(Draw.mix(t.panelBgDeep(), 0xFF000000, 0.35f), alpha));
@@ -183,7 +185,7 @@ public abstract class ConfeeScreen extends Screen {
             Draw.text(g, font, line, x + TIP_PAD_X, ly, Draw.withAlpha(t.textOnDark(), Math.max(alpha, 0.05f)));
             ly += 10;
         }
-        g.pose().popPose();
+        g.pose().popMatrix();
     }
 
     /** Top-left corner of the tooltip, or null when it can only cover the open suggestion list. */

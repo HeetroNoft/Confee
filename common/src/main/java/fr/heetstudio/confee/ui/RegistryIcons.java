@@ -1,7 +1,7 @@
 package fr.heetstudio.confee.ui;
 
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.client.resources.language.I18n;
@@ -53,8 +53,8 @@ public final class RegistryIcons {
             if (effect == null) {
                 return false;
             }
-            TextureAtlasSprite sprite = Minecraft.getInstance().getMobEffectTextures().get(BuiltInRegistries.MOB_EFFECT.wrapAsHolder(effect));
-            g.blitSprite(RenderType::guiTextured, sprite, x, y, size, size);
+            ResourceLocation sprite = net.minecraft.client.gui.Gui.getMobEffectSprite(BuiltInRegistries.MOB_EFFECT.wrapAsHolder(effect));
+            g.blitSprite(RenderPipelines.GUI_TEXTURED, sprite, x, y, size, size);
             return true;
         }
         ItemStack stack = stack(registry, id);

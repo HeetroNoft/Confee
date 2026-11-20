@@ -178,8 +178,9 @@ final class ColorPickerPopup implements Overlay {
         int screenW = g.guiWidth();
         int screenH = g.guiHeight();
         layout(screenW, screenH);
-        g.pose().pushPose();
-        g.pose().translate(0, 0, 500);
+        g.pose().pushMatrix();
+        // drawn above what is already on screen (no depth since 1.21.6)
+        g.nextStratum();
         Draw.rect(g, 0, 0, screenW, screenH, 0xB0000000);
         Draw.rect(g, px + 2, py + 2, pw, ph, 0x80000000);
         Draw.rect(g, px, py, pw, ph, t.panelBg());
@@ -243,7 +244,7 @@ final class ColorPickerPopup implements Overlay {
         cancel.setBounds(ok.x - 4 - cancelW, by, cancelW, 20);
         cancel.render(g, mouseX, mouseY, delta);
         ok.render(g, mouseX, mouseY, delta);
-        g.pose().popPose();
+        g.pose().popMatrix();
     }
 
     // ------------------------------------------------------------------ input

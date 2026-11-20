@@ -12,7 +12,7 @@ import fr.heetstudio.confee.ui.Labels;
 import fr.heetstudio.confee.ui.Ui;
 import fr.heetstudio.confee.ui.render.Draw;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.resources.language.I18n;
 import net.minecraft.network.chat.Component;
@@ -170,7 +170,7 @@ final class PreviewPanel {
         int dw = Math.max(1, Math.round(size[0] * scale));
         int dh = Math.max(1, Math.round(size[1] * scale));
         int dx = x + (w - dw) / 2;
-        g.blit(RenderType::guiTextured, id, dx, y, 0, 0, dw, dh, size[0], size[1], size[0], size[1]);
+        g.blit(RenderPipelines.GUI_TEXTURED, id, dx, y, 0, 0, dw, dh, size[0], size[1], size[0], size[1]);
         return y + dh;
     }
 

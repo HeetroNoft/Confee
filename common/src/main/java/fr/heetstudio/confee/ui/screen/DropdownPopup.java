@@ -66,8 +66,10 @@ final class DropdownPopup implements Overlay {
         Theme t = ui.theme();
         float p = Draw.easeOut((ui.now() - openedAt) / (float) OPEN_MS);
         int slide = Math.round((1 - p) * 4) * (above ? 1 : -1);
-        g.pose().pushPose();
-        g.pose().translate(0, slide, 400);
+        g.pose().pushMatrix();
+        g.pose().translate(0, slide);
+        // drawn above what is already on screen (no depth since 1.21.6)
+        g.nextStratum();
         int bg = Draw.withAlpha(t.panelBg(), p);
         Draw.rect(g, x, y, w, h, bg);
         Draw.outline(g, x, y, w, h, Draw.withAlpha(t.outline(), p));
@@ -100,7 +102,7 @@ final class DropdownPopup implements Overlay {
             Draw.rect(g, x + w - 4, y + 1, 3, trackH, t.panelBgDeep());
             Draw.rect(g, x + w - 4, handleY, 3, handleH, t.buttonFace());
         }
-        g.pose().popPose();
+        g.pose().popMatrix();
     }
 
     @SuppressWarnings({"unchecked", "rawtypes"})

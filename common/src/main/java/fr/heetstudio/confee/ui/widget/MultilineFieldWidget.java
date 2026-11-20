@@ -22,38 +22,18 @@ public class MultilineFieldWidget extends ConfeeWidget {
     /** Room under the box for the character counter (only with a length limit). */
     private static final int COUNTER_H = 11;
 
-    private final Box box;
+    private final MultiLineEditBox box;
     private final Component label;
     private Consumer<String> listener;
     @Nullable
     private Component error;
 
-    /** The vanilla box with Confee's background and border. */
-    private final class Box extends MultiLineEditBox {
-        Box(Component label) {
-            super(ui.font(), 0, 0, 100, HEIGHT, Component.empty(), label);
-        }
-
-        double scroll() {
-            return scrollAmount();
-        }
-
-        @Override
-        protected void renderBackground(GuiGraphics g) {
-            Theme t = ui.theme();
-            int border = error != null ? t.error() : focused ? t.accent() : t.textDisabled();
-            if (!enabled) {
-                border = Draw.mix(t.textDisabled(), t.panelBg(), 0.5f);
-            }
-            Draw.rect(g, getX(), getY(), getWidth(), getHeight(), enabled ? t.panelBgDeep() : Draw.mix(t.panelBgDeep(), t.panelBg(), 0.5f));
-            Draw.outline(g, getX(), getY(), getWidth(), getHeight(), border);
-        }
-    }
-
     public MultilineFieldWidget(Ui ui, Component label, String text, int maxLength, Consumer<String> onEdit) {
         super(ui, 100, maxLength < Integer.MAX_VALUE ? HEIGHT + COUNTER_H : HEIGHT);
         this.label = label;
-        this.box = new Box(label);
+        // the vanilla box without its background: Confee draws its own (render)
+        this.box = MultiLineEditBox.builder().setPlaceholder(Component.empty()).setShowBackground(false)
+                .build(ui.font(), 100, HEIGHT, label);
         // the vanilla box draws a "length/limit" counter under itself only when a limit is set
         box.setCharacterLimit(maxLength);
         box.setValue(text);
@@ -96,6 +76,13 @@ public class MultilineFieldWidget extends ConfeeWidget {
         box.setY(y);
         box.setWidth(width);
         box.active = enabled;
+        Theme t = ui.theme();
+        int border = error != null ? t.error() : focused ? t.accent() : t.textDisabled();
+        if (!enabled) {
+            border = Draw.mix(t.textDisabled(), t.panelBg(), 0.5f);
+        }
+        Draw.rect(g, x, y, width, HEIGHT, enabled ? t.panelBgDeep() : Draw.mix(t.panelBgDeep(), t.panelBg(), 0.5f));
+        Draw.outline(g, x, y, width, HEIGHT, border);
         box.render(g, mouseX, mouseY, delta);
     }
 
@@ -124,9 +111,9 @@ public class MultilineFieldWidget extends ConfeeWidget {
     public boolean mouseScrolled(double mx, double my, double delta) {
         // the vanilla box always takes the wheel, even when its text fits or it is already at the top / bottom: the
         // wheel then goes to the option panel, so the screen keeps scrolling when the mouse passes over the box
-        double before = box.scroll();
+        double before = box.scrollAmount();
         box.mouseScrolled(mx, my, 0, delta);
-        return box.scroll() != before;
+        return box.scrollAmount() != before;
     }
 
     @Override

@@ -32,7 +32,7 @@ import fr.heetstudio.confee.ui.widget.SliderWidget;
 import fr.heetstudio.confee.ui.widget.TextFieldWidget;
 import fr.heetstudio.confee.ui.widget.ToggleWidget;
 import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 import org.jetbrains.annotations.Nullable;
@@ -880,7 +880,7 @@ public final class ConfigScreen extends ConfeeScreen {
             net.minecraft.resources.ResourceLocation bg = net.minecraft.resources.ResourceLocation.tryParse(layout.background());
             if (size[0] > 0 && bg != null) {
                 // tiled at its own size
-                g.blit(RenderType::guiTextured, bg, 0, 0, 0, 0, width, height, size[0], size[1]);
+                g.blit(RenderPipelines.GUI_TEXTURED, bg, 0, 0, 0, 0, width, height, size[0], size[1]);
             }
         }
         layoutRows();

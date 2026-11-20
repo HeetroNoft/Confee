@@ -242,8 +242,9 @@ final class ItemPickerPopup implements Overlay {
             pendingReveal = false;
         }
         scrollRow = Math.max(0, Math.min(Math.max(0, rows() - visibleRows), scrollRow));
-        g.pose().pushPose();
-        g.pose().translate(0, 0, 500);
+        g.pose().pushMatrix();
+        // drawn above what is already on screen (no depth since 1.21.6)
+        g.nextStratum();
         Draw.rect(g, 0, 0, screenW, screenH, 0xB0000000);
         Draw.rect(g, px + 2, py + 2, pw, ph, 0x80000000);
         Draw.rect(g, px, py, pw, ph, t.panelBg());
@@ -309,7 +310,7 @@ final class ItemPickerPopup implements Overlay {
             Draw.rect(g, trackX, gy, 3, trackH, Draw.mix(t.panelBgDeep(), t.textOnDark(), 0.08f));
             Draw.rect(g, trackX, handleY, 3, handleH, t.buttonFace());
         }
-        g.pose().popPose();
+        g.pose().popMatrix();
     }
 
     /** The icon, or the first letters of the entry when it has none (an entity without spawn egg, a mod without logo). */

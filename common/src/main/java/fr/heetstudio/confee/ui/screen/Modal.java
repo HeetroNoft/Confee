@@ -95,10 +95,11 @@ public final class Modal implements Overlay {
         int screenH = g.guiHeight();
         layout(screenW, screenH);
         float p = Draw.easeOut((ui.now() - openedAt) / (float) OPEN_MS);
-        g.pose().pushPose();
-        g.pose().translate(0, 0, 500);
+        g.pose().pushMatrix();
+        // drawn above what is already on screen (no depth since 1.21.6)
+        g.nextStratum();
         Draw.rect(g, 0, 0, screenW, screenH, Draw.withAlpha(0xB0000000, p));
-        g.pose().translate(0, Math.round((1 - p) * 6), 0);
+        g.pose().translate(0, Math.round((1 - p) * 6));
         Draw.rect(g, px, py, pw, ph, t.panelBg());
         Draw.outline(g, px, py, pw, ph, t.outline());
         Draw.rect(g, px + 1, py + 1, pw - 2, 1, Draw.mix(t.panelBg(), t.textOnDark(), 0.08f));
@@ -112,7 +113,7 @@ public final class Modal implements Overlay {
         for (ButtonWidget button : buttons) {
             button.render(g, mouseX, my, delta);
         }
-        g.pose().popPose();
+        g.pose().popMatrix();
     }
 
     @Override

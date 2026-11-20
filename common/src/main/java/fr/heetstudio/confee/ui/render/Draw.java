@@ -48,15 +48,18 @@ public final class Draw {
     }
 
     public static int text(GuiGraphics g, Font font, Component text, int x, int y, int color) {
-        return g.drawString(font, text, x, y, color, false);
+        g.drawString(font, text, x, y, color, false);
+        return x + font.width(text);
     }
 
     public static int text(GuiGraphics g, Font font, String text, int x, int y, int color) {
-        return g.drawString(font, text, x, y, color, false);
+        g.drawString(font, text, x, y, color, false);
+        return x + font.width(text);
     }
 
     public static int text(GuiGraphics g, Font font, FormattedCharSequence text, int x, int y, int color) {
-        return g.drawString(font, text, x, y, color, false);
+        g.drawString(font, text, x, y, color, false);
+        return x + font.width(text);
     }
 
     /** Draws the text cut with "..." so it fits in {@code maxWidth}. */
