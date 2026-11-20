@@ -1,7 +1,7 @@
 package fr.heetstudio.confee.testmod;
 
 import fr.heetstudio.confee.api.client.OptionWidget;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import org.lwjgl.glfw.GLFW;
 
 /**
@@ -19,7 +19,7 @@ public class TemperatureWidget extends OptionWidget<Integer> {
     }
 
     @Override
-    public void render(GuiGraphics g, int x, int y, int width, int height, int mouseX, int mouseY, float delta) {
+    public void render(GuiGraphicsExtractor g, int x, int y, int width, int height, int mouseX, int mouseY, float delta) {
         int value = value();
         float f = (value - MIN) / (float) (MAX - MIN);
         int barY = y + 12;
@@ -29,10 +29,10 @@ public class TemperatureWidget extends OptionWidget<Integer> {
         int cold = 0xFF2D7DD2;
         int hot = 0xFFE5533D;
         g.fillGradient(x + 1, barY + 1, x + 1 + filled, barY + 9, cold, f > 0.5f ? hot : cold);
-        g.renderOutline(x, barY, width, 10, enabled() ? theme().outline() : theme().textDisabled());
+        g.outline(x, barY, width, 10, enabled() ? theme().outline() : theme().textDisabled());
         int zero = x + 1 + Math.round((width - 2) * (-MIN / (float) (MAX - MIN)));
         g.fill(zero, barY - 2, zero + 1, barY + 12, theme().textOnDark());
-        g.drawString(font(), value + " °C", x, y, enabled() ? theme().textOnDark() : theme().textDisabled(), false);
+        g.text(font(), value + " °C", x, y, enabled() ? theme().textOnDark() : theme().textDisabled(), false);
     }
 
     private void setFromMouse(double mouseX) {

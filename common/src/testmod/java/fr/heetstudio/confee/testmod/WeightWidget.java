@@ -1,7 +1,7 @@
 package fr.heetstudio.confee.testmod;
 
 import fr.heetstudio.confee.api.client.OptionWidget;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import org.lwjgl.glfw.GLFW;
 
 /**
@@ -20,15 +20,15 @@ public class WeightWidget extends OptionWidget<Long> {
     }
 
     @Override
-    public void render(GuiGraphics g, int x, int y, int width, int height, int mouseX, int mouseY, float delta) {
+    public void render(GuiGraphicsExtractor g, int x, int y, int width, int height, int mouseX, int mouseY, float delta) {
         int cellW = Math.max(4, (width - 40) / CELLS);
         for (int i = 0; i < CELLS; i++) {
             int cx = x + i * cellW;
             boolean on = (i + 1) * STEP <= value();
             g.fill(cx, y + 2, cx + cellW - 2, y + height - 2, on ? theme().accent() : theme().panelBgDeep());
-            g.renderOutline(cx, y + 2, cellW - 2, height - 4, theme().outline());
+            g.outline(cx, y + 2, cellW - 2, height - 4, theme().outline());
         }
-        g.drawString(font(), String.valueOf(value()), x + CELLS * cellW + 6, y + 4, theme().textOnDark(), false);
+        g.text(font(), String.valueOf(value()), x + CELLS * cellW + 6, y + 4, theme().textOnDark(), false);
     }
 
     @Override

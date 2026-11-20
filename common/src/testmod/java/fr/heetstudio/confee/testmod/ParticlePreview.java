@@ -1,7 +1,7 @@
 package fr.heetstudio.confee.testmod;
 
 import fr.heetstudio.confee.api.PreviewRenderer;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 
 /** Custom preview of {@code particleCount}: one dot per particle, gently floating. Client only. */
 public class ParticlePreview implements PreviewRenderer {
@@ -9,7 +9,7 @@ public class ParticlePreview implements PreviewRenderer {
     private float time;
 
     @Override
-    public void render(GuiGraphics g, int x, int y, int width, int height, Object value, float delta) {
+    public void render(GuiGraphicsExtractor g, int x, int y, int width, int height, Object value, float delta) {
         time += delta;
         int count = Math.min(200, Math.max(0, ((Number) value).intValue()));
         for (int i = 0; i < count; i++) {

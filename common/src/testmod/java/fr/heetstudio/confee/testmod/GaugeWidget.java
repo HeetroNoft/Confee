@@ -1,7 +1,7 @@
 package fr.heetstudio.confee.testmod;
 
 import fr.heetstudio.confee.api.client.OptionWidget;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import org.lwjgl.glfw.GLFW;
 
 /**
@@ -24,16 +24,16 @@ public class GaugeWidget extends OptionWidget<Integer> {
     }
 
     @Override
-    public void render(GuiGraphics g, int x, int y, int width, int height, int mouseX, int mouseY, float delta) {
+    public void render(GuiGraphicsExtractor g, int x, int y, int width, int height, int mouseX, int mouseY, float delta) {
         int cells = max() - min() + 1;
         int cellW = Math.max(4, (width - 40) / cells);
         for (int i = 0; i < cells; i++) {
             int cx = x + i * cellW;
             boolean on = min() + i <= value();
             g.fill(cx, y + 2, cx + cellW - 2, y + height - 2, on ? theme().accent() : theme().panelBgDeep());
-            g.renderOutline(cx, y + 2, cellW - 2, height - 4, theme().outline());
+            g.outline(cx, y + 2, cellW - 2, height - 4, theme().outline());
         }
-        g.drawString(font(), "x" + value(), x + cells * cellW + 6, y + 4, theme().textOnDark(), false);
+        g.text(font(), "x" + value(), x + cells * cellW + 6, y + 4, theme().textOnDark(), false);
     }
 
     @Override

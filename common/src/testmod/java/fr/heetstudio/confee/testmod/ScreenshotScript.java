@@ -559,7 +559,7 @@ public final class ScreenshotScript {
         step(20, mc -> {
             // narrow window: the sidebar folds into a category dropdown (spec 10.6)
             mc.getWindow().setWindowed(640, 720);
-            mc.resizeDisplay();
+            mc.resizeGui();
         });
         shot("13-narrow-collapsed");
         step(5, Minecraft::stop);
@@ -670,7 +670,8 @@ public final class ScreenshotScript {
                 int packFormat = net.minecraft.SharedConstants.getCurrentVersion()
                         .packVersion(net.minecraft.server.packs.PackType.SERVER_DATA).major();
                 Files.writeString(pack.resolve("pack.mcmeta"),
-                        "{\"pack\": {\"pack_format\": " + packFormat + ", \"description\": \"Confee test biome\"}}");
+                        "{\"pack\": {\"min_format\": " + packFormat + ", \"max_format\": " + packFormat
+                                + ", \"description\": \"Confee test biome\"}}");
                 Files.writeString(pack.resolve("data/confee_pack/worldgen/biome/glow_meadow.json"), String.join("\n",
                         "{",
                         "  \"has_precipitation\": true, \"temperature\": 0.8, \"downfall\": 0.4,",
@@ -685,9 +686,10 @@ public final class ScreenshotScript {
                     fr.heetstudio.confee.ui.RegistryEntries.ids(biomes).contains("confee_pack:glow_meadow"));
             String name = "confee-test";
             mc.createWorldOpenFlows().createFreshLevel(name,
-                    new net.minecraft.world.level.LevelSettings(name, net.minecraft.world.level.GameType.CREATIVE, false,
-                            net.minecraft.world.Difficulty.PEACEFUL, true, new net.minecraft.world.level.gamerules.GameRules(net.minecraft.world.level.WorldDataConfiguration.DEFAULT.enabledFeatures()),
-                            net.minecraft.world.level.WorldDataConfiguration.DEFAULT),
+                    new net.minecraft.world.level.LevelSettings(name, net.minecraft.world.level.GameType.CREATIVE,
+                            new net.minecraft.world.level.LevelSettings.DifficultySettings(
+                                    net.minecraft.world.Difficulty.PEACEFUL, false, false),
+                            true, net.minecraft.world.level.WorldDataConfiguration.DEFAULT),
                     new net.minecraft.world.level.levelgen.WorldOptions(0L, false, false),
                     registries -> registries.lookupOrThrow(net.minecraft.core.registries.Registries.WORLD_PRESET)
                             .getOrThrow(net.minecraft.world.level.levelgen.presets.WorldPresets.FLAT).value()
@@ -852,12 +854,12 @@ public final class ScreenshotScript {
 
     private static void type(Minecraft mc, String text) {
         for (char c : text.toCharArray()) {
-            mc.screen.charTyped(new net.minecraft.client.input.CharacterEvent(c, 0));
+            mc.screen.charTyped(new net.minecraft.client.input.CharacterEvent(c));
         }
     }
 
     private static void scale(Minecraft mc, int scale) {
         mc.options.guiScale().set(scale);
-        mc.resizeDisplay();
+        mc.resizeGui();
     }
 }
