@@ -1,5 +1,7 @@
 ![Confee logo](https://media.forgecdn.net/attachments/description/null/description_42cb4097-d757-476c-8bd4-a7d4f31dfa50.png)
 
+![Confee is in beta. Things may still break or change between versions. Back up your config folder before editing other mods' files, and please report any issue on the issue tracker.](docs/publishing/beta-warning.png)
+
 Config library for Minecraft mods, with generated Bedrock-style config screens, plus an in-game editor for the config
 files of mods that do not use it.
 
@@ -159,42 +161,42 @@ See [Translations](#translations); the dev report lists the keys still missing.
 The public, non-static, non-transient fields of a `@Config` class are the options; their initial values are the
 defaults. The class needs a constructor without arguments.
 
-| Annotation | On | Effect |
-|---|---|---|
-| `@Config(modId, name = "", scope = COMMON, format = TOML)` | class | Declares the config. With a `name`, the file is `config/<modId>-<name>.<ext>`. |
-| `@Theme(accent = 0xFF2D7DD2, ...)` | class | Colors of the screen, see [Theme](#theme). |
-| `@Category("key")` | field | Puts the option in a category: a sidebar tab, and a table in the file. |
-| `@Comment("...")` | field, class | Comment written in the file, and tooltip when no translation exists. |
-| `@Name("...")` | field | Display name when no translation exists. |
-| `@Range(min, max)` | number, List of numbers | Bounds (of each value, on a list). Values out of range are clamped. |
-| `@Slider(step)` | number | Shown as a slider. Needs both bounds. |
-| `@RequiresRestart` | field | Yellow "!" icon. The player is told to restart after saving. |
-| `@Hidden` | field | Saved in the file, but not shown on the screen. |
-| `@Pattern("regex")`, `@MaxLength(n)` | String, List of String | Text validation (of each value, on a list). |
-| `@Color(alpha = false)` | int | Shown as a color field with a preview. |
-| `@Key("name")` | field | Key in the file, when it differs from the field name. |
-| `@Section` | nested static class | A field of this type becomes a sub-table. |
-| `@Preview(image, text, renderer)` | field | Preview shown in a third column, see [Previews](#previews). |
-| `@EnabledIf("path")`, `@VisibleIf("path")` | field | Grays out / hides the option unless the condition holds: `"showHud"`, `"!showHud"` or `"quality=HIGH"`. |
-| `@Unit("%")` | number | Unit shown after the value (text or translation key). |
-| `@Multiline` | String | Multi-line text area. |
-| `@AllowDuplicates` | List | The list may hold the same value twice. By default duplicates are removed (on load and on save). |
-| `@Size(min, max)` | List | Number of values allowed. |
-| `@Sorted` | List | The list is kept sorted. |
-| `@IgnoreCase` | List of String | "Dirt" and "dirt" are the same value. |
-| `@Registry("minecraft:item")` | ResourceLocation, String, List&lt;String&gt; | Autocompletion from a built-in registry. |
-| `@Item`, `@Block` | ResourceLocation, String, List&lt;String&gt; | Item / block ID: icon, suggestions with icons, a searchable grid picker and an automatic preview. |
-| `@Entity`, `@Biome`, `@Dimension`, `@Structure`, `@Enchantment`, `@Effect`, `@Sound`, `@Fluid` | ResourceLocation, String, List&lt;String&gt; | ID of that registry, entries added by mods included. See [Registry options](#registry-options). |
-| `@ModId` | String, List&lt;String&gt; | ID of an installed mod: suggestions with the mods' logos, logo in the field and a mod picker. |
-| `@Picker(styles, defaultStyle)` | ID field with a picker | Picker styles: `GRID`, `LIST` (icon, name, ID), `DETAILED` (plus the mod description). The player switches with the buttons of the picker (or Tab) and Confee remembers the choice per kind of ID. Default: grid for items/blocks, list for mods. |
-| `@Description("...")` | field | Text shown under the name on the screen (not written in the file: use `@Comment` for that). |
-| `@Suggestions({"a", "b"}, provider = ...)` | String, ResourceLocation, List&lt;String&gt; | Values suggested while typing (fixed and/or from a `SuggestionProvider`). |
-| `@Stepper(step = 1)` | number | Field with − and + buttons. |
-| `@Keybind` | String | A key such as `key.keyboard.g`, set by pressing it. |
-| `@Widget(MyWidget.class)` | field | Your own widget, see [Your own widgets](#your-own-widgets). |
-| `@Category("dash", icon = "minecraft:feather")` | field | Category with an icon (item ID or texture). |
-| `@Icon("minecraft:compass")` | `@Section` field or class | Icon of the sub-section. |
-| `@Layout(...)` | class | Screen layout, see [Layout and decorations](#layout-and-decorations). |
+| Annotation                                                                                     | On                                           | Effect                                                                                                                                                                                                                                            |
+| ---------------------------------------------------------------------------------------------- | -------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `@Config(modId, name = "", scope = COMMON, format = TOML)`                                     | class                                        | Declares the config. With a `name`, the file is `config/<modId>-<name>.<ext>`.                                                                                                                                                                    |
+| `@Theme(accent = 0xFF2D7DD2, ...)`                                                             | class                                        | Colors of the screen, see [Theme](#theme).                                                                                                                                                                                                        |
+| `@Category("key")`                                                                             | field                                        | Puts the option in a category: a sidebar tab, and a table in the file.                                                                                                                                                                            |
+| `@Comment("...")`                                                                              | field, class                                 | Comment written in the file, and tooltip when no translation exists.                                                                                                                                                                              |
+| `@Name("...")`                                                                                 | field                                        | Display name when no translation exists.                                                                                                                                                                                                          |
+| `@Range(min, max)`                                                                             | number, List of numbers                      | Bounds (of each value, on a list). Values out of range are clamped.                                                                                                                                                                               |
+| `@Slider(step)`                                                                                | number                                       | Shown as a slider. Needs both bounds.                                                                                                                                                                                                             |
+| `@RequiresRestart`                                                                             | field                                        | Yellow "!" icon. The player is told to restart after saving.                                                                                                                                                                                      |
+| `@Hidden`                                                                                      | field                                        | Saved in the file, but not shown on the screen.                                                                                                                                                                                                   |
+| `@Pattern("regex")`, `@MaxLength(n)`                                                           | String, List of String                       | Text validation (of each value, on a list).                                                                                                                                                                                                       |
+| `@Color(alpha = false)`                                                                        | int                                          | Shown as a color field with a preview.                                                                                                                                                                                                            |
+| `@Key("name")`                                                                                 | field                                        | Key in the file, when it differs from the field name.                                                                                                                                                                                             |
+| `@Section`                                                                                     | nested static class                          | A field of this type becomes a sub-table.                                                                                                                                                                                                         |
+| `@Preview(image, text, renderer)`                                                              | field                                        | Preview shown in a third column, see [Previews](#previews).                                                                                                                                                                                       |
+| `@EnabledIf("path")`, `@VisibleIf("path")`                                                     | field                                        | Grays out / hides the option unless the condition holds: `"showHud"`, `"!showHud"` or `"quality=HIGH"`.                                                                                                                                           |
+| `@Unit("%")`                                                                                   | number                                       | Unit shown after the value (text or translation key).                                                                                                                                                                                             |
+| `@Multiline`                                                                                   | String                                       | Multi-line text area.                                                                                                                                                                                                                             |
+| `@AllowDuplicates`                                                                             | List                                         | The list may hold the same value twice. By default duplicates are removed (on load and on save).                                                                                                                                                  |
+| `@Size(min, max)`                                                                              | List                                         | Number of values allowed.                                                                                                                                                                                                                         |
+| `@Sorted`                                                                                      | List                                         | The list is kept sorted.                                                                                                                                                                                                                          |
+| `@IgnoreCase`                                                                                  | List of String                               | "Dirt" and "dirt" are the same value.                                                                                                                                                                                                             |
+| `@Registry("minecraft:item")`                                                                  | ResourceLocation, String, List&lt;String&gt; | Autocompletion from a built-in registry.                                                                                                                                                                                                          |
+| `@Item`, `@Block`                                                                              | ResourceLocation, String, List&lt;String&gt; | Item / block ID: icon, suggestions with icons, a searchable grid picker and an automatic preview.                                                                                                                                                 |
+| `@Entity`, `@Biome`, `@Dimension`, `@Structure`, `@Enchantment`, `@Effect`, `@Sound`, `@Fluid` | ResourceLocation, String, List&lt;String&gt; | ID of that registry, entries added by mods included. See [Registry options](#registry-options).                                                                                                                                                   |
+| `@ModId`                                                                                       | String, List&lt;String&gt;                   | ID of an installed mod: suggestions with the mods' logos, logo in the field and a mod picker.                                                                                                                                                     |
+| `@Picker(styles, defaultStyle)`                                                                | ID field with a picker                       | Picker styles: `GRID`, `LIST` (icon, name, ID), `DETAILED` (plus the mod description). The player switches with the buttons of the picker (or Tab) and Confee remembers the choice per kind of ID. Default: grid for items/blocks, list for mods. |
+| `@Description("...")`                                                                          | field                                        | Text shown under the name on the screen (not written in the file: use `@Comment` for that).                                                                                                                                                       |
+| `@Suggestions({"a", "b"}, provider = ...)`                                                     | String, ResourceLocation, List&lt;String&gt; | Values suggested while typing (fixed and/or from a `SuggestionProvider`).                                                                                                                                                                         |
+| `@Stepper(step = 1)`                                                                           | number                                       | Field with − and + buttons.                                                                                                                                                                                                                       |
+| `@Keybind`                                                                                     | String                                       | A key such as `key.keyboard.g`, set by pressing it.                                                                                                                                                                                               |
+| `@Widget(MyWidget.class)`                                                                      | field                                        | Your own widget, see [Your own widgets](#your-own-widgets).                                                                                                                                                                                       |
+| `@Category("dash", icon = "minecraft:feather")`                                                | field                                        | Category with an icon (item ID or texture).                                                                                                                                                                                                       |
+| `@Icon("minecraft:compass")`                                                                   | `@Section` field or class                    | Icon of the sub-section.                                                                                                                                                                                                                          |
+| `@Layout(...)`                                                                                 | class                                        | Screen layout, see [Layout and decorations](#layout-and-decorations).                                                                                                                                                                             |
 
 List annotations (`@AllowDuplicates`, `@Size`, `@Sorted`, `@Reorderable`, `@IgnoreCase`, and `@Range` / `@Pattern` / `@MaxLength` on a list): see [Lists](#lists).
 
@@ -258,15 +260,15 @@ A list never holds the same value twice. In the screen, values already in the li
 **+ Add** and hidden in the item / block picker; a duplicate typed by hand is removed when the player saves. In the
 file, duplicates are removed when it is loaded (first one kept, a warning in the log).
 
-| Annotation | Builder | In the file | In the screen |
-|---|---|---|---|
-| `@AllowDuplicates` | `.allowDuplicates()` | Duplicates kept. | Every value is suggested. |
-| `@Size(min = 1, max = 5)` | `.size(1, 5)`, `.maxSize(5)` | Extra values removed; a list too short is replaced by the default. | **+ Add** greyed out at the max, ✕ at the min. |
-| `@Sorted` | `.sorted()` | Sorted (texts and numbers in natural order, enums in declaration order). | No move arrows; sorted when saved. |
-| `@Reorderable` | `.reorderable()` | Order kept as the player sets it. | ▲ ▼ move buttons (hidden without it). Also on lists of objects. Not with `@Sorted`. |
-| `@IgnoreCase` | `.ignoreCase()` | `Dirt` and `dirt` are duplicates. | Same for the suggestions. |
-| `@Range(min = 1, max = 64)` | `.range(1, 64)` | Each value: out of range values clamped. | Error on the field of the value. |
-| `@Pattern("[a-z_]+")`, `@MaxLength(16)` | `.pattern("[a-z_]+")`, `.maxLength(16)` | Each value: one that does not fit gives the default value. | Error on the field of the value. |
+| Annotation                              | Builder                                 | In the file                                                              | In the screen                                                                       |
+| --------------------------------------- | --------------------------------------- | ------------------------------------------------------------------------ | ----------------------------------------------------------------------------------- |
+| `@AllowDuplicates`                      | `.allowDuplicates()`                    | Duplicates kept.                                                         | Every value is suggested.                                                           |
+| `@Size(min = 1, max = 5)`               | `.size(1, 5)`, `.maxSize(5)`            | Extra values removed; a list too short is replaced by the default.       | **+ Add** greyed out at the max, ✕ at the min.                                      |
+| `@Sorted`                               | `.sorted()`                             | Sorted (texts and numbers in natural order, enums in declaration order). | No move arrows; sorted when saved.                                                  |
+| `@Reorderable`                          | `.reorderable()`                        | Order kept as the player sets it.                                        | ▲ ▼ move buttons (hidden without it). Also on lists of objects. Not with `@Sorted`. |
+| `@IgnoreCase`                           | `.ignoreCase()`                         | `Dirt` and `dirt` are duplicates.                                        | Same for the suggestions.                                                           |
+| `@Range(min = 1, max = 64)`             | `.range(1, 64)`                         | Each value: out of range values clamped.                                 | Error on the field of the value.                                                    |
+| `@Pattern("[a-z_]+")`, `@MaxLength(16)` | `.pattern("[a-z_]+")`, `.maxLength(16)` | Each value: one that does not fit gives the default value.               | Error on the field of the value.                                                    |
 
 ```java
 @Size(max = 5) @Sorted @IgnoreCase
@@ -337,13 +339,13 @@ game already groups (several filters = any of them). The suggestions and the pic
 screen shows an error on a value outside them. The file is not checked when it is loaded: at that time the registries
 are not complete yet (mods' items, biomes of the world).
 
-| Filter | Values | From |
-|---|---|---|
-| `EntityFilter` (`@Entity`) | `MONSTER`, `CREATURE`, `AMBIENT`, `AXOLOTLS`, `UNDERGROUND_WATER_CREATURE`, `WATER_CREATURE`, `WATER_AMBIENT`, `MISC`, `LIVING` | spawn category of the entity type; `LIVING` = has attributes |
-| `ItemFilter` (`@Item`, `@Block`) | `BUILDING_BLOCKS`, `COLORED_BLOCKS`, `NATURAL_BLOCKS`, `FUNCTIONAL_BLOCKS`, `REDSTONE_BLOCKS`, `TOOLS_AND_UTILITIES`, `COMBAT`, `FOOD_AND_DRINKS`, `INGREDIENTS`, `SPAWN_EGGS`, `BLOCKS` | creative tabs (mods' items included); `BLOCKS` = places a block |
-| `EffectFilter` (`@Effect`) | `BENEFICIAL`, `HARMFUL`, `NEUTRAL` | effect category |
-| `EnchantmentFilter` (`@Enchantment`) | `ARMOR`, `ARMOR_FEET`, `ARMOR_LEGS`, `ARMOR_CHEST`, `ARMOR_HEAD`, `WEAPON`, `DIGGER`, `FISHING_ROD`, `TRIDENT`, `BREAKABLE`, `BOW`, `WEARABLE`, `CROSSBOW`, `VANISHABLE`, `TREASURE`, `CURSE` | enchantment category, treasure / curse |
-| `BiomeFilter` (`@Biome`) | `OVERWORLD`, `NETHER`, `END` | biome tags `is_overworld`, `is_nether`, `is_end` |
+| Filter                               | Values                                                                                                                                                                                        | From                                                            |
+| ------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------- |
+| `EntityFilter` (`@Entity`)           | `MONSTER`, `CREATURE`, `AMBIENT`, `AXOLOTLS`, `UNDERGROUND_WATER_CREATURE`, `WATER_CREATURE`, `WATER_AMBIENT`, `MISC`, `LIVING`                                                               | spawn category of the entity type; `LIVING` = has attributes    |
+| `ItemFilter` (`@Item`, `@Block`)     | `BUILDING_BLOCKS`, `COLORED_BLOCKS`, `NATURAL_BLOCKS`, `FUNCTIONAL_BLOCKS`, `REDSTONE_BLOCKS`, `TOOLS_AND_UTILITIES`, `COMBAT`, `FOOD_AND_DRINKS`, `INGREDIENTS`, `SPAWN_EGGS`, `BLOCKS`      | creative tabs (mods' items included); `BLOCKS` = places a block |
+| `EffectFilter` (`@Effect`)           | `BENEFICIAL`, `HARMFUL`, `NEUTRAL`                                                                                                                                                            | effect category                                                 |
+| `EnchantmentFilter` (`@Enchantment`) | `ARMOR`, `ARMOR_FEET`, `ARMOR_LEGS`, `ARMOR_CHEST`, `ARMOR_HEAD`, `WEAPON`, `DIGGER`, `FISHING_ROD`, `TRIDENT`, `BREAKABLE`, `BOW`, `WEARABLE`, `CROSSBOW`, `VANISHABLE`, `TREASURE`, `CURSE` | enchantment category, treasure / curse                          |
+| `BiomeFilter` (`@Biome`)             | `OVERWORLD`, `NETHER`, `END`                                                                                                                                                                  | biome tags `is_overworld`, `is_nether`, `is_end`                |
 
 ```java
 @Entity(only = EntityFilter.MONSTER)
@@ -490,10 +492,10 @@ Without a translation, the screen uses `@Name` / `.name()`, then the key made re
 
 Players install Confee like any library mod:
 
-| Loader | File | Also needs |
-|---|---|---|
-| Fabric, Quilt | `confee-<version>+1.20.1-fabric.jar` | Fabric API. Mod Menu to see the Config buttons. |
-| Forge, NeoForge (1.20.1) | `confee-<version>+1.20.1-forge.jar` | Nothing else. |
+| Loader                   | File                                 | Also needs                                      |
+| ------------------------ | ------------------------------------ | ----------------------------------------------- |
+| Fabric, Quilt            | `confee-<version>+1.20.1-fabric.jar` | Fabric API. Mod Menu to see the Config buttons. |
+| Forge, NeoForge (1.20.1) | `confee-<version>+1.20.1-forge.jar`  | Nothing else.                                   |
 
 Mods that use Confee declare it as a required dependency. Embedding Confee in another jar (jar-in-jar) is not supported.
 
