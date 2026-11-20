@@ -74,8 +74,21 @@ Toutes tranchées par Lucas le 2026-11-19 et reportées dans `CONFEE_SPEC.md` (�
       `B3CdSsU9` Forge, vérifiés par hash), CurseForge (3 jars), release GitHub `0.2.0+1.20.2`. Testé : build + tests,
       captures complètes sur Fabric, Quilt, Forge, NeoForge, et serveurs dédiés de production NeoForge 20.2.93 et
       Forge 48.1.0 avec les jars de release.
-- [ ] Ports suivants (spec 4.1), dans l'ordre : `1.20.3-1.20.4`, `1.20.5-1.20.6`, `1.21-1.21.1`, `1.21.2-1.21.3`,
-      `1.21.4`, `1.21.5`, `1.21.6-1.21.8`, `1.21.9-1.21.10`, `1.21.11`, `26.1-26.1.2`, `26.2`, `26.3`.
+- [x] Ports **0.2.0 beta** publiés (2026-11-20/21) sur GitHub (pre-release), Modrinth et CurseForge, 3 jars chacun (Fabric/Quilt, NeoForge, Forge). Testés : build + tests, captures complètes sur Fabric, Forge, NeoForge et Quilt (Quilt en dev jusqu'à 1.21.11, puis serveur Quilt de production avec le jar Fabric), serveurs dédiés de production NeoForge et Forge avec les jars de release. IDs Modrinth :
+      - `1.20.3-1.20.4` : fabric 4Akoz1u6, neoforge YahIIkcl, forge wgHohu9Y
+      - `1.20.5-1.20.6` : fabric XcCFkyHb, neoforge BuRcIM2l, forge iPr7BuhZ
+      - `1.21-1.21.1` : fabric zGyDIS2u, neoforge baUJNeq5, forge 25o07dsn
+      - `1.21.2-1.21.3` : fabric OgGpbDYr, neoforge D9TRQ6pi, forge nNJLJmCK
+      - `1.21.4` : fabric Rit9X1QN, neoforge WqEt6ign, forge kQ2Ni8oe
+      - `1.21.5` : fabric LDYUy3lI, neoforge sqrF2Yi9, forge ExBH3Ttr
+      - `1.21.6-1.21.8` : fabric sVvPf3ip, neoforge eUhLUXVK, forge Uw3vtTGd
+      - `1.21.9-1.21.10` : fabric dAb4hBMD, neoforge u9CU6ZlQ, forge j6tOwIte
+      - `1.21.11` : fabric D8klXXDZ, neoforge w2ejmS5C, forge sL9EETvp
+      - `26.1-26.1.2` : fabric l95ao5gX, neoforge OJi3RpNY, forge zHHRDQ9W
+      - `26.2` : fabric MgZflMWQ, neoforge KrHLKJU7, forge pVWjCH6I
+      - `26.3` : fabric txUYL3KE, neoforge nllwjiqs, forge 2yZRTn9r
+- [ ] Limites connues des ports : NeoForge 26.1+ hors monde : les items n'ont que leur modèle et leur nom (icônes OK, filtre « ingrédients » vide tant qu'aucun monde n'est chargé). NeoForge 21.6+ : pas de Cloth Config dans les lancements de dev (écran d'avertissement).
+- [ ] À décider par Lucas : le jar Forge 0.1.0 sur Modrinth (et sans doute CurseForge) est cassé (non réobfusqué).
 
 ## 4. Limites connues (V1.1 / V2)
 
