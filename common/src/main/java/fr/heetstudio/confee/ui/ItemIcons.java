@@ -1,6 +1,5 @@
 package fr.heetstudio.confee.ui;
 
-import com.mojang.blaze3d.systems.RenderSystem;
 import fr.heetstudio.confee.ui.screen.Textures;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.renderer.RenderType;
@@ -79,9 +78,7 @@ public final class ItemIcons {
             ResourceLocation id = ResourceLocation.tryParse(spec);
             int[] texSize = id == null ? new int[]{0, 0} : Textures.size(spec);
             if (texSize[0] > 0) {
-                RenderSystem.enableBlend();
                 g.blit(RenderType::guiTextured, id, x, y, 0, 0, size, size, texSize[0], texSize[1], texSize[0], texSize[1]);
-                RenderSystem.disableBlend();
             }
             return;
         }

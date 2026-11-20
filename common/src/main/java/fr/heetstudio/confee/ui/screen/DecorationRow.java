@@ -1,6 +1,5 @@
 package fr.heetstudio.confee.ui.screen;
 
-import com.mojang.blaze3d.systems.RenderSystem;
 import fr.heetstudio.confee.ConfeeLog;
 import fr.heetstudio.confee.api.Decoration;
 import fr.heetstudio.confee.api.Theme;
@@ -183,9 +182,7 @@ final class DecorationRow extends Row {
         }
         int h = height;
         int w = Math.min(width, Math.round(size[0] * (h / (float) size[1])));
-        RenderSystem.enableBlend();
         g.blit(RenderType::guiTextured, id, x + (width - w) / 2, y, 0, 0, w, h, size[0], size[1], size[0], size[1]);
-        RenderSystem.disableBlend();
     }
 
     @Override

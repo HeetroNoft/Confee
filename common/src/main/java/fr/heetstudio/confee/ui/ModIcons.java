@@ -64,7 +64,7 @@ public final class ModIcons {
         }
         try (InputStream in = Files.newInputStream(path.get())) {
             NativeImage image = NativeImage.read(in);
-            DynamicTexture texture = new DynamicTexture(image);
+            DynamicTexture texture = new DynamicTexture(() -> "Confee mod icon " + modId, image);
             // a large logo drawn small looks better smoothed; pixel-art icons stay sharp
             texture.setFilter(image.getWidth() > 64 || image.getHeight() > 64, false);
             String safe = modId.toLowerCase(Locale.ROOT).replaceAll("[^a-z0-9_.-]", "_");

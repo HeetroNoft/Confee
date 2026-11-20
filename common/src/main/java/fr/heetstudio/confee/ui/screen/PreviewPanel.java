@@ -1,7 +1,6 @@
 package fr.heetstudio.confee.ui.screen;
 
 import com.mojang.blaze3d.platform.NativeImage;
-import com.mojang.blaze3d.systems.RenderSystem;
 import fr.heetstudio.confee.ConfeeLog;
 import fr.heetstudio.confee.api.Preview;
 import fr.heetstudio.confee.api.PreviewRenderer;
@@ -171,9 +170,7 @@ final class PreviewPanel {
         int dw = Math.max(1, Math.round(size[0] * scale));
         int dh = Math.max(1, Math.round(size[1] * scale));
         int dx = x + (w - dw) / 2;
-        RenderSystem.enableBlend();
         g.blit(RenderType::guiTextured, id, dx, y, 0, 0, dw, dh, size[0], size[1], size[0], size[1]);
-        RenderSystem.disableBlend();
         return y + dh;
     }
 
