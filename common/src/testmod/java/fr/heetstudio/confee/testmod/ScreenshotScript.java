@@ -686,7 +686,7 @@ public final class ScreenshotScript {
             String name = "confee-test";
             mc.createWorldOpenFlows().createFreshLevel(name,
                     new net.minecraft.world.level.LevelSettings(name, net.minecraft.world.level.GameType.CREATIVE, false,
-                            net.minecraft.world.Difficulty.PEACEFUL, true, new net.minecraft.world.level.GameRules(net.minecraft.world.level.WorldDataConfiguration.DEFAULT.enabledFeatures()),
+                            net.minecraft.world.Difficulty.PEACEFUL, true, new net.minecraft.world.level.gamerules.GameRules(net.minecraft.world.level.WorldDataConfiguration.DEFAULT.enabledFeatures()),
                             net.minecraft.world.level.WorldDataConfiguration.DEFAULT),
                     new net.minecraft.world.level.levelgen.WorldOptions(0L, false, false),
                     registries -> registries.lookupOrThrow(net.minecraft.core.registries.Registries.WORLD_PRESET)

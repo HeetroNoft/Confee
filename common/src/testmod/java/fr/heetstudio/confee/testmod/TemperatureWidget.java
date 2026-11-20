@@ -29,7 +29,7 @@ public class TemperatureWidget extends OptionWidget<Integer> {
         int cold = 0xFF2D7DD2;
         int hot = 0xFFE5533D;
         g.fillGradient(x + 1, barY + 1, x + 1 + filled, barY + 9, cold, f > 0.5f ? hot : cold);
-        g.submitOutline(x, barY, width, 10, enabled() ? theme().outline() : theme().textDisabled());
+        g.renderOutline(x, barY, width, 10, enabled() ? theme().outline() : theme().textDisabled());
         int zero = x + 1 + Math.round((width - 2) * (-MIN / (float) (MAX - MIN)));
         g.fill(zero, barY - 2, zero + 1, barY + 12, theme().textOnDark());
         g.drawString(font(), value + " °C", x, y, enabled() ? theme().textOnDark() : theme().textDisabled(), false);

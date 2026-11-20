@@ -36,7 +36,7 @@ import fr.heetstudio.confee.api.annotation.Section;
 import fr.heetstudio.confee.api.annotation.Slider;
 import fr.heetstudio.confee.api.annotation.Unit;
 import fr.heetstudio.confee.api.annotation.VisibleIf;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 
 import java.util.ArrayList;
 import java.util.EnumSet;
@@ -116,10 +116,10 @@ public class AnnotatedTestConfig {
 
     @Item
     @Comment("Item: icon, suggestions, picker and automatic preview")
-    public ResourceLocation item = ResourceLocation.fromNamespaceAndPath("minecraft", "diamond");
+    public Identifier item = Identifier.fromNamespaceAndPath("minecraft", "diamond");
 
     @Block
-    public ResourceLocation favoriteBlock = ResourceLocation.fromNamespaceAndPath("minecraft", "grass_block");
+    public Identifier favoriteBlock = Identifier.fromNamespaceAndPath("minecraft", "grass_block");
 
     @Suggestions({"north", "south", "east", "west", "up", "down"})
     @Description("Suggestions given by the mod (press Down).")
@@ -235,7 +235,7 @@ public class AnnotatedTestConfig {
     public int internalCounter = 0;
 
     public Decoration links = Decoration.button("Open the Minecraft wiki",
-            () -> net.minecraft.Util.getPlatform().openUri("https://minecraft.wiki")).icon("minecraft:book");
+            () -> net.minecraft.util.Util.getPlatform().openUri("https://minecraft.wiki")).icon("minecraft:book");
 
     @Category(value = "dash", icon = "minecraft:feather")
     @Comment("Dash distance, in blocks")
