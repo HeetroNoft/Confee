@@ -5,6 +5,18 @@ plugins {
     id 'me.modmuss50.mod-publish-plugin' version '0.8.4' apply false
 }
 
+// Changelog of the published version only: the "## <mod_version> ..." section of CHANGELOG.md
+ext.versionChangelog = { ->
+    def lines = rootProject.file('CHANGELOG.md').readLines('UTF-8')
+    def start = lines.findIndexOf { it.startsWith("## ${mod_version} ") }
+    if (start < 0) {
+        throw new GradleException("[Confee] CHANGELOG.md has no '## ${mod_version} ...' section")
+    }
+    def end = lines.findIndexOf(start + 1) { it.startsWith('## ') }
+    def body = lines.subList(start + 1, end < 0 ? lines.size() : end)
+    return body.join('\n').trim()
+}
+
 subprojects {
     apply plugin: 'java'
 
