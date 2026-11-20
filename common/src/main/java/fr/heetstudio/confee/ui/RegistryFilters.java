@@ -20,7 +20,6 @@ import net.minecraft.world.flag.FeatureFlagSet;
 import net.minecraft.world.flag.FeatureFlags;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.CreativeModeTab;
-import net.minecraft.world.item.CreativeModeTabs;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
@@ -144,10 +143,11 @@ public final class RegistryFilters {
                 Minecraft mc = Minecraft.getInstance();
                 FeatureFlagSet flags = mc.level != null ? mc.level.enabledFeatures() : FeatureFlags.DEFAULT_FLAGS;
                 HolderLookup.Provider lookup = mc.level != null ? mc.level.registryAccess() : VanillaRegistries.createLookup();
-                CreativeModeTabs.tryRebuildTabContents(flags, false, lookup);
+                // only this tab: outside a world some tabs (tools: goat horns) need tags that only a world binds (1.20.5+)
                 CreativeModeTab tab = BuiltInRegistries.CREATIVE_MODE_TAB.get(
                         ResourceLocation.fromNamespaceAndPath("minecraft", f.name().toLowerCase(Locale.ROOT)));
                 if (tab != null) {
+                    tab.buildContents(new CreativeModeTab.ItemDisplayParameters(flags, false, lookup));
                     for (ItemStack stack : tab.getDisplayItems()) {
                         items.add(stack.getItem());
                     }
