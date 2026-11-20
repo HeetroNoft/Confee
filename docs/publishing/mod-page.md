@@ -13,6 +13,10 @@ Library, Utility. Environment: client and server (the server side is optional fo
 
 ## Description
 
+> [!WARNING]
+> **Confee is in beta.** Things may still break or change between versions. Back up your config folder before
+> editing other mods' files, and please report any issue on the issue tracker.
+
 **Confee** gives every mod a clean config screen, in the style of Bedrock Edition.
 
 ### For players
