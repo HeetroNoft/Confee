@@ -70,6 +70,12 @@ Toutes tranchées par Lucas le 2026-11-19 et reportées dans `CONFEE_SPEC.md` (�
 - [x] Publication réelle de la **0.2.0 beta** (2026-11-20) : Modrinth (versions `2WUKWOYe` Fabric, `oYhWJGb1`
       Forge, jars vérifiés par hash), CurseForge (Fabric + Forge), release GitHub `0.2.0+1.20.1` (pre-release, les
       2 jars).
+- [x] Port **1.20.2** publié en 0.2.0 beta (2026-11-20) : Modrinth (`2mUPUo4W` Fabric, `FfisYDpr` NeoForge,
+      `B3CdSsU9` Forge, vérifiés par hash), CurseForge (3 jars), release GitHub `0.2.0+1.20.2`. Testé : build + tests,
+      captures complètes sur Fabric, Quilt, Forge, NeoForge, et serveurs dédiés de production NeoForge 20.2.93 et
+      Forge 48.1.0 avec les jars de release.
+- [ ] Ports suivants (spec 4.1), dans l'ordre : `1.20.3-1.20.4`, `1.20.5-1.20.6`, `1.21-1.21.1`, `1.21.2-1.21.3`,
+      `1.21.4`, `1.21.5`, `1.21.6-1.21.8`, `1.21.9-1.21.10`, `1.21.11`, `26.1-26.1.2`, `26.2`, `26.3`.
 
 ## 4. Limites connues (V1.1 / V2)
 
