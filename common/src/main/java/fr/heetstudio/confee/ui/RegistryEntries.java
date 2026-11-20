@@ -7,7 +7,7 @@ import net.minecraft.core.Registry;
 import net.minecraft.core.RegistryAccess;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceKey;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.packs.PackType;
 import net.minecraft.server.packs.VanillaPackResources;
 import net.minecraft.server.packs.repository.ServerPacksSource;
@@ -82,7 +82,7 @@ public final class RegistryEntries {
     @SuppressWarnings({"unchecked", "rawtypes"})
     private static Set<String> loadTagMembers(String registry, String tagId, Set<String> visiting) {
         Set<String> out = new HashSet<>();
-        ResourceLocation tag = ResourceLocation.tryParse(tagId);
+        Identifier tag = Identifier.tryParse(tagId);
         if (tag == null || !visiting.add(tagId)) {
             return out;
         }
@@ -93,7 +93,7 @@ public final class RegistryEntries {
                 Registry reg = found.get();
                 Optional<?> set = reg.get(net.minecraft.tags.TagKey.create((ResourceKey) key(registry), tag));
                 set.ifPresent(holders -> ((Iterable<net.minecraft.core.Holder<?>>) holders).forEach(holder ->
-                        holder.unwrapKey().ifPresent(k -> out.add(((ResourceKey<?>) k).location().toString()))));
+                        holder.unwrapKey().ifPresent(k -> out.add(((ResourceKey<?>) k).identifier().toString()))));
                 if (!out.isEmpty()) {
                     return out;
                 }
@@ -106,7 +106,7 @@ public final class RegistryEntries {
             if (vanillaData == null) {
                 vanillaData = new ServerPacksSource(new DirectoryValidator(file -> false)).getVanillaPack();
             }
-            var resource = vanillaData.getResource(PackType.SERVER_DATA, ResourceLocation.fromNamespaceAndPath(tag.getNamespace(), path));
+            var resource = vanillaData.getResource(PackType.SERVER_DATA, Identifier.fromNamespaceAndPath(tag.getNamespace(), path));
             if (resource != null) {
                 try (var in = resource.get()) {
                     jsons.add(new String(in.readAllBytes(), java.nio.charset.StandardCharsets.UTF_8));
@@ -151,7 +151,7 @@ public final class RegistryEntries {
      * 1.21 enchantments are data: read from the loaded world, else from the enchantment's data file.
      */
     @Nullable
-    public static synchronized String enchantmentSupportedItems(ResourceLocation id) {
+    public static synchronized String enchantmentSupportedItems(Identifier id) {
         List<String> found = cached("enchantment-items|" + id, () -> {
             Set<String> out = new HashSet<>();
             RegistryAccess world = world();
@@ -179,14 +179,14 @@ public final class RegistryEntries {
     }
 
     /** Contents of {@code data/<namespace>/<dir>/<path>.json} in the game and in every mod. */
-    private static List<String> dataJsons(ResourceLocation id, String dir) {
+    private static List<String> dataJsons(Identifier id, String dir) {
         String path = dir + "/" + id.getPath() + ".json";
         List<String> jsons = new ArrayList<>();
         try {
             if (vanillaData == null) {
                 vanillaData = new ServerPacksSource(new DirectoryValidator(file -> false)).getVanillaPack();
             }
-            var resource = vanillaData.getResource(PackType.SERVER_DATA, ResourceLocation.fromNamespaceAndPath(id.getNamespace(), path));
+            var resource = vanillaData.getResource(PackType.SERVER_DATA, Identifier.fromNamespaceAndPath(id.getNamespace(), path));
             if (resource != null) {
                 try (var in = resource.get()) {
                     jsons.add(new String(in.readAllBytes(), java.nio.charset.StandardCharsets.UTF_8));
@@ -239,7 +239,7 @@ public final class RegistryEntries {
     }
 
     private static ResourceKey<? extends Registry<?>> key(String registry) {
-        return ResourceKey.createRegistryKey(ResourceLocation.parse(registry));
+        return ResourceKey.createRegistryKey(Identifier.parse(registry));
     }
 
     @SuppressWarnings({"unchecked", "rawtypes"})
@@ -251,7 +251,7 @@ public final class RegistryEntries {
                 return found;
             }
         }
-        return Optional.ofNullable(BuiltInRegistries.REGISTRY.getValue(ResourceLocation.parse(registry)));
+        return Optional.ofNullable(BuiltInRegistries.REGISTRY.getValue(Identifier.parse(registry)));
     }
 
     private static Set<String> loadIds(String registry) {
@@ -261,7 +261,7 @@ public final class RegistryEntries {
             found.get().keySet().forEach(id -> out.add(id.toString()));
         } else {
             // world registry outside a world: the data files
-            String dir = ResourceLocation.parse(registry).getPath();
+            String dir = Identifier.parse(registry).getPath();
             out.addAll(dataFiles(dir));
             if ("minecraft:dimension".equals(registry)) {
                 out.addAll(VANILLA_DIMENSIONS);
@@ -319,7 +319,7 @@ public final class RegistryEntries {
                         files.filter(p -> p.toString().endsWith(".json")).forEach(p -> {
                             String rel = folder.relativize(p).toString().replace('\\', '/');
                             String id = namespace + ":" + rel.substring(0, rel.length() - ".json".length());
-                            if (ResourceLocation.tryParse(id) != null) {
+                            if (Identifier.tryParse(id) != null) {
                                 out.add(id);
                             }
                         });
@@ -333,7 +333,7 @@ public final class RegistryEntries {
     }
 
     /** {@code namespace:<dir>/<name>.json} → {@code namespace:<name>}. */
-    private static void addJson(Set<String> out, ResourceLocation file, String dir) {
+    private static void addJson(Set<String> out, Identifier file, String dir) {
         String path = file.getPath();
         if (path.endsWith(".json") && path.startsWith(dir + "/")) {
             out.add(file.getNamespace() + ":" + path.substring(dir.length() + 1, path.length() - ".json".length()));

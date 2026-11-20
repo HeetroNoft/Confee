@@ -1,7 +1,7 @@
 package fr.heetstudio.confee.ui;
 
 import fr.heetstudio.confee.api.Theme;
-import net.minecraft.Util;
+import net.minecraft.util.Util;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.resources.sounds.SimpleSoundInstance;

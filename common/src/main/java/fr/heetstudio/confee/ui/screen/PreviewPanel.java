@@ -16,7 +16,7 @@ import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.resources.language.I18n;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.packs.resources.Resource;
 import net.minecraft.util.FormattedCharSequence;
 import org.jetbrains.annotations.Nullable;
@@ -162,7 +162,7 @@ final class PreviewPanel {
 
     private int image(GuiGraphics g, String resource, int x, int y, int w) {
         int[] size = Textures.size(resource);
-        ResourceLocation id = ResourceLocation.tryParse(resource);
+        Identifier id = Identifier.tryParse(resource);
         if (size[0] <= 0 || id == null) {
             return paragraph(g, Component.translatable("confee.preview.missing_image", resource), x, y, w, ui.theme().error());
         }
@@ -176,7 +176,7 @@ final class PreviewPanel {
 
     /** Width and height of a texture, or {0, 0} when it does not exist. */
     private static int[] readSize(String resource) {
-        ResourceLocation id = ResourceLocation.tryParse(resource);
+        Identifier id = Identifier.tryParse(resource);
         if (id == null) {
             return new int[]{0, 0};
         }

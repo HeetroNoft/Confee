@@ -257,7 +257,7 @@ public final class ConfigScreen extends ConfeeScreen {
             // spec 8.3: the mod may only read its file at startup
             rows.add(new Row.Banner(ui, Component.translatable("confee.banner.raw_file"),
                     new ButtonWidget(ui, Component.translatable("confee.button.open_file"), ButtonWidget.Style.NORMAL,
-                            () -> net.minecraft.Util.getPlatform().openFile(external.file().toFile()))));
+                            () -> net.minecraft.util.Util.getPlatform().openFile(external.file().toFile()))));
         }
         if (schema.source() == ConfigSource.FORGE_SPEC && schema.scope() == fr.heetstudio.confee.api.ConfigScope.SERVER) {
             // spec 8.4: server configs are read-only until the server sync arrives
@@ -877,7 +877,7 @@ public final class ConfigScreen extends ConfeeScreen {
         Draw.rect(g, 0, 0, width, height, t.panelBgDeep());
         if (layout.background() != null) {
             int[] size = Textures.size(layout.background());
-            net.minecraft.resources.ResourceLocation bg = net.minecraft.resources.ResourceLocation.tryParse(layout.background());
+            net.minecraft.resources.Identifier bg = net.minecraft.resources.Identifier.tryParse(layout.background());
             if (size[0] > 0 && bg != null) {
                 // tiled at its own size
                 g.blit(RenderPipelines.GUI_TEXTURED, bg, 0, 0, 0, 0, width, height, size[0], size[1]);
@@ -1288,10 +1288,10 @@ public final class ConfigScreen extends ConfeeScreen {
     }
 
     @Override
-    public void resize(net.minecraft.client.Minecraft minecraft, int width, int height) {
+    public void resize(int width, int height) {
         ConfeeWidget focused = focus;
         closeOverlay();
-        super.resize(minecraft, width, height);
+        super.resize(width, height);
         if (focused == search) {
             setFocus(search);
         }

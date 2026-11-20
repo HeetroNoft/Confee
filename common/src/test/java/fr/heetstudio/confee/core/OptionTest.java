@@ -263,7 +263,7 @@ class OptionTest {
         assertEquals(PseudoRegistries.MOD, mod.registry());
         IllegalStateException identifier = assertThrows(IllegalStateException.class,
                 () -> Option.<String>builder("m", OptionType.IDENTIFIER).registry(PseudoRegistries.MOD).build());
-        assertTrue(identifier.getMessage().contains("is not a ResourceLocation"), identifier.getMessage());
+        assertTrue(identifier.getMessage().contains("is not a Identifier"), identifier.getMessage());
         IllegalStateException tags = assertThrows(IllegalStateException.class, () -> Option.<String>builder("m", OptionType.STRING)
                 .defaultValue("").registry(PseudoRegistries.MOD).allowTags(true).build());
         assertTrue(tags.getMessage().contains("mods have no tags"), tags.getMessage());

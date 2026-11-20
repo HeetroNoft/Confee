@@ -15,7 +15,7 @@ import fr.heetstudio.confee.api.annotation.Range;
 import fr.heetstudio.confee.api.annotation.RequiresRestart;
 import fr.heetstudio.confee.api.annotation.Slider;
 import fr.heetstudio.confee.api.annotation.Theme;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -69,7 +69,7 @@ class AnnotationConfigsTest {
 
         public List<String> blacklist = new ArrayList<>(List.of("minecraft:dirt"));
 
-        public ResourceLocation item = ResourceLocation.fromNamespaceAndPath("minecraft", "stone");
+        public Identifier item = Identifier.fromNamespaceAndPath("minecraft", "stone");
 
         public Advanced advanced = new Advanced();
 
@@ -165,7 +165,7 @@ class AnnotationConfigsTest {
         config.reload();
         FullConfig values = config.get();
         assertEquals(10.0, values.dashDistance);
-        assertEquals(ResourceLocation.fromNamespaceAndPath("mymod", "gem"), values.item);
+        assertEquals(Identifier.fromNamespaceAndPath("mymod", "gem"), values.item);
         assertFalse(values.showHud);
 
         // change a field from code, save, file is updated

@@ -12,7 +12,7 @@ import net.minecraft.core.HolderLookup;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.tags.ItemTags;
 import net.minecraft.data.registries.VanillaRegistries;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.effect.MobEffect;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.ai.attributes.DefaultAttributes;
@@ -66,7 +66,7 @@ public final class RegistryFilters {
         return CACHE.computeIfAbsent(registry + "|" + filters, k -> {
             Set<String> out = new HashSet<>();
             for (String id : RegistryEntries.ids(registry)) {
-                ResourceLocation rl = ResourceLocation.tryParse(id);
+                Identifier rl = Identifier.tryParse(id);
                 if (rl == null) {
                     continue;
                 }
@@ -85,7 +85,7 @@ public final class RegistryFilters {
         });
     }
 
-    private static boolean matches(String registry, ResourceLocation id, Enum<?> filter) {
+    private static boolean matches(String registry, Identifier id, Enum<?> filter) {
         if (filter instanceof EntityFilter f) {
             if (!BuiltInRegistries.ENTITY_TYPE.containsKey(id)) {
                 return false;
@@ -145,7 +145,7 @@ public final class RegistryFilters {
                 HolderLookup.Provider lookup = mc.level != null ? mc.level.registryAccess() : VanillaRegistries.createLookup();
                 // only this tab: outside a world some tabs (tools: goat horns) need tags that only a world binds (1.20.5+)
                 CreativeModeTab tab = BuiltInRegistries.CREATIVE_MODE_TAB.getValue(
-                        ResourceLocation.fromNamespaceAndPath("minecraft", f.name().toLowerCase(Locale.ROOT)));
+                        Identifier.fromNamespaceAndPath("minecraft", f.name().toLowerCase(Locale.ROOT)));
                 if (tab != null) {
                     tab.buildContents(new CreativeModeTab.ItemDisplayParameters(flags, false, lookup));
                     for (ItemStack stack : tab.getDisplayItems()) {
@@ -173,7 +173,7 @@ public final class RegistryFilters {
             case ARMOR_LEGS -> java.util.Set.of(ItemTags.LEG_ARMOR_ENCHANTABLE);
             case ARMOR_CHEST -> java.util.Set.of(ItemTags.CHEST_ARMOR_ENCHANTABLE);
             case ARMOR_HEAD -> java.util.Set.of(ItemTags.HEAD_ARMOR_ENCHANTABLE);
-            case WEAPON -> java.util.Set.of(ItemTags.WEAPON_ENCHANTABLE, ItemTags.SWORD_ENCHANTABLE,
+            case WEAPON -> java.util.Set.of(ItemTags.WEAPON_ENCHANTABLE, ItemTags.MELEE_WEAPON_ENCHANTABLE, ItemTags.SWEEPING_ENCHANTABLE,
                     ItemTags.SHARP_WEAPON_ENCHANTABLE, ItemTags.FIRE_ASPECT_ENCHANTABLE);
             case DIGGER -> java.util.Set.of(ItemTags.MINING_ENCHANTABLE, ItemTags.MINING_LOOT_ENCHANTABLE);
             case FISHING_ROD -> java.util.Set.of(ItemTags.FISHING_ENCHANTABLE);

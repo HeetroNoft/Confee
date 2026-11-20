@@ -4,7 +4,7 @@ import fr.heetstudio.confee.ui.screen.Textures;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.block.Block;
@@ -31,7 +31,7 @@ public final class ItemIcons {
             return ItemStack.EMPTY;
         }
         return CACHE.computeIfAbsent(registry + "|" + id, k -> {
-            ResourceLocation rl = ResourceLocation.tryParse(id.trim());
+            Identifier rl = Identifier.tryParse(id.trim());
             if (rl == null) {
                 return ItemStack.EMPTY;
             }
@@ -75,7 +75,7 @@ public final class ItemIcons {
             return;
         }
         if (spec.endsWith(".png")) {
-            ResourceLocation id = ResourceLocation.tryParse(spec);
+            Identifier id = Identifier.tryParse(spec);
             int[] texSize = id == null ? new int[]{0, 0} : Textures.size(spec);
             if (texSize[0] > 0) {
                 g.blit(RenderPipelines.GUI_TEXTURED, id, x, y, 0, 0, size, size, texSize[0], texSize[1], texSize[0], texSize[1]);

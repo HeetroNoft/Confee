@@ -7,7 +7,7 @@ import java.lang.annotation.Target;
 
 /**
  * The value is a block ID: suggestions from the block registry, block icon in the field, block picker (grid) and an
- * automatic preview. On {@code ResourceLocation}, {@code String} or {@code List<String>} fields.
+ * automatic preview. On {@code Identifier}, {@code String} or {@code List<String>} fields.
  * <pre>{@code
  * @Block
  * public List<String> unbreakable = new ArrayList<>(List.of("minecraft:bedrock"));

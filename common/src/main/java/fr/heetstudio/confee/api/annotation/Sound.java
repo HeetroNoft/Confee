@@ -7,7 +7,7 @@ import java.lang.annotation.Target;
 
 /**
  * The value is a sound ({@code minecraft:block.note_block.bell}): suggestions from the {@code minecraft:sound_event} registry, mods' entries included (no icon).
- * On {@code ResourceLocation}, {@code String} or {@code List<String>} fields. Same as {@code @Registry("minecraft:sound_event")}.
+ * On {@code Identifier}, {@code String} or {@code List<String>} fields. Same as {@code @Registry("minecraft:sound_event")}.
  * <pre>{@code
  * @Sound
  * public String alertSound = "minecraft:block.note_block.bell";

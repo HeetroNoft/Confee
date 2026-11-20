@@ -19,7 +19,7 @@ import fr.heetstudio.confee.api.annotation.Slider;
 import fr.heetstudio.confee.api.annotation.Stepper;
 import fr.heetstudio.confee.api.annotation.Suggestions;
 import fr.heetstudio.confee.api.builder.ConfigBuilder;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -55,7 +55,7 @@ class CustomizationTest {
         public boolean showHud = true;
 
         @Item
-        public ResourceLocation item = ResourceLocation.fromNamespaceAndPath("minecraft", "diamond");
+        public Identifier item = Identifier.fromNamespaceAndPath("minecraft", "diamond");
 
         @Block
         public List<String> blocks = List.of("minecraft:stone");

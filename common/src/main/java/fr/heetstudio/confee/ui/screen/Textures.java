@@ -3,7 +3,7 @@ package fr.heetstudio.confee.ui.screen;
 import com.mojang.blaze3d.platform.NativeImage;
 import fr.heetstudio.confee.ConfeeLog;
 import net.minecraft.client.Minecraft;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.packs.resources.Resource;
 
 import java.io.InputStream;
@@ -28,7 +28,7 @@ public final class Textures {
     }
 
     private static int[] read(String resource) {
-        ResourceLocation id = ResourceLocation.tryParse(resource);
+        Identifier id = Identifier.tryParse(resource);
         if (id == null) {
             ConfeeLog.warn("Invalid texture id '{}'", resource);
             return new int[]{0, 0};

@@ -7,7 +7,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.renderer.texture.DynamicTexture;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.InputStream;
@@ -25,7 +25,7 @@ import java.util.Optional;
  */
 public final class ModIcons {
 
-    private record Icon(ResourceLocation texture, int width, int height) {
+    private record Icon(Identifier texture, int width, int height) {
     }
 
     /** Empty = the mod has no readable logo (not tried again). */
@@ -64,11 +64,18 @@ public final class ModIcons {
         }
         try (InputStream in = Files.newInputStream(path.get())) {
             NativeImage image = NativeImage.read(in);
-            DynamicTexture texture = new DynamicTexture(() -> "Confee mod icon " + modId, image);
             // a large logo drawn small looks better smoothed; pixel-art icons stay sharp
-            texture.setFilter(image.getWidth() > 64 || image.getHeight() > 64, false);
+            boolean smooth = image.getWidth() > 64 || image.getHeight() > 64;
+            DynamicTexture texture = new DynamicTexture(() -> "Confee mod icon " + modId, image) {
+                {
+                    if (smooth) {
+                        sampler = com.mojang.blaze3d.systems.RenderSystem.getSamplerCache()
+                                .getClampToEdge(com.mojang.blaze3d.textures.FilterMode.LINEAR);
+                    }
+                }
+            };
             String safe = modId.toLowerCase(Locale.ROOT).replaceAll("[^a-z0-9_.-]", "_");
-            ResourceLocation location = ResourceLocation.fromNamespaceAndPath("confee", "mod_icon/" + safe);
+            Identifier location = Identifier.fromNamespaceAndPath("confee", "mod_icon/" + safe);
             Minecraft.getInstance().getTextureManager().register(location, texture);
             return Optional.of(new Icon(location, image.getWidth(), image.getHeight()));
         } catch (Exception e) {

@@ -16,7 +16,7 @@ import fr.heetstudio.confee.ui.widget.ConfeeWidget;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.util.FormattedCharSequence;
 import org.jetbrains.annotations.Nullable;
 
@@ -174,7 +174,7 @@ final class DecorationRow extends Row {
 
     private void renderImage(GuiGraphics g) {
         int[] size = Textures.size(decoration.image());
-        ResourceLocation id = ResourceLocation.tryParse(decoration.image());
+        Identifier id = Identifier.tryParse(decoration.image());
         if (size[0] <= 0 || id == null) {
             Draw.textFit(g, ui.font(), Component.translatable("confee.preview.missing_image", decoration.image()), x, y,
                     width, ui.theme().error());

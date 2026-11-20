@@ -7,7 +7,7 @@ import java.lang.annotation.Target;
 
 /**
  * The value is an item ID: suggestions from the item registry, item icon in the field, item picker (grid) and an
- * automatic preview. On {@code ResourceLocation}, {@code String} or {@code List<String>} fields.
+ * automatic preview. On {@code Identifier}, {@code String} or {@code List<String>} fields.
  * <pre>{@code
  * @Item(tags = true)
  * public List<String> fuels = new ArrayList<>(List.of("minecraft:coal", "#minecraft:logs"));

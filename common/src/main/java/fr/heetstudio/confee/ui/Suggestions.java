@@ -5,7 +5,7 @@ import fr.heetstudio.confee.api.SuggestionProvider;
 import fr.heetstudio.confee.core.Option;
 import net.minecraft.core.Registry;
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;

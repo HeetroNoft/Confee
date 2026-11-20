@@ -4,7 +4,7 @@ import fr.heetstudio.confee.core.ConfigSchema;
 import fr.heetstudio.confee.core.ConfigSource;
 import fr.heetstudio.confee.core.Option;
 import fr.heetstudio.confee.core.OptionType;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -93,7 +93,7 @@ public final class RegistryDetector {
             boolean tag = v.startsWith("#");
             String id = tag ? v.substring(1) : v;
             // every value must look like an ID with a namespace ("minecraft:stone"); an empty list relies on the key
-            if (!id.contains(":") || ResourceLocation.tryParse(id) == null) {
+            if (!id.contains(":") || Identifier.tryParse(id) == null) {
                 return NONE;
             }
             if (tag) {
@@ -125,7 +125,7 @@ public final class RegistryDetector {
             return false;
         }
         for (String id : ids) {
-            ResourceLocation rl = ResourceLocation.tryParse(id);
+            Identifier rl = Identifier.tryParse(id);
             if (rl == null || java.util.Collections.binarySearch(known, rl.toString()) < 0) {
                 return false;
             }

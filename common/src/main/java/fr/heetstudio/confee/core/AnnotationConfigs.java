@@ -33,7 +33,7 @@ import fr.heetstudio.confee.ConfeeLog;
  */
 public final class AnnotationConfigs {
 
-    private static final String RESOURCE_LOCATION = "net.minecraft.resources.ResourceLocation";
+    private static final String RESOURCE_LOCATION = "net.minecraft.resources.Identifier";
 
     /** Typed shortcuts → registry. */
     private static final Map<Class<? extends java.lang.annotation.Annotation>, String> REGISTRY_SHORTCUTS = Map.ofEntries(
@@ -336,7 +336,7 @@ public final class AnnotationConfigs {
             identifier = true;
         } else {
             throw new IllegalArgumentException("unsupported type " + type.getName()
-                    + ". Fix: use boolean, int, long, float, double, String, an enum, ResourceLocation, List, Set<Enum>, "
+                    + ". Fix: use boolean, int, long, float, double, String, an enum, Identifier, List, Set<Enum>, "
                     + "Map<String, V>, a @Section class or List<@Section class>");
         }
 
@@ -452,7 +452,7 @@ public final class AnnotationConfigs {
         }
         if (tags) {
             if (identifier) {
-                throw new IllegalArgumentException("tags (#namespace:path) do not fit in a ResourceLocation. Fix: use a String or List<String> field");
+                throw new IllegalArgumentException("tags (#namespace:path) do not fit in a Identifier. Fix: use a String or List<String> field");
             }
             builder.allowTags(true);
         }
@@ -657,7 +657,7 @@ public final class AnnotationConfigs {
         }
     }
 
-    /** ResourceLocation field ↔ String value of an IDENTIFIER option. */
+    /** Identifier field ↔ String value of an IDENTIFIER option. */
     private static final class IdentifierFieldStore extends FieldStore {
 
         IdentifierFieldStore(Field field, Object instance) {
@@ -672,7 +672,7 @@ public final class AnnotationConfigs {
 
         @Override
         public void set(Object value) {
-            super.set(net.minecraft.resources.ResourceLocation.parse((String) value));
+            super.set(net.minecraft.resources.Identifier.parse((String) value));
         }
     }
 }

@@ -7,7 +7,7 @@ import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.client.resources.language.I18n;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.effect.MobEffect;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.item.ItemStack;
@@ -53,7 +53,7 @@ public final class RegistryIcons {
             if (effect == null) {
                 return false;
             }
-            ResourceLocation sprite = net.minecraft.client.gui.Gui.getMobEffectSprite(BuiltInRegistries.MOB_EFFECT.wrapAsHolder(effect));
+            Identifier sprite = net.minecraft.client.gui.Gui.getMobEffectSprite(BuiltInRegistries.MOB_EFFECT.wrapAsHolder(effect));
             g.blitSprite(RenderPipelines.GUI_TEXTURED, sprite, x, y, size, size);
             return true;
         }
@@ -97,7 +97,7 @@ public final class RegistryIcons {
         if (registry != null && fr.heetstudio.confee.core.PseudoRegistries.isModList(registry)) {
             return fr.heetstudio.confee.platform.Services.PLATFORM.getModDisplayName(id).map(Component::literal).orElse(null);
         }
-        ResourceLocation rl = ResourceLocation.tryParse(id);
+        Identifier rl = Identifier.tryParse(id);
         if (registry == null || rl == null) {
             return null;
         }
@@ -123,7 +123,7 @@ public final class RegistryIcons {
 
     @Nullable
     private static <T> T lookup(net.minecraft.core.Registry<T> registry, String id) {
-        ResourceLocation rl = ResourceLocation.tryParse(id);
+        Identifier rl = Identifier.tryParse(id);
         return rl == null || !registry.containsKey(rl) ? null : registry.getValue(rl);
     }
 }

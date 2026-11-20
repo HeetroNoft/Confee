@@ -7,7 +7,7 @@ import java.lang.annotation.Target;
 
 /**
  * The value is a structure ({@code minecraft:village_plains}): suggestions from the {@code minecraft:worldgen/structure} registry, mods' entries included (no icon).
- * On {@code ResourceLocation}, {@code String} or {@code List<String>} fields. Same as {@code @Registry("minecraft:worldgen/structure")}.
+ * On {@code Identifier}, {@code String} or {@code List<String>} fields. Same as {@code @Registry("minecraft:worldgen/structure")}.
  * <pre>{@code
  * @Structure
  * public String targetStructure = "minecraft:village_plains";

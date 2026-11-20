@@ -917,11 +917,11 @@ public final class Option<T> implements Node, ConfigValue<T> {
                 problems.add("@Multiline / multiline() is only allowed on String options");
             }
             if (registry != null && !textual) {
-                problems.add("@Registry, @Item and @Block need a ResourceLocation, String or List<String> value");
+                problems.add("@Registry, @Item and @Block need a Identifier, String or List<String> value");
             }
             if (PseudoRegistries.isModList(String.valueOf(registry)) && type == OptionType.IDENTIFIER) {
                 problems.add("@ModId / modId() needs a String or List<String> field: a mod ID such as \"sodium\" is not"
-                        + " a ResourceLocation");
+                        + " a Identifier");
             }
             if (allowTags && PseudoRegistries.isModList(String.valueOf(registry))) {
                 problems.add("mods have no tags. Fix: remove tags from @ModId / modId()");
@@ -933,7 +933,7 @@ public final class Option<T> implements Node, ConfigValue<T> {
                 problems.add("'" + registry + "' is not a valid registry ID. Fix: e.g. \"minecraft:entity_type\" or \"minecraft:worldgen/biome\"");
             }
             if (suggestions != null && !textual) {
-                problems.add("suggestions need a ResourceLocation, String or List<String> value. Fix: for a fixed choice, use an enum");
+                problems.add("suggestions need a Identifier, String or List<String> value. Fix: for a fixed choice, use an enum");
             }
             if (widgetHint == WidgetHint.STEPPER && !type.isNumeric()) {
                 problems.add("@Stepper / stepper() is only allowed on numbers");
