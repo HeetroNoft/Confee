@@ -64,6 +64,12 @@ Toutes tranchées par Lucas le 2026-11-19 et reportées dans `CONFEE_SPEC.md` (�
 - [x] Publication réelle de la **0.1.0 beta** (2026-11-19) : Modrinth (versions `hFtdOOSX` Fabric, `WjjCG70R`
       Forge), CurseForge (fichiers `9704565` Fabric, `9704564` Forge), release GitHub `0.1.0+1.20.1` (pre-release,
       les 2 jars). Reste : validation des projets par la modération Modrinth et CurseForge.
+- [ ] ⚠️ Le jar **Forge 0.1.0** envoyé sur Modrinth (et sans doute CurseForge) n'est pas réobfusqué (upload lancé
+      avant `reobfJar`) : il ne tourne pas hors environnement de dev. Corrigé pour la 0.2.0. À décider par Lucas :
+      retirer ou archiver ce fichier 0.1.0.
+- [x] Publication réelle de la **0.2.0 beta** (2026-11-20) : Modrinth (versions `2WUKWOYe` Fabric, `oYhWJGb1`
+      Forge, jars vérifiés par hash), CurseForge (Fabric + Forge), release GitHub `0.2.0+1.20.1` (pre-release, les
+      2 jars).
 
 ## 4. Limites connues (V1.1 / V2)
 
