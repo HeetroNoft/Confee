@@ -8,9 +8,9 @@ Players install Confee like any library mod:
 
 | Loader | File | Also needs |
 | --- | --- | --- |
-| Fabric, Quilt | `confee-<version>+1.21.4-fabric.jar` | Fabric API. Mod Menu to see the Config buttons. |
-| NeoForge | `confee-<version>+1.21.4-neoforge.jar` | Nothing else. |
-| Forge | `confee-<version>+1.21.4-forge.jar` | Nothing else. |
+| Fabric, Quilt | `confee-<version>+1.21.5-fabric.jar` | Fabric API. Mod Menu to see the Config buttons. |
+| NeoForge | `confee-<version>+1.21.5-neoforge.jar` | Nothing else. |
+| Forge | `confee-<version>+1.21.5-forge.jar` | Nothing else. |
 
 Mods that use Confee declare it as a required dependency.
 
