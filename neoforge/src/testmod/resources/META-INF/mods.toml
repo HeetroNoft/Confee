@@ -10,7 +10,7 @@ description = '''Development-only test mod for Confee. Not published.'''
 
 [[dependencies.confee_testmod]]
 modId = "confee"
-mandatory = true
+type = "required"
 versionRange = "[0,)"
 ordering = "AFTER"
 side = "BOTH"
