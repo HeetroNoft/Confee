@@ -3,7 +3,7 @@ package fr.heetstudio.confee.ui.widget;
 import fr.heetstudio.confee.api.Theme;
 import fr.heetstudio.confee.ui.Ui;
 import fr.heetstudio.confee.ui.render.Draw;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.network.chat.Component;
 import org.jetbrains.annotations.Nullable;
 import org.lwjgl.glfw.GLFW;
@@ -40,7 +40,7 @@ public class SegmentedWidget<T> extends ChoiceWidget<T> {
     }
 
     @Override
-    public void render(GuiGraphics g, int mouseX, int mouseY, float delta) {
+    public void render(GuiGraphicsExtractor g, int mouseX, int mouseY, float delta) {
         if (!visible) {
             return;
         }
@@ -94,7 +94,7 @@ public class SegmentedWidget<T> extends ChoiceWidget<T> {
     }
 
     /** Mid-slide frame: every segment drawn as inactive, then the accent face between the old and the new segment. */
-    private void renderSliding(GuiGraphics g, Theme t, int mouseX, int mouseY, int current, float progress) {
+    private void renderSliding(GuiGraphicsExtractor g, Theme t, int mouseX, int mouseY, int current, float progress) {
         int[] xs = new int[values.size()];
         int[] ws = new int[values.size()];
         String[] names = new String[values.size()];

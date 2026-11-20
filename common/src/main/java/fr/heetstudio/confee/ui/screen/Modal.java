@@ -4,7 +4,7 @@ import fr.heetstudio.confee.api.Theme;
 import fr.heetstudio.confee.ui.Ui;
 import fr.heetstudio.confee.ui.render.Draw;
 import fr.heetstudio.confee.ui.widget.ButtonWidget;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.network.chat.Component;
 import net.minecraft.util.FormattedCharSequence;
 import org.jetbrains.annotations.Nullable;
@@ -86,7 +86,7 @@ public final class Modal implements Overlay {
     }
 
     @Override
-    public void render(GuiGraphics g, int mouseX, int mouseY, float delta) {
+    public void render(GuiGraphicsExtractor g, int mouseX, int mouseY, float delta) {
         if (openedAt < 0) {
             openedAt = ui.now();
         }

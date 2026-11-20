@@ -3,7 +3,7 @@ package fr.heetstudio.confee.ui.widget;
 import fr.heetstudio.confee.api.Theme;
 import fr.heetstudio.confee.ui.Ui;
 import fr.heetstudio.confee.ui.render.Draw;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.MultiLineEditBox;
 import net.minecraft.network.chat.Component;
 import org.jetbrains.annotations.Nullable;
@@ -68,7 +68,7 @@ public class MultilineFieldWidget extends ConfeeWidget {
     }
 
     @Override
-    public void render(GuiGraphics g, int mouseX, int mouseY, float delta) {
+    public void render(GuiGraphicsExtractor g, int mouseX, int mouseY, float delta) {
         if (!visible) {
             return;
         }
@@ -83,7 +83,7 @@ public class MultilineFieldWidget extends ConfeeWidget {
         }
         Draw.rect(g, x, y, width, HEIGHT, enabled ? t.panelBgDeep() : Draw.mix(t.panelBgDeep(), t.panelBg(), 0.5f));
         Draw.outline(g, x, y, width, HEIGHT, border);
-        box.render(g, mouseX, mouseY, delta);
+        box.extractRenderState(g, mouseX, mouseY, delta);
     }
 
     @Override
@@ -130,7 +130,7 @@ public class MultilineFieldWidget extends ConfeeWidget {
 
     @Override
     public boolean charTyped(char c, int modifiers) {
-        return enabled && box.charTyped(new net.minecraft.client.input.CharacterEvent(c, modifiers));
+        return enabled && box.charTyped(new net.minecraft.client.input.CharacterEvent(c));
     }
 
     @Override

@@ -9,7 +9,7 @@ import fr.heetstudio.confee.ui.widget.ButtonWidget;
 import fr.heetstudio.confee.ui.widget.ConfeeWidget;
 import fr.heetstudio.confee.ui.widget.IconButton;
 import net.minecraft.util.Util;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.util.FormattedCharSequence;
@@ -62,7 +62,7 @@ public final class UnreadableFileScreen extends ConfeeScreen {
     }
 
     @Override
-    protected void renderContent(GuiGraphics g, int mouseX, int mouseY, float delta) {
+    protected void renderContent(GuiGraphicsExtractor g, int mouseX, int mouseY, float delta) {
         Theme t = ui.theme();
         Draw.rect(g, 0, 0, width, height, t.panelBgDeep());
         int w = Math.min(320, width - 16);

@@ -4,7 +4,7 @@ import fr.heetstudio.confee.api.Theme;
 import fr.heetstudio.confee.ui.Ui;
 import fr.heetstudio.confee.ui.render.Draw;
 import fr.heetstudio.confee.ui.render.Icon;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.network.chat.Component;
 import org.lwjgl.glfw.GLFW;
 
@@ -48,7 +48,7 @@ public class DropdownWidget<T> extends ChoiceWidget<T> {
     }
 
     @Override
-    public void render(GuiGraphics g, int mouseX, int mouseY, float delta) {
+    public void render(GuiGraphicsExtractor g, int mouseX, int mouseY, float delta) {
         if (!visible) {
             return;
         }

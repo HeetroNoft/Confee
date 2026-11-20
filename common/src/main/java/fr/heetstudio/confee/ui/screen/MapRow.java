@@ -13,7 +13,7 @@ import fr.heetstudio.confee.ui.widget.ConfeeWidget;
 import fr.heetstudio.confee.ui.widget.DropdownWidget;
 import fr.heetstudio.confee.ui.widget.IconButton;
 import fr.heetstudio.confee.ui.widget.TextFieldWidget;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.network.chat.Component;
 import org.jetbrains.annotations.Nullable;
 
@@ -175,7 +175,7 @@ final class MapRow extends OptionRow {
     }
 
     @Override
-    void render(GuiGraphics g, int mouseX, int mouseY, float delta) {
+    void render(GuiGraphicsExtractor g, int mouseX, int mouseY, float delta) {
         Theme t = ui.theme();
         if (!session.isDefault(option)) {
             Draw.rect(g, x, y + 3, 3, 3, t.accent());

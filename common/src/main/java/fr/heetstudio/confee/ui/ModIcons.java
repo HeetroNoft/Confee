@@ -5,7 +5,7 @@ import fr.heetstudio.confee.ConfeeLog;
 import fr.heetstudio.confee.platform.Services;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.RenderPipelines;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.renderer.texture.DynamicTexture;
 import net.minecraft.resources.Identifier;
 import org.jetbrains.annotations.Nullable;
@@ -35,7 +35,7 @@ public final class ModIcons {
     }
 
     /** Draws the logo of the mod in a {@code size} box; false when it has none. */
-    public static boolean draw(GuiGraphics g, String modId, int x, int y, int size) {
+    public static boolean draw(GuiGraphicsExtractor g, String modId, int x, int y, int size) {
         Icon icon = icon(modId);
         if (icon == null) {
             return false;

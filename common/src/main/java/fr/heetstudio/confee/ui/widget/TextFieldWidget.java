@@ -5,7 +5,7 @@ import fr.heetstudio.confee.ui.ItemIcons;
 import fr.heetstudio.confee.ui.Ui;
 import fr.heetstudio.confee.ui.render.Draw;
 import fr.heetstudio.confee.ui.render.Icon;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.ItemStack;
@@ -34,6 +34,8 @@ public class TextFieldWidget extends ConfeeWidget {
     private final EditBox box;
     private final Component label;
     private Consumer<String> responder;
+    @Nullable
+    private final Predicate<String> filter;
     @Nullable
     private Component error;
     @Nullable
@@ -73,9 +75,8 @@ public class TextFieldWidget extends ConfeeWidget {
         box.setTextColorUneditable(ui.theme().textDisabled());
         box.setValue(text);
         box.moveCursorToStart(false);
-        if (filter != null) {
-            box.setFilter(filter);
-        }
+        // the vanilla box has no filter since 26.1: Confee checks each edit itself (filtered)
+        this.filter = filter;
         this.responder = onEdit;
         box.setResponder(onEdit);
     }
@@ -173,7 +174,7 @@ public class TextFieldWidget extends ConfeeWidget {
     // ------------------------------------------------------------------ rendering
 
     @Override
-    public void render(GuiGraphics g, int mouseX, int mouseY, float delta) {
+    public void render(GuiGraphicsExtractor g, int mouseX, int mouseY, float delta) {
         if (!visible) {
             return;
         }
@@ -204,7 +205,7 @@ public class TextFieldWidget extends ConfeeWidget {
         box.setY(y + (height - 8) / 2);
         box.setWidth(x + fw - 5 - textX - suffixW);
         box.setEditable(enabled);
-        box.render(g, mouseX, mouseY, delta);
+        box.extractRenderState(g, mouseX, mouseY, delta);
 
         int sx = x + width - SIDE_BUTTON;
         if (showSwatch) {
@@ -225,7 +226,7 @@ public class TextFieldWidget extends ConfeeWidget {
     }
 
     /** Light/dark squares behind translucent colors. */
-    public static void checker(GuiGraphics g, int x, int y, int w, int h) {
+    public static void checker(GuiGraphicsExtractor g, int x, int y, int w, int h) {
         for (int cy = 0; cy < h; cy += 4) {
             for (int cx = 0; cx < w; cx += 4) {
                 boolean light = ((cx + cy) / 4) % 2 == 0;
@@ -277,7 +278,7 @@ public class TextFieldWidget extends ConfeeWidget {
     }
 
     @Override
-    public void renderFloating(GuiGraphics g, int mouseX, int mouseY, float delta) {
+    public void renderFloating(GuiGraphicsExtractor g, int mouseX, int mouseY, float delta) {
         if (suggestions.isEmpty() || !focused) {
             return;
         }
@@ -447,7 +448,7 @@ public class TextFieldWidget extends ConfeeWidget {
                 return true;
             }
         }
-        boolean handled = box.keyPressed(new net.minecraft.client.input.KeyEvent(key, scanCode, modifiers));
+        boolean handled = filtered(() -> box.keyPressed(new net.minecraft.client.input.KeyEvent(key, scanCode, modifiers)));
         if (handled) {
             updateSuggestions(false);
         }
@@ -456,7 +457,7 @@ public class TextFieldWidget extends ConfeeWidget {
 
     @Override
     public boolean charTyped(char c, int modifiers) {
-        boolean handled = enabled && box.charTyped(new net.minecraft.client.input.CharacterEvent(c, modifiers));
+        boolean handled = enabled && filtered(() -> box.charTyped(new net.minecraft.client.input.CharacterEvent(c)));
         if (handled) {
             selectedSuggestion = -1;
             updateSuggestions(false);
@@ -494,5 +495,39 @@ public class TextFieldWidget extends ConfeeWidget {
         Component value = Component.literal(box.getValue());
         return error == null ? Component.translatable("confee.narration.field", label, value)
                 : Component.translatable("confee.narration.field_error", label, value, error);
+    }
+
+    /**
+     * Runs an edit of the vanilla box and keeps it only if the text still passes the filter; otherwise the text and
+     * the cursor are put back. The listener only sees accepted texts.
+     */
+    private boolean filtered(java.util.function.BooleanSupplier edit) {
+        if (filter == null) {
+            return edit.getAsBoolean();
+        }
+        String before = box.getValue();
+        int cursor = box.getCursorPosition();
+        box.setResponder(s -> { });
+        boolean handled;
+        try {
+            handled = edit.getAsBoolean();
+        } finally {
+            box.setResponder(responder);
+        }
+        String after = box.getValue();
+        if (after.equals(before)) {
+            return handled;
+        }
+        if (!filter.test(after)) {
+            box.setResponder(s -> { });
+            box.setValue(before);
+            box.setCursorPosition(cursor);
+            box.setResponder(responder);
+            return true;
+        }
+        if (responder != null) {
+            responder.accept(after);
+        }
+        return handled;
     }
 }

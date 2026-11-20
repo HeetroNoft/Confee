@@ -13,7 +13,7 @@ import fr.heetstudio.confee.ui.render.Draw;
 import fr.heetstudio.confee.ui.render.Icon;
 import fr.heetstudio.confee.ui.widget.ButtonWidget;
 import fr.heetstudio.confee.ui.widget.ConfeeWidget;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
@@ -115,7 +115,7 @@ final class DecorationRow extends Row {
     }
 
     @Override
-    void render(GuiGraphics g, int mouseX, int mouseY, float delta) {
+    void render(GuiGraphicsExtractor g, int mouseX, int mouseY, float delta) {
         Theme t = ui.theme();
         switch (decoration.kind()) {
             case HEADER -> {
@@ -140,7 +140,7 @@ final class DecorationRow extends Row {
         }
     }
 
-    private void renderText(GuiGraphics g, Theme t) {
+    private void renderText(GuiGraphicsExtractor g, Theme t) {
         boolean framed = decoration.style() != Decoration.Style.PLAIN;
         int tx = x;
         int ly = y;
@@ -172,7 +172,7 @@ final class DecorationRow extends Row {
         }
     }
 
-    private void renderImage(GuiGraphics g) {
+    private void renderImage(GuiGraphicsExtractor g) {
         int[] size = Textures.size(decoration.image());
         Identifier id = Identifier.tryParse(decoration.image());
         if (size[0] <= 0 || id == null) {

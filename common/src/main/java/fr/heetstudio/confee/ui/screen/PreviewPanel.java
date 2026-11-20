@@ -13,7 +13,7 @@ import fr.heetstudio.confee.ui.Ui;
 import fr.heetstudio.confee.ui.render.Draw;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.RenderPipelines;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.resources.language.I18n;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
@@ -77,14 +77,14 @@ final class PreviewPanel {
         return any[0];
     }
 
-    void render(GuiGraphics g, int x, int top, int bottom, @Nullable Option<?> option, float delta) {
+    void render(GuiGraphicsExtractor g, int x, int top, int bottom, @Nullable Option<?> option, float delta) {
         render(g, x, top, bottom, option, null, delta);
     }
 
     /**
      * @param shown value to preview instead of the current one (the item hovered in an open dropdown), or null
      */
-    void render(GuiGraphics g, int x, int top, int bottom, @Nullable Option<?> option, @Nullable Object shown,
+    void render(GuiGraphicsExtractor g, int x, int top, int bottom, @Nullable Option<?> option, @Nullable Object shown,
                 float delta) {
         Theme t = ui.theme();
         Draw.rect(g, x, top, width, bottom - top, t.panelBg());
@@ -160,7 +160,7 @@ final class PreviewPanel {
         return image.replace("{value}", name.toLowerCase(Locale.ROOT));
     }
 
-    private int image(GuiGraphics g, String resource, int x, int y, int w) {
+    private int image(GuiGraphicsExtractor g, String resource, int x, int y, int w) {
         int[] size = Textures.size(resource);
         Identifier id = Identifier.tryParse(resource);
         if (size[0] <= 0 || id == null) {
@@ -192,7 +192,7 @@ final class PreviewPanel {
         }
     }
 
-    private int custom(GuiGraphics g, Option<?> option, Preview preview, Object value, int x, int y, int w, float delta) {
+    private int custom(GuiGraphicsExtractor g, Option<?> option, Preview preview, Object value, int x, int y, int w, float delta) {
         if (brokenRenderers.contains(option)) {
             return paragraph(g, Component.translatable("confee.preview.error"), x, y, w, ui.theme().error());
         }
@@ -212,7 +212,7 @@ final class PreviewPanel {
         }
     }
 
-    private int paragraph(GuiGraphics g, Component text, int x, int y, int w, int color) {
+    private int paragraph(GuiGraphicsExtractor g, Component text, int x, int y, int w, int color) {
         List<FormattedCharSequence> lines = ui.font().split(text, w);
         for (FormattedCharSequence line : lines) {
             Draw.text(g, ui.font(), line, x, y, color);

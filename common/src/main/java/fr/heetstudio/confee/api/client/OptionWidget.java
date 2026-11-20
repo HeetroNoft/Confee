@@ -2,7 +2,7 @@ package fr.heetstudio.confee.api.client;
 
 import fr.heetstudio.confee.api.Theme;
 import net.minecraft.client.gui.Font;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.network.chat.Component;
 
 /**
@@ -15,10 +15,10 @@ import net.minecraft.network.chat.Component;
  *
  * <pre>{@code
  * public class TemperatureWidget extends OptionWidget<Integer> {
- *     public void render(GuiGraphics g, int x, int y, int width, int height, int mouseX, int mouseY, float delta) {
+ *     public void render(GuiGraphicsExtractor g, int x, int y, int width, int height, int mouseX, int mouseY, float delta) {
  *         int filled = width * value() / 100;
  *         g.fill(x, y, x + filled, y + height, theme().accent());
- *         g.drawString(font(), value() + " °C", x + 4, y + 6, theme().textOnDark());
+ *         g.text(font(), value() + " °C", x + 4, y + 6, theme().textOnDark());
  *     }
  *     public boolean mouseClicked(double mx, double my, int button) {
  *         setValue((int) ((mx - x()) * 100 / width()));
@@ -43,7 +43,7 @@ public abstract class OptionWidget<T> {
     }
 
     /** Draws the widget in its box. Coordinates are screen coordinates. */
-    public abstract void render(GuiGraphics g, int x, int y, int width, int height, int mouseX, int mouseY, float delta);
+    public abstract void render(GuiGraphicsExtractor g, int x, int y, int width, int height, int mouseX, int mouseY, float delta);
 
     /** Click inside the box; return true when handled (the widget then gets the keyboard focus). */
     public boolean mouseClicked(double mouseX, double mouseY, int button) {

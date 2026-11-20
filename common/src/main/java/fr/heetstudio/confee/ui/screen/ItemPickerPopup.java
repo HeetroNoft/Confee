@@ -7,7 +7,7 @@ import fr.heetstudio.confee.ui.Ui;
 import fr.heetstudio.confee.ui.render.Draw;
 import fr.heetstudio.confee.ui.render.Icon;
 import fr.heetstudio.confee.ui.widget.TextFieldWidget;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.network.chat.Component;
 import org.jetbrains.annotations.Nullable;
 import org.lwjgl.glfw.GLFW;
@@ -232,7 +232,7 @@ final class ItemPickerPopup implements Overlay {
     // ------------------------------------------------------------------ rendering
 
     @Override
-    public void render(GuiGraphics g, int mouseX, int mouseY, float delta) {
+    public void render(GuiGraphicsExtractor g, int mouseX, int mouseY, float delta) {
         Theme t = ui.theme();
         int screenW = g.guiWidth();
         int screenH = g.guiHeight();
@@ -314,14 +314,14 @@ final class ItemPickerPopup implements Overlay {
     }
 
     /** The icon, or the first letters of the entry when it has none (an entity without spawn egg, a mod without logo). */
-    private void icon(GuiGraphics g, Entry entry, int x, int y, int size, int initialsColor) {
+    private void icon(GuiGraphicsExtractor g, Entry entry, int x, int y, int size, int initialsColor) {
         if (!fr.heetstudio.confee.ui.RegistryIcons.draw(g, registry, entry.id(), x, y, size)) {
             Draw.textCentered(g, ui.font(), entry.initials(), x + size / 2, y + (size - 8) / 2, initialsColor);
         }
     }
 
     /** One entry of the list styles: icon, name and ID (right), then the description on a second line (detailed). */
-    private void row(GuiGraphics g, Theme t, Entry entry, int x, int y, boolean selected) {
+    private void row(GuiGraphicsExtractor g, Theme t, Entry entry, int x, int y, boolean selected) {
         int text = selected ? t.onAccentText() : t.textOnDark();
         int secondary = selected ? Draw.mix(t.onAccentText(), t.accent(), 0.25f) : ui.secondaryText();
         // detailed rows: the icon takes the whole height of the row (2 px padding)
@@ -344,7 +344,7 @@ final class ItemPickerPopup implements Overlay {
     }
 
     /** Name on the left, ID on the right; the ID gives way to the name when the row is too narrow. */
-    private void line(GuiGraphics g, String name, String id, int x, int y, int w, int nameColor, int idColor) {
+    private void line(GuiGraphicsExtractor g, String name, String id, int x, int y, int w, int nameColor, int idColor) {
         int idW = id.isEmpty() ? 0 : Math.min(ui.font().width(id), w / 2);
         Draw.textFit(g, ui.font(), Component.literal(name), x, y, w - (idW > 0 ? idW + 8 : 0), nameColor);
         if (idW > 0) {

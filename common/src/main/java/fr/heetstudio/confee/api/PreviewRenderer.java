@@ -6,7 +6,7 @@ package fr.heetstudio.confee.api;
  *
  * <pre>{@code
  * public class HudPreview implements PreviewRenderer {
- *     public void render(GuiGraphics g, int x, int y, int width, int height, Object value, float delta) {
+ *     public void render(GuiGraphicsExtractor g, int x, int y, int width, int height, Object value, float delta) {
  *         int opacity = (int) ((Double) value * 255);
  *         g.fill(x, y, x + width, y + height, opacity << 24 | 0x2D7DD2);
  *     }
@@ -16,11 +16,11 @@ package fr.heetstudio.confee.api;
 public interface PreviewRenderer {
 
     /**
-     * @param g      a {@code net.minecraft.client.gui.GuiGraphics}; drawing is clipped to the box
+     * @param g      a {@code net.minecraft.client.gui.GuiGraphicsExtractor}; drawing is clipped to the box
      * @param value  the value being edited (not saved yet), of the option's type
      * @param delta  partial tick, for animations
      */
-    void render(net.minecraft.client.gui.GuiGraphics g, int x, int y, int width, int height, Object value, float delta);
+    void render(net.minecraft.client.gui.GuiGraphicsExtractor g, int x, int y, int width, int height, Object value, float delta);
 
     /** Height of the drawing box for a given width (default: 3/4 of the width). */
     default int height(int width) {

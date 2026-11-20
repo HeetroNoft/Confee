@@ -4,7 +4,7 @@ import fr.heetstudio.confee.api.Theme;
 import fr.heetstudio.confee.ui.Ui;
 import fr.heetstudio.confee.ui.render.Draw;
 import fr.heetstudio.confee.ui.widget.DropdownWidget;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.network.chat.Component;
 import org.lwjgl.glfw.GLFW;
 
@@ -61,7 +61,7 @@ final class DropdownPopup implements Overlay {
     }
 
     @Override
-    public void render(GuiGraphics g, int mouseX, int mouseY, float delta) {
+    public void render(GuiGraphicsExtractor g, int mouseX, int mouseY, float delta) {
         place();
         Theme t = ui.theme();
         float p = Draw.easeOut((ui.now() - openedAt) / (float) OPEN_MS);

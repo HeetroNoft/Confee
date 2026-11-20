@@ -12,7 +12,7 @@ import fr.heetstudio.confee.ui.widget.ButtonWidget;
 import fr.heetstudio.confee.ui.widget.ConfeeWidget;
 import fr.heetstudio.confee.ui.widget.DropdownWidget;
 import fr.heetstudio.confee.ui.widget.IconButton;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.network.chat.Component;
 import org.jetbrains.annotations.Nullable;
 
@@ -192,7 +192,7 @@ final class ObjectListRow extends OptionRow {
     }
 
     @Override
-    void render(GuiGraphics g, int mouseX, int mouseY, float delta) {
+    void render(GuiGraphicsExtractor g, int mouseX, int mouseY, float delta) {
         Theme t = ui.theme();
         if (!session.isDefault(option)) {
             Draw.rect(g, x, y + 3, 3, 3, t.accent());

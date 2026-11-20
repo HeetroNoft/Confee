@@ -15,7 +15,7 @@ import fr.heetstudio.confee.ui.widget.IconButton;
 import fr.heetstudio.confee.ui.widget.SliderWidget;
 import fr.heetstudio.confee.ui.widget.TextFieldWidget;
 import fr.heetstudio.confee.ui.widget.ToggleWidget;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.network.chat.Component;
 import org.jetbrains.annotations.Nullable;
 
@@ -153,7 +153,7 @@ class OptionRow extends Row {
     }
 
     /** Draws the description under the name line. */
-    protected void renderSubtitle(GuiGraphics g) {
+    protected void renderSubtitle(GuiGraphicsExtractor g) {
         int ly = y + (inline ? ToggleWidget.KNOB + 3 : LABEL_H);
         int color = editable ? ui.secondaryText() : ui.theme().textDisabled();
         for (net.minecraft.util.FormattedCharSequence line : subtitleLines) {
@@ -196,7 +196,7 @@ class OptionRow extends Row {
     }
 
     @Override
-    void render(GuiGraphics g, int mouseX, int mouseY, float delta) {
+    void render(GuiGraphicsExtractor g, int mouseX, int mouseY, float delta) {
         Theme t = ui.theme();
         int lineY = inline ? y + (ToggleWidget.KNOB - 8) / 2 : y + 1;
         if (!session.isDefault(option) && !option.readOnly()) {
@@ -219,7 +219,7 @@ class OptionRow extends Row {
         }
     }
 
-    protected void renderRestartIcon(GuiGraphics g) {
+    protected void renderRestartIcon(GuiGraphicsExtractor g) {
         if (option.requiresRestart()) {
             int wx = warningX();
             int wy = inline ? y + (ToggleWidget.KNOB - 9) / 2 : y;

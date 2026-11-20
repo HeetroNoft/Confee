@@ -7,7 +7,7 @@ import fr.heetstudio.confee.ui.render.Draw;
 import fr.heetstudio.confee.ui.render.Icon;
 import fr.heetstudio.confee.ui.widget.ConfeeWidget;
 import fr.heetstudio.confee.ui.widget.IconButton;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 import org.lwjgl.glfw.GLFW;
@@ -90,7 +90,7 @@ public final class FileSelectScreen extends ConfeeScreen {
     }
 
     @Override
-    protected void renderContent(GuiGraphics g, int mouseX, int mouseY, float delta) {
+    protected void renderContent(GuiGraphicsExtractor g, int mouseX, int mouseY, float delta) {
         Theme t = ui.theme();
         Draw.rect(g, 0, 0, width, height, t.panelBgDeep());
         int x = viewport[0];
@@ -148,7 +148,7 @@ public final class FileSelectScreen extends ConfeeScreen {
         }
 
         @Override
-        public void render(GuiGraphics g, int mouseX, int mouseY, float delta) {
+        public void render(GuiGraphicsExtractor g, int mouseX, int mouseY, float delta) {
             Theme t = ui.theme();
             boolean hover = hovered(mouseX, mouseY);
             boolean pressed = mouseDown && hover;

@@ -4,7 +4,7 @@ import fr.heetstudio.confee.api.Theme;
 import fr.heetstudio.confee.ui.Ui;
 import fr.heetstudio.confee.ui.render.Draw;
 import fr.heetstudio.confee.ui.render.Icon;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 import org.jetbrains.annotations.Nullable;
@@ -38,7 +38,7 @@ public class StepperWidget extends ConfeeWidget {
     }
 
     @Override
-    public void render(GuiGraphics g, int mouseX, int mouseY, float delta) {
+    public void render(GuiGraphicsExtractor g, int mouseX, int mouseY, float delta) {
         if (!visible) {
             return;
         }
@@ -50,7 +50,7 @@ public class StepperWidget extends ConfeeWidget {
         button(g, x + width - BUTTON, 1, Icon.PLUS, mouseX, mouseY);
     }
 
-    private void button(GuiGraphics g, int bx, int direction, Icon icon, int mouseX, int mouseY) {
+    private void button(GuiGraphicsExtractor g, int bx, int direction, Icon icon, int mouseX, int mouseY) {
         Theme t = ui.theme();
         boolean hover = enabled && mouseX >= bx && mouseX < bx + BUTTON && mouseY >= y && mouseY < y + height;
         boolean down = pressed == direction && ui.now() - pressedAt < 90;

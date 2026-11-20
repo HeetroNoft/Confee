@@ -1,6 +1,6 @@
 package fr.heetstudio.confee.ui.render;
 
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 
 /**
  * Pixel-art icons drawn with the theme colors ('#' = pixel). One consistent 1 px stroke.
@@ -143,7 +143,7 @@ public enum Icon {
         return rows.length;
     }
 
-    public void draw(GuiGraphics g, int x, int y, int color) {
+    public void draw(GuiGraphicsExtractor g, int x, int y, int color) {
         for (int row = 0; row < rows.length; row++) {
             String line = rows[row];
             int start = -1;
@@ -160,7 +160,7 @@ public enum Icon {
     }
 
     /** Draws the icon centered in a box. */
-    public void drawCentered(GuiGraphics g, int boxX, int boxY, int boxW, int boxH, int color) {
+    public void drawCentered(GuiGraphicsExtractor g, int boxX, int boxY, int boxW, int boxH, int color) {
         draw(g, boxX + (boxW - width()) / 2, boxY + (boxH - height()) / 2, color);
     }
 }

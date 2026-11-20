@@ -31,7 +31,7 @@ import fr.heetstudio.confee.ui.widget.SegmentedWidget;
 import fr.heetstudio.confee.ui.widget.SliderWidget;
 import fr.heetstudio.confee.ui.widget.TextFieldWidget;
 import fr.heetstudio.confee.ui.widget.ToggleWidget;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
@@ -872,7 +872,7 @@ public final class ConfigScreen extends ConfeeScreen {
     // ------------------------------------------------------------------ rendering
 
     @Override
-    protected void renderContent(GuiGraphics g, int mouseX, int mouseY, float delta) {
+    protected void renderContent(GuiGraphicsExtractor g, int mouseX, int mouseY, float delta) {
         Theme t = ui.theme();
         Draw.rect(g, 0, 0, width, height, t.panelBgDeep());
         if (layout.background() != null) {
@@ -933,7 +933,7 @@ public final class ConfigScreen extends ConfeeScreen {
         }
     }
 
-    private void renderBody(GuiGraphics g, int mouseX, int mouseY, float delta) {
+    private void renderBody(GuiGraphicsExtractor g, int mouseX, int mouseY, float delta) {
         Theme t = ui.theme();
         int top = TITLE_H;
         int bottom = height - BOTTOM_H;
@@ -1018,7 +1018,7 @@ public final class ConfigScreen extends ConfeeScreen {
         return new int[]{trackX, viewport[1], 3, viewH, handleY, handleH};
     }
 
-    private void renderScrollbar(GuiGraphics g) {
+    private void renderScrollbar(GuiGraphicsExtractor g) {
         int[] r = scrollbarRect();
         if (r == null) {
             return;
@@ -1028,7 +1028,7 @@ public final class ConfigScreen extends ConfeeScreen {
         Draw.rect(g, r[0], r[4], r[2], r[5], draggingScrollbar ? t.buttonFaceHover() : t.buttonFace());
     }
 
-    private void renderSidebar(GuiGraphics g, int mouseX, int mouseY, float delta) {
+    private void renderSidebar(GuiGraphicsExtractor g, int mouseX, int mouseY, float delta) {
         Theme t = ui.theme();
         int top = TITLE_H;
         int bottom = height - BOTTOM_H;
@@ -1049,7 +1049,7 @@ public final class ConfigScreen extends ConfeeScreen {
         g.disableScissor();
     }
 
-    private void renderTitleBar(GuiGraphics g, int mouseX, int mouseY, float delta) {
+    private void renderTitleBar(GuiGraphicsExtractor g, int mouseX, int mouseY, float delta) {
         Theme t = ui.theme();
         Draw.rect(g, 0, 0, width, TITLE_H - 2, t.titleBarBg());
         Draw.rect(g, 0, TITLE_H - 2, width, 1, t.toggleOffTrack());
@@ -1063,7 +1063,7 @@ public final class ConfigScreen extends ConfeeScreen {
         Draw.textFit(g, font, title, titleX, 6, search.x - 8 - titleX, t.titleBarText());
     }
 
-    private void renderBottomBar(GuiGraphics g, int mouseX, int mouseY, float delta) {
+    private void renderBottomBar(GuiGraphicsExtractor g, int mouseX, int mouseY, float delta) {
         Theme t = ui.theme();
         int top = height - BOTTOM_H;
         Draw.rect(g, 0, top, width, BOTTOM_H, t.panelBg());

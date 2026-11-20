@@ -4,7 +4,7 @@ import fr.heetstudio.confee.api.Theme;
 import fr.heetstudio.confee.ui.Ui;
 import fr.heetstudio.confee.ui.render.Draw;
 import fr.heetstudio.confee.ui.widget.ConfeeWidget;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.events.GuiEventListener;
 import net.minecraft.client.gui.narration.NarratableEntry;
 import net.minecraft.client.gui.narration.NarratedElementType;
@@ -53,7 +53,7 @@ public abstract class ConfeeScreen extends Screen {
     protected abstract List<ConfeeWidget> widgets();
 
     /** Draws everything except overlays and tooltips. */
-    protected abstract void renderContent(GuiGraphics g, int mouseX, int mouseY, float delta);
+    protected abstract void renderContent(GuiGraphicsExtractor g, int mouseX, int mouseY, float delta);
 
     /** Tooltip for non-widget areas (labels, icons), or null. Returns a key identifying the hovered area. */
     @Nullable
@@ -91,7 +91,7 @@ public abstract class ConfeeScreen extends Screen {
     // ------------------------------------------------------------------ rendering
 
     @Override
-    public void render(GuiGraphics g, int mouseX, int mouseY, float delta) {
+    public void extractRenderState(GuiGraphicsExtractor g, int mouseX, int mouseY, float delta) {
         if (focus != null && !widgets().contains(focus)) {
             focus = null;
         }
@@ -113,7 +113,7 @@ public abstract class ConfeeScreen extends Screen {
         renderTooltip(g, mouseX, mouseY);
     }
 
-    private void renderTooltip(GuiGraphics g, int mouseX, int mouseY) {
+    private void renderTooltip(GuiGraphicsExtractor g, int mouseX, int mouseY) {
         TooltipTarget target = null;
         if (overlay != null) {
             Component text = overlay.tooltip(mouseX, mouseY);
@@ -157,7 +157,7 @@ public abstract class ConfeeScreen extends Screen {
      * Bedrock tooltip: opaque dark box, light 1 px border, drop shadow. Placed under (else above) the hovered element
      * so it never hides it, inside {@link #tooltipRegion}, and away from an open suggestion list.
      */
-    protected void drawTooltip(GuiGraphics g, Component text, int mouseX, int mouseY, @Nullable int[] anchor,
+    protected void drawTooltip(GuiGraphicsExtractor g, Component text, int mouseX, int mouseY, @Nullable int[] anchor,
                                float alpha) {
         Theme t = ui.theme();
         int[] region = tooltipRegion(anchor);
@@ -302,8 +302,8 @@ public abstract class ConfeeScreen extends Screen {
 
     @Override
     public boolean charTyped(CharacterEvent event) {
-        // characters outside the BMP are dropped, as before 1.21.9 (char)
-        return Character.isBmpCodePoint(event.codepoint()) && charTyped((char) event.codepoint(), event.modifiers());
+        // characters outside the BMP are dropped, as before 1.21.9 (char); since 26.1 the event has no modifiers
+        return Character.isBmpCodePoint(event.codepoint()) && charTyped((char) event.codepoint(), 0);
     }
 
     public boolean mouseClicked(double mx, double my, int button) {

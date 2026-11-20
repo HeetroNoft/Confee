@@ -1,6 +1,6 @@
 package fr.heetstudio.confee.ui.screen;
 
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.network.chat.Component;
 import org.jetbrains.annotations.Nullable;
 
@@ -10,7 +10,7 @@ import org.jetbrains.annotations.Nullable;
  */
 public interface Overlay {
 
-    void render(GuiGraphics g, int mouseX, int mouseY, float delta);
+    void render(GuiGraphicsExtractor g, int mouseX, int mouseY, float delta);
 
     boolean mouseClicked(double mx, double my, int button);
 

@@ -1,7 +1,7 @@
 package fr.heetstudio.confee.ui.widget;
 
 import fr.heetstudio.confee.ui.Ui;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.network.chat.Component;
 import org.jetbrains.annotations.Nullable;
 
@@ -42,7 +42,7 @@ public abstract class ConfeeWidget {
         this.y = y;
     }
 
-    public abstract void render(GuiGraphics g, int mouseX, int mouseY, float delta);
+    public abstract void render(GuiGraphicsExtractor g, int mouseX, int mouseY, float delta);
 
     /** Text read by the narrator when the widget is focused or hovered. */
     public abstract Component narration();
@@ -152,7 +152,7 @@ public abstract class ConfeeWidget {
     }
 
     /** Content drawn above everything while the widget is focused (suggestion list...). */
-    public void renderFloating(GuiGraphics g, int mouseX, int mouseY, float delta) {
+    public void renderFloating(GuiGraphicsExtractor g, int mouseX, int mouseY, float delta) {
     }
 
     /** Click on the floating content; true when handled. */

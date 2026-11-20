@@ -7,7 +7,7 @@ import fr.heetstudio.confee.ui.render.Icon;
 import fr.heetstudio.confee.ui.widget.ButtonWidget;
 import fr.heetstudio.confee.ui.widget.ConfeeWidget;
 import fr.heetstudio.confee.ui.widget.IconButton;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.network.chat.Component;
 import net.minecraft.util.FormattedCharSequence;
 import org.jetbrains.annotations.Nullable;
@@ -33,7 +33,7 @@ abstract class Row {
     /** Places the row (and its widgets) and returns its height. */
     abstract int layout(int x, int y, int width);
 
-    abstract void render(GuiGraphics g, int mouseX, int mouseY, float delta);
+    abstract void render(GuiGraphicsExtractor g, int mouseX, int mouseY, float delta);
 
     List<ConfeeWidget> widgets() {
         return List.of();
@@ -85,7 +85,7 @@ abstract class Row {
         }
 
         @Override
-        void render(GuiGraphics g, int mouseX, int mouseY, float delta) {
+        void render(GuiGraphicsExtractor g, int mouseX, int mouseY, float delta) {
             if (back != null) {
                 back.render(g, mouseX, mouseY, delta);
                 return;
@@ -108,7 +108,7 @@ abstract class Row {
         }
 
         @Override
-        public void render(GuiGraphics g, int mouseX, int mouseY, float delta) {
+        public void render(GuiGraphicsExtractor g, int mouseX, int mouseY, float delta) {
             Theme t = ui.theme();
             boolean hover = hovered(mouseX, mouseY);
             if (hover || focused) {
@@ -143,7 +143,7 @@ abstract class Row {
         }
 
         @Override
-        void render(GuiGraphics g, int mouseX, int mouseY, float delta) {
+        void render(GuiGraphicsExtractor g, int mouseX, int mouseY, float delta) {
             int ly = y + 4;
             for (FormattedCharSequence line : lines) {
                 Draw.text(g, ui.font(), line, x, ly, ui.secondaryText());
@@ -180,7 +180,7 @@ abstract class Row {
         }
 
         @Override
-        void render(GuiGraphics g, int mouseX, int mouseY, float delta) {
+        void render(GuiGraphicsExtractor g, int mouseX, int mouseY, float delta) {
             Theme t = ui.theme();
             Draw.rect(g, x, y, width, height, t.panelBgDeep());
             Draw.outline(g, x, y, width, height, Draw.mix(t.warning(), t.panelBgDeep(), 0.45f));
@@ -221,7 +221,7 @@ abstract class Row {
         }
 
         @Override
-        void render(GuiGraphics g, int mouseX, int mouseY, float delta) {
+        void render(GuiGraphicsExtractor g, int mouseX, int mouseY, float delta) {
             widget.render(g, mouseX, mouseY, delta);
         }
 
@@ -268,7 +268,7 @@ abstract class Row {
         }
 
         @Override
-        void render(GuiGraphics g, int mouseX, int mouseY, float delta) {
+        void render(GuiGraphicsExtractor g, int mouseX, int mouseY, float delta) {
             open.render(g, mouseX, mouseY, delta);
             up.render(g, mouseX, mouseY, delta);
             down.render(g, mouseX, mouseY, delta);

@@ -1,7 +1,7 @@
 package fr.heetstudio.confee.ui.render;
 
 import net.minecraft.client.gui.Font;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.network.chat.Component;
 import net.minecraft.util.FormattedCharSequence;
 
@@ -16,13 +16,13 @@ public final class Draw {
     private Draw() {
     }
 
-    public static void rect(GuiGraphics g, int x, int y, int w, int h, int color) {
+    public static void rect(GuiGraphicsExtractor g, int x, int y, int w, int h, int color) {
         if (w > 0 && h > 0) {
             g.fill(x, y, x + w, y + h, color);
         }
     }
 
-    public static void outline(GuiGraphics g, int x, int y, int w, int h, int color) {
+    public static void outline(GuiGraphicsExtractor g, int x, int y, int w, int h, int color) {
         if (w > 0 && h > 0) {
             // four fills rather than submitOutline, which ignores the scissor area since 1.21.9
             g.fill(x, y, x + w, y + 1, color);
@@ -36,7 +36,7 @@ public final class Draw {
      * Bedrock "3D" block (spec 10.3): 1 px outline, flat face, 2 px darker strip at the bottom.
      * Pressed: no strip (the caller moves the content down by 1 px).
      */
-    public static void bevel(GuiGraphics g, int x, int y, int w, int h, int face, int shadow, int outline, boolean pressed) {
+    public static void bevel(GuiGraphicsExtractor g, int x, int y, int w, int h, int face, int shadow, int outline, boolean pressed) {
         outline(g, x, y, w, h, outline);
         if (pressed) {
             rect(g, x + 1, y + 1, w - 2, h - 2, face);
@@ -47,31 +47,31 @@ public final class Draw {
     }
 
     /** Keyboard focus ring (spec 10.3): 1 px around the widget. */
-    public static void focusRing(GuiGraphics g, int x, int y, int w, int h, int color) {
+    public static void focusRing(GuiGraphicsExtractor g, int x, int y, int w, int h, int color) {
         outline(g, x - 1, y - 1, w + 2, h + 2, color);
     }
 
-    public static int text(GuiGraphics g, Font font, Component text, int x, int y, int color) {
-        g.drawString(font, text, x, y, color, false);
+    public static int text(GuiGraphicsExtractor g, Font font, Component text, int x, int y, int color) {
+        g.text(font, text, x, y, color, false);
         return x + font.width(text);
     }
 
-    public static int text(GuiGraphics g, Font font, String text, int x, int y, int color) {
-        g.drawString(font, text, x, y, color, false);
+    public static int text(GuiGraphicsExtractor g, Font font, String text, int x, int y, int color) {
+        g.text(font, text, x, y, color, false);
         return x + font.width(text);
     }
 
-    public static int text(GuiGraphics g, Font font, FormattedCharSequence text, int x, int y, int color) {
-        g.drawString(font, text, x, y, color, false);
+    public static int text(GuiGraphicsExtractor g, Font font, FormattedCharSequence text, int x, int y, int color) {
+        g.text(font, text, x, y, color, false);
         return x + font.width(text);
     }
 
     /** Draws the text cut with "..." so it fits in {@code maxWidth}. */
-    public static void textFit(GuiGraphics g, Font font, Component text, int x, int y, int maxWidth, int color) {
+    public static void textFit(GuiGraphicsExtractor g, Font font, Component text, int x, int y, int maxWidth, int color) {
         text(g, font, fit(font, text.getString(), maxWidth), x, y, color);
     }
 
-    public static void textCentered(GuiGraphics g, Font font, String text, int centerX, int y, int color) {
+    public static void textCentered(GuiGraphicsExtractor g, Font font, String text, int centerX, int y, int color) {
         text(g, font, text, centerX - font.width(text) / 2, y, color);
     }
 
