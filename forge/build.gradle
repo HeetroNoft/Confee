@@ -16,6 +16,13 @@ sourceSets {
     }
 }
 
+// Forge 49+ (dev runs): the classes and resources of a source set must share one folder, else they load as two modules
+sourceSets.each {
+    def dir = layout.buildDirectory.dir("sourcesSets/$it.name")
+    it.output.resourcesDir = dir
+    it.java.destinationDirectory = dir
+}
+
 minecraft {
     mappings channel: 'official', version: minecraft_version
     copyIdeResources = true
@@ -98,7 +105,6 @@ dependencies {
 
     // Cohabitation tests (spec 15), dev runs only: mods with their own config screens
     runtimeOnly fg.deobf("maven.modrinth:cloth-config:${cloth_config_forge_version}")
-    runtimeOnly fg.deobf("maven.modrinth:yacl:${yacl_forge_version}")
 }
 
 tasks.withType(JavaCompile).matching { it.name == 'compileJava' }.configureEach {
