@@ -35,8 +35,8 @@ dependencies {
     testmodImplementation "net.neoforged:neoforge:${neoforge_version}"
     rawmodImplementation "net.neoforged:neoforge:${neoforge_version}"
 
-    // Cohabitation test (spec 15), dev runs only: a mod with its own config screen
-    runtimeOnly "maven.modrinth:cloth-config:${cloth_config_neoforge_version}"
+    // Cohabitation test (spec 15): left out since NeoForge 21.6, whose warning screen about Cloth Config's
+    // @OnlyIn annotations stops the automatic screenshots (Cloth Config is still checked on Fabric)
 }
 
 runs {
