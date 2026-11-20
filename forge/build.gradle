@@ -141,7 +141,7 @@ jar.finalizedBy('reobfJar')
 apply plugin: 'me.modmuss50.mod-publish-plugin'
 publishMods {
     file = jar.archiveFile
-    changelog = providers.provider { rootProject.file('CHANGELOG.md').text }
+    changelog = providers.provider { rootProject.versionChangelog() }
     type = providers.provider { me.modmuss50.mpp.ReleaseType.of(release_type) }
     version = "${mod_version}+${minecraft_version}-forge"
     displayName = "Confee ${mod_version} (Forge/NeoForge ${minecraft_version})"
@@ -161,7 +161,8 @@ publishMods {
         serverRequired = false
     }
 }
-tasks.named('publishMods') { dependsOn 'reobfJar' }
+// The upload tasks read the jar file: it must be reobfuscated (SRG names) before they run
+tasks.matching { it.name in ['publishMods', 'publishModrinth', 'publishCurseforge'] }.configureEach { dependsOn 'reobfJar' }
 
 // Shared testmod resources (preview images...)
 tasks.named('processTestmodResources', ProcessResources) {
