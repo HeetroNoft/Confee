@@ -90,6 +90,9 @@ Loaders : Fabric, Quilt, Forge, NeoForge. Première cible : **Minecraft 1.20.1**
 ### 4.1 Outillage Gradle ✅ DÉCIDÉ
 
 - **Multi-version** : **une branche Git par version MC** (`1.20.1`, …). Pas de Stonecutter. Les correctifs se reportent entre branches (cherry-pick).
+- ✅ DÉCIDÉ (Lucas, 2026-11-20) : après 1.20.1, **une branche par groupe de versions compatibles**, nommée par la plage ; le jar déclare toute la plage. Branches : `1.20.2`, `1.20.3-1.20.4`, `1.20.5-1.20.6`, `1.21-1.21.1`, `1.21.2-1.21.3`, `1.21.4`, `1.21.5`, `1.21.6-1.21.8`, `1.21.9-1.21.10`, `1.21.11`, `26.1-26.1.2`, `26.2`, `26.3`.
+- ✅ DÉCIDÉ (Lucas, 2026-11-20) : chaque branche après 1.20.1 publie **3 jars : Fabric (+ Quilt), NeoForge, Forge**. Ports faits dans l'ordre chronologique, chaque branche partant de la précédente.
+- ✅ DÉCIDÉ (Lucas, 2026-11-20) : un port n'est publié (GitHub, Modrinth, CurseForge) qu'une fois le build, les tests unitaires et le script de captures passés sur chacun de ses loaders.
 - **Multi-loader** : structure **MultiLoader** (modules `common` / `fabric` / `forge`, Fabric Loom + ForgeGradle, VanillaGradle pour `common`).
 - **JDK** : toolchain Gradle automatique (foojay) → Java 17 téléchargé par Gradle, rien à installer.
 - **Aucune dépendance runtime obligatoire** pour le joueur hormis le loader (et Fabric API côté Fabric). Mod Menu = dépendance **optionnelle**.
