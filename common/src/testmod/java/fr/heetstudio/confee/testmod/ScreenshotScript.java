@@ -691,7 +691,8 @@ public final class ScreenshotScript {
                     new net.minecraft.world.level.levelgen.WorldOptions(0L, false, false),
                     registries -> registries.registryOrThrow(net.minecraft.core.registries.Registries.WORLD_PRESET)
                             .getHolderOrThrow(net.minecraft.world.level.levelgen.presets.WorldPresets.FLAT).value()
-                            .createWorldDimensions());
+                            .createWorldDimensions(),
+                    new TitleScreen());
         });
         waitUntil(2400, mc -> mc.level != null && mc.player != null && mc.screen == null);
         step(40, mc -> {
