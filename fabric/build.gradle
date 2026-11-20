@@ -39,7 +39,7 @@ dependencies {
 
     // Cohabitation tests (spec 15), dev runs only: mods with their own config screens
     modLocalRuntime "maven.modrinth:cloth-config:${cloth_config_fabric_version}"
-    modLocalRuntime "maven.modrinth:yacl:${yacl_fabric_version}"
+    // YACL: no build for this Minecraft version that this Loom can read (class tweaker format)
     localRuntime "org.quiltmc.parsers:json:0.2.1"
     localRuntime "me.shedaniel.cloth:basic-math:0.6.1"
     localRuntime "org.quiltmc.parsers:gson:0.2.1"
