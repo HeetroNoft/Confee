@@ -20,7 +20,8 @@ public final class ConfeeRawmodForge {
 
     public ConfeeRawmodForge() {
         // like a real mod: re-read the values when Forge says the config was reloaded
-        net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext.get().getModEventBus().addListener(
+        net.minecraftforge.fml.event.config.ModConfigEvent.Reloading.getBus(
+                net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext.get().getModBusGroup()).addListener(
                 (net.minecraftforge.fml.event.config.ModConfigEvent.Reloading event) -> {
                     if (event.getConfig().getType() == ModConfig.Type.CLIENT) {
                         org.slf4j.LoggerFactory.getLogger("confee_rawmod")
