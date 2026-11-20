@@ -6,9 +6,7 @@ import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import net.minecraftforge.fml.loading.FMLEnvironment;
 
 /**
- * Forge entrypoint. The constructor takes no argument on purpose: the
- * {@code FMLJavaModLoadingContext} constructor parameter only exists in Forge 47.3+
- * and would break NeoForge 1.20.1 (spec 4.3).
+ * Forge entrypoint.
  */
 @Mod(ConfeeMod.MOD_ID)
 public final class ConfeeForge {

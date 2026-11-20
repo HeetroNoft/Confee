@@ -153,14 +153,14 @@ publishMods {
     modrinth {
         accessToken = providers.environmentVariable('MODRINTH_TOKEN')
         projectId = providers.environmentVariable('MODRINTH_PROJECT_ID').orElse(modrinth_project_id)
-        minecraftVersions.add(minecraft_version)
+        minecraftVersions.addAll(minecraft_versions.split(','))
         requires('fabric-api')
         optional('modmenu')
     }
     curseforge {
         accessToken = providers.environmentVariable('CURSEFORGE_TOKEN')
         projectId = providers.environmentVariable('CURSEFORGE_PROJECT_ID').orElse(curseforge_project_id)
-        minecraftVersions.add(minecraft_version)
+        minecraftVersions.addAll(minecraft_versions.split(','))
         requires('fabric-api')
         optional('modmenu')
         clientRequired = true

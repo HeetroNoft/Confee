@@ -137,26 +137,25 @@ tasks.matching { it.name == 'runTestmodScreenshots' }.configureEach { dependsOn 
 jar.finalizedBy('reobfJar')
 
 // Publishing (spec 16). Always a dry run unless CONFEE_PUBLISH=true; tokens only come from environment variables.
-// The 1.20.1 Forge jar also runs on NeoForge 1.20.1 (spec 4.3).
 apply plugin: 'me.modmuss50.mod-publish-plugin'
 publishMods {
     file = jar.archiveFile
     changelog = providers.provider { rootProject.versionChangelog() }
     type = providers.provider { me.modmuss50.mpp.ReleaseType.of(release_type) }
     version = "${mod_version}+${minecraft_version}-forge"
-    displayName = "Confee ${mod_version} (Forge/NeoForge ${minecraft_version})"
-    modLoaders.addAll('forge', 'neoforge')
+    displayName = "Confee ${mod_version} (Forge ${minecraft_version})"
+    modLoaders.add('forge')
     dryRun = providers.environmentVariable('CONFEE_PUBLISH').map { it != 'true' }.orElse(true)
 
     modrinth {
         accessToken = providers.environmentVariable('MODRINTH_TOKEN')
         projectId = providers.environmentVariable('MODRINTH_PROJECT_ID').orElse(modrinth_project_id)
-        minecraftVersions.add(minecraft_version)
+        minecraftVersions.addAll(minecraft_versions.split(','))
     }
     curseforge {
         accessToken = providers.environmentVariable('CURSEFORGE_TOKEN')
         projectId = providers.environmentVariable('CURSEFORGE_PROJECT_ID').orElse(curseforge_project_id)
-        minecraftVersions.add(minecraft_version)
+        minecraftVersions.addAll(minecraft_versions.split(','))
         clientRequired = true
         serverRequired = false
     }
