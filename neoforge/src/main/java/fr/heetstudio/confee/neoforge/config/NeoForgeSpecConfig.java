@@ -54,7 +54,8 @@ public final class NeoForgeSpecConfig implements EditableConfig {
         walk(spec.getSpec(), spec.getValues(), new ArrayList<>(), root);
         ConfigScope scope = switch (modConfig.getType()) {
             case CLIENT -> ConfigScope.CLIENT;
-            case COMMON -> ConfigScope.COMMON;
+            // STARTUP (NeoForge 20.5+): a common config read once at launch
+            case COMMON, STARTUP -> ConfigScope.COMMON;
             case SERVER -> ConfigScope.SERVER;
         };
         this.schema = new ConfigSchema(modConfig.getModId(), type(modConfig), scope, ConfigFormat.TOML, filePath,

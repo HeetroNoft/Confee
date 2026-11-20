@@ -35,7 +35,7 @@ public final class NeoForgeLoaderConfig implements LoaderConfig {
                 .filter(c -> c.getModId().equals(modId) && c.getSpec() instanceof ModConfigSpec)
                 .forEach(configs::add));
         // Client, Common, Server (spec 10.4 A order), not Forge's enum order
-        List<ModConfig.Type> order = List.of(ModConfig.Type.CLIENT, ModConfig.Type.COMMON, ModConfig.Type.SERVER);
+        List<ModConfig.Type> order = List.of(ModConfig.Type.CLIENT, ModConfig.Type.COMMON, ModConfig.Type.STARTUP, ModConfig.Type.SERVER);
         configs.sort(Comparator.comparing((ModConfig c) -> order.indexOf(c.getType())).thenComparing(ModConfig::getFileName));
         List<LoaderConfig> out = new ArrayList<>();
         for (ModConfig c : configs) {
