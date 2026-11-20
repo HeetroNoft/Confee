@@ -100,8 +100,7 @@ dependencies {
     minecraft "net.minecraftforge:forge:${minecraft_version}-${forge_version}"
     compileOnly project(':common')
 
-    // Cohabitation tests (spec 15), dev runs only: mods with their own config screens
-    runtimeOnly fg.deobf("maven.modrinth:cloth-config:${cloth_config_forge_version}")
+    // Cohabitation tests (spec 15): no Cloth Config / YACL build for Forge on this Minecraft version
 }
 
 tasks.withType(JavaCompile).matching { it.name == 'compileJava' }.configureEach {
