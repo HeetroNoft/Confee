@@ -55,7 +55,7 @@ public final class RegistryIcons {
             if (effect == null) {
                 return false;
             }
-            TextureAtlasSprite sprite = Minecraft.getInstance().getMobEffectTextures().get(effect);
+            TextureAtlasSprite sprite = Minecraft.getInstance().getMobEffectTextures().get(BuiltInRegistries.MOB_EFFECT.wrapAsHolder(effect));
             g.blit(x, y, 0, size, size, sprite);
             return true;
         }

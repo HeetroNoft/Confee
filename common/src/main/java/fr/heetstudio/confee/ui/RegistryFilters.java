@@ -10,6 +10,7 @@ import fr.heetstudio.confee.core.Option;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.tags.ItemTags;
 import net.minecraft.data.registries.VanillaRegistries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.effect.MobEffect;
@@ -115,7 +116,7 @@ public final class RegistryFilters {
             return switch (f) {
                 case TREASURE -> enchantment.isTreasureOnly();
                 case CURSE -> enchantment.isCurse();
-                default -> enchantment.category.name().equals(f.name());
+                default -> supportedTags(f).contains(enchantment.getSupportedItems());
             };
         }
         if (filter instanceof BiomeFilter f) {
@@ -160,5 +161,30 @@ public final class RegistryFilters {
             }
             return items;
         });
+    }
+
+    /**
+     * Since 1.20.5 an enchantment names the items it applies to with an item tag instead of a category: the tags that
+     * match each category of {@link EnchantmentFilter}.
+     */
+    private static java.util.Set<net.minecraft.tags.TagKey<net.minecraft.world.item.Item>> supportedTags(EnchantmentFilter f) {
+        return switch (f) {
+            case ARMOR -> java.util.Set.of(ItemTags.ARMOR_ENCHANTABLE);
+            case ARMOR_FEET -> java.util.Set.of(ItemTags.FOOT_ARMOR_ENCHANTABLE);
+            case ARMOR_LEGS -> java.util.Set.of(ItemTags.LEG_ARMOR_ENCHANTABLE);
+            case ARMOR_CHEST -> java.util.Set.of(ItemTags.CHEST_ARMOR_ENCHANTABLE);
+            case ARMOR_HEAD -> java.util.Set.of(ItemTags.HEAD_ARMOR_ENCHANTABLE);
+            case WEAPON -> java.util.Set.of(ItemTags.WEAPON_ENCHANTABLE, ItemTags.SWORD_ENCHANTABLE,
+                    ItemTags.SHARP_WEAPON_ENCHANTABLE, ItemTags.FIRE_ASPECT_ENCHANTABLE);
+            case DIGGER -> java.util.Set.of(ItemTags.MINING_ENCHANTABLE, ItemTags.MINING_LOOT_ENCHANTABLE);
+            case FISHING_ROD -> java.util.Set.of(ItemTags.FISHING_ENCHANTABLE);
+            case TRIDENT -> java.util.Set.of(ItemTags.TRIDENT_ENCHANTABLE);
+            case BREAKABLE -> java.util.Set.of(ItemTags.DURABILITY_ENCHANTABLE);
+            case BOW -> java.util.Set.of(ItemTags.BOW_ENCHANTABLE);
+            case WEARABLE -> java.util.Set.of(ItemTags.EQUIPPABLE_ENCHANTABLE);
+            case CROSSBOW -> java.util.Set.of(ItemTags.CROSSBOW_ENCHANTABLE);
+            case VANISHABLE -> java.util.Set.of(ItemTags.VANISHING_ENCHANTABLE);
+            case TREASURE, CURSE -> java.util.Set.of();
+        };
     }
 }
