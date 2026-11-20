@@ -3,6 +3,7 @@ package fr.heetstudio.confee.ui;
 import com.mojang.blaze3d.systems.RenderSystem;
 import fr.heetstudio.confee.ui.screen.Textures;
 import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.renderer.RenderType;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
@@ -39,11 +40,11 @@ public final class ItemIcons {
                 if (!BuiltInRegistries.BLOCK.containsKey(rl)) {
                     return ItemStack.EMPTY;
                 }
-                Block block = BuiltInRegistries.BLOCK.get(rl);
+                Block block = BuiltInRegistries.BLOCK.getValue(rl);
                 return block.asItem() == Items.AIR ? ItemStack.EMPTY : new ItemStack(block.asItem());
             }
             if ("minecraft:item".equals(registry) && BuiltInRegistries.ITEM.containsKey(rl)) {
-                return new ItemStack(BuiltInRegistries.ITEM.get(rl));
+                return new ItemStack(BuiltInRegistries.ITEM.getValue(rl));
             }
             return ItemStack.EMPTY;
         });
@@ -79,7 +80,7 @@ public final class ItemIcons {
             int[] texSize = id == null ? new int[]{0, 0} : Textures.size(spec);
             if (texSize[0] > 0) {
                 RenderSystem.enableBlend();
-                g.blit(id, x, y, size, size, 0, 0, texSize[0], texSize[1], texSize[0], texSize[1]);
+                g.blit(RenderType::guiTextured, id, x, y, 0, 0, size, size, texSize[0], texSize[1], texSize[0], texSize[1]);
                 RenderSystem.disableBlend();
             }
             return;

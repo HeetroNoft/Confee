@@ -88,10 +88,10 @@ public final class RegistryEntries {
         }
         RegistryAccess world = world();
         if (world != null) {
-            Optional<? extends Registry<?>> found = world.registry((ResourceKey) key(registry));
+            Optional<? extends Registry<?>> found = world.lookup((ResourceKey) key(registry));
             if (found.isPresent()) {
                 Registry reg = found.get();
-                Optional<?> set = reg.getTag(net.minecraft.tags.TagKey.create((ResourceKey) key(registry), tag));
+                Optional<?> set = reg.get(net.minecraft.tags.TagKey.create((ResourceKey) key(registry), tag));
                 set.ifPresent(holders -> ((Iterable<net.minecraft.core.Holder<?>>) holders).forEach(holder ->
                         holder.unwrapKey().ifPresent(k -> out.add(((ResourceKey<?>) k).location().toString()))));
                 if (!out.isEmpty()) {
@@ -156,7 +156,7 @@ public final class RegistryEntries {
             Set<String> out = new HashSet<>();
             RegistryAccess world = world();
             if (world != null) {
-                world.registry(Registries.ENCHANTMENT).flatMap(reg -> reg.getOptional(id))
+                world.lookup(Registries.ENCHANTMENT).flatMap(reg -> reg.getOptional(id))
                         .flatMap(enchantment -> enchantment.definition().supportedItems().unwrapKey())
                         .ifPresent(tag -> out.add("#" + tag.location()));
                 if (!out.isEmpty()) {
@@ -246,12 +246,12 @@ public final class RegistryEntries {
     private static Optional<? extends Registry<?>> fromWorldOrGame(String registry) {
         RegistryAccess world = world();
         if (world != null) {
-            Optional<? extends Registry<?>> found = world.registry((ResourceKey) key(registry));
+            Optional<? extends Registry<?>> found = world.lookup((ResourceKey) key(registry));
             if (found.isPresent()) {
                 return found;
             }
         }
-        return Optional.ofNullable(BuiltInRegistries.REGISTRY.get(ResourceLocation.parse(registry)));
+        return Optional.ofNullable(BuiltInRegistries.REGISTRY.getValue(ResourceLocation.parse(registry)));
     }
 
     private static Set<String> loadIds(String registry) {
@@ -279,7 +279,7 @@ public final class RegistryEntries {
         Set<String> out = new HashSet<>();
         Optional<? extends Registry<?>> found = fromWorldOrGame(registry);
         if (world() != null && found.isPresent()) {
-            ((Registry) found.get()).getTagNames().forEach(tag -> out.add("#" + ((net.minecraft.tags.TagKey<?>) tag).location()));
+            ((Registry<?>) found.get()).getTags().forEach(tag -> out.add("#" + tag.key().location()));
         }
         if (out.isEmpty()) {
             // outside a world (tags are only bound in a world): the tag files

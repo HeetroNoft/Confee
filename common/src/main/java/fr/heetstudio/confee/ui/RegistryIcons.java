@@ -1,6 +1,7 @@
 package fr.heetstudio.confee.ui;
 
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.client.resources.language.I18n;
@@ -53,7 +54,7 @@ public final class RegistryIcons {
                 return false;
             }
             TextureAtlasSprite sprite = Minecraft.getInstance().getMobEffectTextures().get(BuiltInRegistries.MOB_EFFECT.wrapAsHolder(effect));
-            g.blit(x, y, 0, size, size, sprite);
+            g.blitSprite(RenderType::guiTextured, sprite, x, y, size, size);
             return true;
         }
         ItemStack stack = stack(registry, id);
@@ -123,6 +124,6 @@ public final class RegistryIcons {
     @Nullable
     private static <T> T lookup(net.minecraft.core.Registry<T> registry, String id) {
         ResourceLocation rl = ResourceLocation.tryParse(id);
-        return rl == null || !registry.containsKey(rl) ? null : registry.get(rl);
+        return rl == null || !registry.containsKey(rl) ? null : registry.getValue(rl);
     }
 }

@@ -15,6 +15,7 @@ import fr.heetstudio.confee.ui.render.Icon;
 import fr.heetstudio.confee.ui.widget.ButtonWidget;
 import fr.heetstudio.confee.ui.widget.ConfeeWidget;
 import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.renderer.RenderType;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.FormattedCharSequence;
@@ -183,7 +184,7 @@ final class DecorationRow extends Row {
         int h = height;
         int w = Math.min(width, Math.round(size[0] * (h / (float) size[1])));
         RenderSystem.enableBlend();
-        g.blit(id, x + (width - w) / 2, y, w, h, 0, 0, size[0], size[1], size[0], size[1]);
+        g.blit(RenderType::guiTextured, id, x + (width - w) / 2, y, 0, 0, w, h, size[0], size[1], size[0], size[1]);
         RenderSystem.disableBlend();
     }
 

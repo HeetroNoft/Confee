@@ -91,20 +91,20 @@ public final class RegistryFilters {
             if (!BuiltInRegistries.ENTITY_TYPE.containsKey(id)) {
                 return false;
             }
-            EntityType<?> type = BuiltInRegistries.ENTITY_TYPE.get(id);
+            EntityType<?> type = BuiltInRegistries.ENTITY_TYPE.getValue(id);
             return f == EntityFilter.LIVING ? DefaultAttributes.hasSupplier(type) : type.getCategory().name().equals(f.name());
         }
         if (filter instanceof ItemFilter f) {
             Item item = "minecraft:block".equals(registry)
-                    ? (BuiltInRegistries.BLOCK.containsKey(id) ? BuiltInRegistries.BLOCK.get(id).asItem() : Items.AIR)
-                    : (BuiltInRegistries.ITEM.containsKey(id) ? BuiltInRegistries.ITEM.get(id) : Items.AIR);
+                    ? (BuiltInRegistries.BLOCK.containsKey(id) ? BuiltInRegistries.BLOCK.getValue(id).asItem() : Items.AIR)
+                    : (BuiltInRegistries.ITEM.containsKey(id) ? BuiltInRegistries.ITEM.getValue(id) : Items.AIR);
             if (item == Items.AIR) {
                 return false;
             }
             return f == ItemFilter.BLOCKS ? item instanceof BlockItem : tabItems(f).contains(item);
         }
         if (filter instanceof EffectFilter f) {
-            MobEffect effect = BuiltInRegistries.MOB_EFFECT.get(id);
+            MobEffect effect = BuiltInRegistries.MOB_EFFECT.getValue(id);
             return effect != null && BuiltInRegistries.MOB_EFFECT.containsKey(id) && effect.getCategory().name().equals(f.name());
         }
         if (filter instanceof EnchantmentFilter f) {
@@ -145,7 +145,7 @@ public final class RegistryFilters {
                 FeatureFlagSet flags = mc.level != null ? mc.level.enabledFeatures() : FeatureFlags.DEFAULT_FLAGS;
                 HolderLookup.Provider lookup = mc.level != null ? mc.level.registryAccess() : VanillaRegistries.createLookup();
                 CreativeModeTabs.tryRebuildTabContents(flags, false, lookup);
-                CreativeModeTab tab = BuiltInRegistries.CREATIVE_MODE_TAB.get(
+                CreativeModeTab tab = BuiltInRegistries.CREATIVE_MODE_TAB.getValue(
                         ResourceLocation.fromNamespaceAndPath("minecraft", f.name().toLowerCase(Locale.ROOT)));
                 if (tab != null) {
                     for (ItemStack stack : tab.getDisplayItems()) {

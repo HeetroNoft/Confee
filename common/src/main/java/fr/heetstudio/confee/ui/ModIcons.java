@@ -4,6 +4,7 @@ import com.mojang.blaze3d.platform.NativeImage;
 import fr.heetstudio.confee.ConfeeLog;
 import fr.heetstudio.confee.platform.Services;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.renderer.texture.DynamicTexture;
 import net.minecraft.resources.ResourceLocation;
@@ -42,8 +43,7 @@ public final class ModIcons {
         float scale = Math.min(size / (float) icon.width(), size / (float) icon.height());
         int w = Math.max(1, Math.round(icon.width() * scale));
         int h = Math.max(1, Math.round(icon.height() * scale));
-        g.blit(icon.texture(), x + (size - w) / 2, y + (size - h) / 2, w, h, 0f, 0f, icon.width(), icon.height(),
-                icon.width(), icon.height());
+        g.blit(RenderType::guiTextured, icon.texture(), x + (size - w) / 2, y + (size - h) / 2, 0f, 0f, w, h, icon.width(), icon.height(), icon.width(), icon.height());
         return true;
     }
 
