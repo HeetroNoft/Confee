@@ -2,7 +2,7 @@ package fr.heetstudio.confee.testmod;
 
 import fr.heetstudio.confee.api.client.OptionWidget;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
-import org.lwjgl.glfw.GLFW;
+import com.mojang.blaze3d.platform.InputConstants;
 
 /**
  * Example of a custom widget for a number of another mod's file (client only): ten cells for a weight from 0 to 20,
@@ -44,8 +44,8 @@ public class WeightWidget extends OptionWidget<Long> {
 
     @Override
     public boolean keyPressed(int key, int scanCode, int modifiers) {
-        if (key == GLFW.GLFW_KEY_RIGHT || key == GLFW.GLFW_KEY_LEFT) {
-            setValue(Math.max(0, Math.min(CELLS * STEP, value() + (key == GLFW.GLFW_KEY_RIGHT ? 1 : -1))));
+        if (key == InputConstants.KEY_RIGHT || key == InputConstants.KEY_LEFT) {
+            setValue(Math.max(0, Math.min(CELLS * STEP, value() + (key == InputConstants.KEY_RIGHT ? 1 : -1))));
             return true;
         }
         return false;

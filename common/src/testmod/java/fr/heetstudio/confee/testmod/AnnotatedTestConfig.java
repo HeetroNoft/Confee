@@ -235,7 +235,7 @@ public class AnnotatedTestConfig {
     public int internalCounter = 0;
 
     public Decoration links = Decoration.button("Open the Minecraft wiki",
-            () -> net.minecraft.util.Util.getPlatform().openUri("https://minecraft.wiki")).icon("minecraft:book");
+            () -> com.mojang.blaze3d.Blaze3D.openUri(java.net.URI.create("https://minecraft.wiki"))).icon("minecraft:book");
 
     @Category(value = "dash", icon = "minecraft:feather")
     @Comment("Dash distance, in blocks")

@@ -2,7 +2,7 @@ package fr.heetstudio.confee.testmod;
 
 import fr.heetstudio.confee.api.client.OptionWidget;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
-import org.lwjgl.glfw.GLFW;
+import com.mojang.blaze3d.platform.InputConstants;
 
 /**
  * Example of a custom widget for any bounded integer (client only): a row of cells, click to choose.
@@ -50,8 +50,8 @@ public class GaugeWidget extends OptionWidget<Integer> {
 
     @Override
     public boolean keyPressed(int key, int scanCode, int modifiers) {
-        if (key == GLFW.GLFW_KEY_RIGHT || key == GLFW.GLFW_KEY_LEFT) {
-            setValue(Math.max(min(), Math.min(max(), value() + (key == GLFW.GLFW_KEY_RIGHT ? 1 : -1))));
+        if (key == InputConstants.KEY_RIGHT || key == InputConstants.KEY_LEFT) {
+            setValue(Math.max(min(), Math.min(max(), value() + (key == InputConstants.KEY_RIGHT ? 1 : -1))));
             return true;
         }
         return false;

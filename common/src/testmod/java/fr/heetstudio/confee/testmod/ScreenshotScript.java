@@ -9,7 +9,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.Screenshot;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.TitleScreen;
-import org.lwjgl.glfw.GLFW;
+import com.mojang.blaze3d.platform.InputConstants;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -161,40 +161,40 @@ public final class ScreenshotScript {
                     after == null ? -1 : after.y, after != null && after.y != wheelBefore[0] ? "scrolled" : "DID NOT SCROLL");
         });
         shot("03b-wheel-over-text-area");
-        step(10, mc -> key(mc, GLFW.GLFW_KEY_TAB, GLFW.GLFW_MOD_CONTROL));
+        step(10, mc -> key(mc, InputConstants.KEY_TAB, InputConstants.MOD_CONTROL));
         shot("04-dash");
         step(10, mc -> {
-            key(mc, GLFW.GLFW_KEY_TAB, GLFW.GLFW_MOD_CONTROL);
-            key(mc, GLFW.GLFW_KEY_TAB, GLFW.GLFW_MOD_CONTROL);
+            key(mc, InputConstants.KEY_TAB, InputConstants.MOD_CONTROL);
+            key(mc, InputConstants.KEY_TAB, InputConstants.MOD_CONTROL);
         });
         shot("05-advanced");
         step(10, mc -> {
-            key(mc, GLFW.GLFW_KEY_TAB, GLFW.GLFW_MOD_CONTROL);
+            key(mc, InputConstants.KEY_TAB, InputConstants.MOD_CONTROL);
             config(mc).focusOption("volume");
             type(mc, "500");
         });
         shot("06-field-error");
         step(10, mc -> {
             config(mc).focusOption("quality");
-            key(mc, GLFW.GLFW_KEY_ENTER, 0);
+            key(mc, InputConstants.KEY_RETURN, 0);
         });
         shot("07-dropdown");
         // the preview follows the highlighted item while the list is open (nothing chosen yet)
         step(10, mc -> {
-            key(mc, GLFW.GLFW_KEY_DOWN, 0);
-            key(mc, GLFW.GLFW_KEY_DOWN, 0);
+            key(mc, InputConstants.KEY_DOWN, 0);
+            key(mc, InputConstants.KEY_DOWN, 0);
         });
         shot("07b-dropdown-preview");
         step(10, mc -> {
-            key(mc, GLFW.GLFW_KEY_ESCAPE, 0);
+            key(mc, InputConstants.KEY_ESCAPE, 0);
             config(mc).focusOption("title");
             type(mc, "!");
-            key(mc, GLFW.GLFW_KEY_ESCAPE, 0);
+            key(mc, InputConstants.KEY_ESCAPE, 0);
         });
         shot("08-unsaved-modal");
         step(10, mc -> {
-            key(mc, GLFW.GLFW_KEY_ESCAPE, 0);
-            key(mc, GLFW.GLFW_KEY_F, GLFW.GLFW_MOD_CONTROL);
+            key(mc, InputConstants.KEY_ESCAPE, 0);
+            key(mc, InputConstants.KEY_F, InputConstants.MOD_CONTROL);
             type(mc, "dash");
         });
         shot("09-search");
@@ -211,14 +211,14 @@ public final class ScreenshotScript {
         shot("30b-list-options");
         step(10, mc -> {
             config(mc).focusOption("showHud");
-            key(mc, GLFW.GLFW_KEY_ENTER, 0);
+            key(mc, InputConstants.KEY_RETURN, 0);
             config(mc).focusOption("showHud");
         });
         shot("31-condition-disabled");
         step(10, mc -> {
             config(mc).focusOption("item");
             for (int i = 0; i < 20; i++) {
-                key(mc, GLFW.GLFW_KEY_BACKSPACE, 0);
+                key(mc, InputConstants.KEY_BACKSPACE, 0);
             }
             type(mc, "dia");
         });
@@ -243,7 +243,7 @@ public final class ScreenshotScript {
         step(10, mc -> {
             config(mc).focusOption("item");
             for (int i = 0; i < 20; i++) {
-                key(mc, GLFW.GLFW_KEY_BACKSPACE, 0);
+                key(mc, InputConstants.KEY_BACKSPACE, 0);
             }
             type(mc, "dmnd");
         });
@@ -258,42 +258,42 @@ public final class ScreenshotScript {
         shot("41-suggestions-icons");
         step(10, mc -> {
             moveMouse(mc, 2, 2);
-            key(mc, GLFW.GLFW_KEY_ESCAPE, 0);
+            key(mc, InputConstants.KEY_ESCAPE, 0);
             clickRightEdge(mc);
             type(mc, "ore");
         });
         shot("42-item-picker");
         step(10, mc -> {
-            key(mc, GLFW.GLFW_KEY_ESCAPE, 0);
+            key(mc, InputConstants.KEY_ESCAPE, 0);
             config(mc).focusOption("tint");
             clickRightEdge(mc);
         });
         shot("43-color-picker");
         step(10, mc -> {
-            key(mc, GLFW.GLFW_KEY_ESCAPE, 0);
+            key(mc, InputConstants.KEY_ESCAPE, 0);
             config(mc).focusOption("allowedQualities");
-            key(mc, GLFW.GLFW_KEY_RIGHT, 0);
-            key(mc, GLFW.GLFW_KEY_SPACE, 0);
+            key(mc, InputConstants.KEY_RIGHT, 0);
+            key(mc, InputConstants.KEY_SPACE, 0);
         });
         shot("44-checkboxes");
         step(10, mc -> {
             config(mc).focusOption("dashKey");
-            key(mc, GLFW.GLFW_KEY_ENTER, 0);
+            key(mc, InputConstants.KEY_RETURN, 0);
         });
         shot("45-keybind-listening");
         step(10, mc -> {
-            key(mc, GLFW.GLFW_KEY_ESCAPE, 0);
+            key(mc, InputConstants.KEY_ESCAPE, 0);
             config(mc).focusOption("lives");
-            key(mc, GLFW.GLFW_KEY_UP, 0);
-            key(mc, GLFW.GLFW_KEY_UP, 0);
+            key(mc, InputConstants.KEY_UP, 0);
+            key(mc, InputConstants.KEY_UP, 0);
             config(mc).focusOption("temperature");
-            key(mc, GLFW.GLFW_KEY_RIGHT, 0);
+            key(mc, InputConstants.KEY_RIGHT, 0);
         });
         shot("46-stepper-custom-widget");
         step(5, mc -> {
             // hover the name of "volume" (grayed out by its condition after showHud is turned off)
             config(mc).focusOption("showHud");
-            key(mc, GLFW.GLFW_KEY_ENTER, 0);
+            key(mc, InputConstants.KEY_RETURN, 0);
         });
         step(5, mc -> mc.gui.screen().mouseScrolled(mc.gui.screen().width / 2.0, mc.gui.screen().height / 2.0, 0, -1));
         step(5, mc -> {
@@ -308,22 +308,22 @@ public final class ScreenshotScript {
         step(10, mc -> {
             config(mc).focusOption("favoriteMob");
             for (int i = 0; i < 30; i++) {
-                key(mc, GLFW.GLFW_KEY_BACKSPACE, 0);
+                key(mc, InputConstants.KEY_BACKSPACE, 0);
             }
             type(mc, "cre");
         });
         shot("48-entity-suggestions");
         step(10, mc -> {
-            key(mc, GLFW.GLFW_KEY_ESCAPE, 0);
+            key(mc, InputConstants.KEY_ESCAPE, 0);
             config(mc).focusOption("spawnBiomes");
             for (int i = 0; i < 30; i++) {
-                key(mc, GLFW.GLFW_KEY_BACKSPACE, 0);
+                key(mc, InputConstants.KEY_BACKSPACE, 0);
             }
             type(mc, "#minecraft:is_m");
         });
         shot("49-biome-tags");
         step(10, mc -> {
-            key(mc, GLFW.GLFW_KEY_ESCAPE, 0);
+            key(mc, InputConstants.KEY_ESCAPE, 0);
             config(mc).focusOption("bonusEffect");
         });
         step(5, mc -> {
@@ -333,19 +333,19 @@ public final class ScreenshotScript {
         });
         shot("50-effect-picker");
         step(5, mc -> {
-            key(mc, GLFW.GLFW_KEY_ESCAPE, 0);
+            key(mc, InputConstants.KEY_ESCAPE, 0);
             config(mc).focusOption("favoriteMod");
         });
         step(5, mc -> clickRightEdge(mc));
         // @ModId: the installed mods with their logos, as a list by default
         shot("50b-mod-picker");
-        step(5, mc -> key(mc, GLFW.GLFW_KEY_TAB, 0));
+        step(5, mc -> key(mc, InputConstants.KEY_TAB, 0));
         shot("50d-mod-picker-detailed");
-        step(5, mc -> key(mc, GLFW.GLFW_KEY_TAB, 0));
+        step(5, mc -> key(mc, InputConstants.KEY_TAB, 0));
         shot("50e-mod-picker-grid");
         step(5, mc -> {
-            key(mc, GLFW.GLFW_KEY_TAB, 0); // back to the list: remembered for the next mod picker
-            key(mc, GLFW.GLFW_KEY_ESCAPE, 0);
+            key(mc, InputConstants.KEY_TAB, 0); // back to the list: remembered for the next mod picker
+            key(mc, InputConstants.KEY_ESCAPE, 0);
             config(mc).focusOption("reward");
         });
         step(5, mc -> clickRightEdge(mc));
@@ -353,16 +353,16 @@ public final class ScreenshotScript {
         shot("50f-item-picker-list");
         // filters: monsters only in the picker, a cow is refused, food and ingredients only
         step(5, mc -> {
-            key(mc, GLFW.GLFW_KEY_ESCAPE, 0);
+            key(mc, InputConstants.KEY_ESCAPE, 0);
             config(mc).focusOption("boss");
         });
         step(5, mc -> clickRightEdge(mc));
         shot("50g-filter-monsters");
         step(5, mc -> {
-            key(mc, GLFW.GLFW_KEY_ESCAPE, 0);
+            key(mc, InputConstants.KEY_ESCAPE, 0);
             config(mc).focusOption("boss");
             for (int i = 0; i < 30; i++) {
-                key(mc, GLFW.GLFW_KEY_BACKSPACE, 0);
+                key(mc, InputConstants.KEY_BACKSPACE, 0);
             }
             type(mc, "minecraft:cow");
         });
@@ -370,32 +370,32 @@ public final class ScreenshotScript {
         step(5, mc -> {
             config(mc).focusOption("netherHome");
             for (int i = 0; i < 30; i++) {
-                key(mc, GLFW.GLFW_KEY_BACKSPACE, 0);
+                key(mc, InputConstants.KEY_BACKSPACE, 0);
             }
             type(mc, "minecraft:");
         });
         shot("50i-filter-nether-biomes");
         step(5, mc -> {
-            key(mc, GLFW.GLFW_KEY_ESCAPE, 0); // closes the suggestions
+            key(mc, InputConstants.KEY_ESCAPE, 0); // closes the suggestions
             config(mc).focusOption("snacks");
         });
         step(5, mc -> {
             // the "+ Add" button is focused: add an entry, then open its picker
-            key(mc, GLFW.GLFW_KEY_ENTER, 0);
+            key(mc, InputConstants.KEY_RETURN, 0);
         });
         step(5, mc -> clickRightEdge(mc));
         shot("50j-filter-food");
-        step(5, mc -> key(mc, GLFW.GLFW_KEY_ESCAPE, 0));
+        step(5, mc -> key(mc, InputConstants.KEY_ESCAPE, 0));
         step(5, mc -> {
-            key(mc, GLFW.GLFW_KEY_ESCAPE, 0);
+            key(mc, InputConstants.KEY_ESCAPE, 0);
             config(mc).focusOption("favoriteMod");
             for (int i = 0; i < 20; i++) {
-                key(mc, GLFW.GLFW_KEY_BACKSPACE, 0);
+                key(mc, InputConstants.KEY_BACKSPACE, 0);
             }
             type(mc, "m");
         });
         shot("50c-mod-suggestions");
-        step(5, mc -> key(mc, GLFW.GLFW_KEY_ESCAPE, 0));
+        step(5, mc -> key(mc, InputConstants.KEY_ESCAPE, 0));
         step(15, mc -> mc.gui.setScreen(ConfeeTestmod.themed.createScreen(fileSelect)));
         shot("10-themed");
 
@@ -414,22 +414,22 @@ public final class ScreenshotScript {
         });
         shot("51-raw-detected");
         step(10, mc -> {
-            key(mc, GLFW.GLFW_KEY_BACKSPACE, 0);
+            key(mc, InputConstants.KEY_BACKSPACE, 0);
             config(mc).focusOption("highlight");
         });
         step(5, mc -> clickRightEdge(mc));
         shot("52-raw-color-picker");
-        step(5, mc -> key(mc, GLFW.GLFW_KEY_ESCAPE, 0));
-        step(10, mc -> key(mc, GLFW.GLFW_KEY_TAB, GLFW.GLFW_MOD_CONTROL));
+        step(5, mc -> key(mc, InputConstants.KEY_ESCAPE, 0));
+        step(10, mc -> key(mc, InputConstants.KEY_TAB, InputConstants.MOD_CONTROL));
         shot("16-raw-render");
         step(10, mc -> {
-            key(mc, GLFW.GLFW_KEY_TAB, GLFW.GLFW_MOD_CONTROL);
-            key(mc, GLFW.GLFW_KEY_TAB, GLFW.GLFW_MOD_CONTROL);
+            key(mc, InputConstants.KEY_TAB, InputConstants.MOD_CONTROL);
+            key(mc, InputConstants.KEY_TAB, InputConstants.MOD_CONTROL);
             config(mc).focusOption("maxParticles");
             type(mc, "0");
             // Escape -> "unsaved changes" -> Enter on the primary "Save"
-            key(mc, GLFW.GLFW_KEY_ESCAPE, 0);
-            key(mc, GLFW.GLFW_KEY_ENTER, 0);
+            key(mc, InputConstants.KEY_ESCAPE, 0);
+            key(mc, InputConstants.KEY_RETURN, 0);
         });
         step(10, mc -> {
             logLines(rawFile(mc), "maxParticles");
@@ -451,7 +451,7 @@ public final class ScreenshotScript {
             mc.gui.setScreen(ConfeeScreens.openExternal(rawSelect, "confee_rawmod",
                     mc.gameDirectory.toPath().resolve("config/confee_rawmod/legacy.cfg")));
         });
-        step(5, mc -> key(mc, GLFW.GLFW_KEY_TAB, GLFW.GLFW_MOD_CONTROL));
+        step(5, mc -> key(mc, InputConstants.KEY_TAB, InputConstants.MOD_CONTROL));
         step(5, mc -> {
             config(mc).focusOption("maxParticles");
             type(mc, "0");
@@ -483,8 +483,8 @@ public final class ScreenshotScript {
         step(5, mc -> config(mc).openSection("waves"));
         shot("65-raw-list-of-lists");
         step(5, mc -> {
-            key(mc, GLFW.GLFW_KEY_ESCAPE, 0);
-            key(mc, GLFW.GLFW_KEY_ENTER, 0);
+            key(mc, InputConstants.KEY_ESCAPE, 0);
+            key(mc, InputConstants.KEY_RETURN, 0);
         });
         step(10, mc -> logLines(mc.gameDirectory.toPath().resolve("config/confee_rawmod/spawns.json"),
                 "mob", "weight", "waves"));
@@ -515,8 +515,8 @@ public final class ScreenshotScript {
         });
         shot("72-hocon-included");
         step(5, mc -> {
-            key(mc, GLFW.GLFW_KEY_ESCAPE, 0);
-            key(mc, GLFW.GLFW_KEY_ENTER, 0);
+            key(mc, InputConstants.KEY_ESCAPE, 0);
+            key(mc, InputConstants.KEY_RETURN, 0);
         });
         step(10, mc -> logLines(mc.gameDirectory.toPath().resolve("config/confee_rawmod/network.conf"), "port"));
         step(15, mc -> mc.gui.setScreen(ConfeeScreens.openExternal(rawSelect, "confee_rawmod",
@@ -527,21 +527,21 @@ public final class ScreenshotScript {
         shot("20-confee-settings");
         // ignoredMods: "+ Add", then the mod picker (only the mods the universal editor handles)
         step(10, mc -> {
-            key(mc, GLFW.GLFW_KEY_TAB, GLFW.GLFW_MOD_CONTROL);
+            key(mc, InputConstants.KEY_TAB, InputConstants.MOD_CONTROL);
             config(mc).focusOption("external.ignoredMods");
-            key(mc, GLFW.GLFW_KEY_ENTER, 0);
+            key(mc, InputConstants.KEY_RETURN, 0);
         });
         step(5, mc -> clickRightEdge(mc));
         shot("20b-ignored-mods-picker");
         step(5, mc -> {
-            key(mc, GLFW.GLFW_KEY_ESCAPE, 0);
+            key(mc, InputConstants.KEY_ESCAPE, 0);
             config(mc).focusOption("external.forceConfeeEditor");
-            key(mc, GLFW.GLFW_KEY_ENTER, 0);
+            key(mc, InputConstants.KEY_RETURN, 0);
         });
         step(5, mc -> clickRightEdge(mc));
         shot("20c-force-editor-picker");
         step(5, mc -> {
-            key(mc, GLFW.GLFW_KEY_ESCAPE, 0);
+            key(mc, InputConstants.KEY_ESCAPE, 0);
             mc.gui.setScreen(ConfeeScreens.forMod(fileSelect, "confee")); // drops the two empty entries (not saved)
         });
 
@@ -628,8 +628,8 @@ public final class ScreenshotScript {
                     return;
                 }
                 type(mc, "1");
-                key(mc, GLFW.GLFW_KEY_ESCAPE, 0);
-                key(mc, GLFW.GLFW_KEY_ENTER, 0);
+                key(mc, InputConstants.KEY_ESCAPE, 0);
+                key(mc, InputConstants.KEY_RETURN, 0);
             });
             step(10, mc -> {
                 if (expected[0] == null) {
@@ -709,13 +709,13 @@ public final class ScreenshotScript {
         step(10, mc -> {
             config(mc).focusOption("spawnBiomes");
             for (int i = 0; i < 30; i++) {
-                key(mc, GLFW.GLFW_KEY_BACKSPACE, 0);
+                key(mc, InputConstants.KEY_BACKSPACE, 0);
             }
             type(mc, "#minecraft:is_");
         });
         shot("53-world-biome-tags");
         step(10, mc -> {
-            key(mc, GLFW.GLFW_KEY_ESCAPE, 0);
+            key(mc, InputConstants.KEY_ESCAPE, 0);
             config(mc).focusOption("favoriteMob");
         });
         shot("54-world-preview");
@@ -764,23 +764,23 @@ public final class ScreenshotScript {
         shot("21-forge-file-select");
         step(15, mc -> {
             // first entry: the CLIENT spec
-            key(mc, GLFW.GLFW_KEY_ENTER, 0);
+            key(mc, InputConstants.KEY_RETURN, 0);
         });
         shot("22-forge-client-spec");
         step(10, mc -> {
             // zoom uses the GaugeWidget registered by the test mod for this Forge config
             config(mc).focusOption("zoom");
-            key(mc, GLFW.GLFW_KEY_RIGHT, 0);
-            key(mc, GLFW.GLFW_KEY_RIGHT, 0);
-            key(mc, GLFW.GLFW_KEY_RIGHT, 0);
+            key(mc, InputConstants.KEY_RIGHT, 0);
+            key(mc, InputConstants.KEY_RIGHT, 0);
+            key(mc, InputConstants.KEY_RIGHT, 0);
             config(mc).focusOption("mode");
-            key(mc, GLFW.GLFW_KEY_RIGHT, 0);
+            key(mc, InputConstants.KEY_RIGHT, 0);
         });
         shot("23-forge-edited");
         step(100, mc -> {
             // save, then give Forge's file watcher time to reload the config (spec 8.4: applied while running)
-            key(mc, GLFW.GLFW_KEY_ESCAPE, 0);
-            key(mc, GLFW.GLFW_KEY_ENTER, 0);
+            key(mc, InputConstants.KEY_ESCAPE, 0);
+            key(mc, InputConstants.KEY_RETURN, 0);
         });
         step(10, mc -> {
             logLines(mc.gameDirectory.toPath().resolve("config/confee_rawmod-forge-client.toml"), "zoom", "mode");
@@ -829,19 +829,11 @@ public final class ScreenshotScript {
         }
     }
 
-    /** Moves the cursor (GUI coordinates): GLFW position + the game's mouse handler (dev names). */
+    /** Moves the cursor (GUI coordinates) as seen by the game's mouse handler. */
     private static void moveMouse(Minecraft mc, double guiX, double guiY) {
         double scale = mc.getWindow().getGuiScale();
-        long window = mc.getWindow().handle();
-        GLFW.glfwSetCursorPos(window, guiX * scale, guiY * scale);
-        try {
-            java.lang.reflect.Method onMove = net.minecraft.client.MouseHandler.class
-                    .getDeclaredMethod("onMove", long.class, double.class, double.class);
-            onMove.setAccessible(true);
-            onMove.invoke(mc.mouseHandler, window, guiX * scale, guiY * scale);
-        } catch (ReflectiveOperationException e) {
-            ConfeeLog.warn("[testmod] cannot move the mouse: {}", e.toString());
-        }
+        // 26.3 (SDL): the game's mouse handler is told about the move, the system cursor stays where it is
+        mc.mouseHandler.onMove(mc.getWindow().handle(), guiX * scale, guiY * scale, 0, 0);
     }
 
     private static ConfigScreen config(Minecraft mc) {
@@ -849,7 +841,9 @@ public final class ScreenshotScript {
     }
 
     private static void key(Minecraft mc, int key, int modifiers) {
-        mc.gui.screen().keyPressed(new net.minecraft.client.input.KeyEvent(key, 0, modifiers));
+        // 26.3 (SDL): a key event carries the scancode and the key code (text boxes read the key code)
+        mc.gui.screen().keyPressed(new net.minecraft.client.input.KeyEvent(key,
+                org.lwjgl.sdl.SDLKeyboard.SDL_GetKeyFromScancode(key, (short) 0, false), modifiers));
     }
 
     private static void type(Minecraft mc, String text) {

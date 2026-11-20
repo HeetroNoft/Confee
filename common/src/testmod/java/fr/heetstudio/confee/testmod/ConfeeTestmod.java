@@ -115,7 +115,7 @@ public final class ConfeeTestmod {
                 .comment("List of objects").build();
         b.intValue("internal_counter", 0).hidden().build();
         b.decoration(fr.heetstudio.confee.api.Decoration.button("Open the Minecraft wiki",
-                () -> net.minecraft.util.Util.getPlatform().openUri("https://minecraft.wiki")).icon("minecraft:book"));
+                () -> com.mojang.blaze3d.Blaze3D.openUri(java.net.URI.create("https://minecraft.wiki"))).icon("minecraft:book"));
 
         CategoryBuilder dash = b.category("dash").icon("minecraft:feather");
         builderDashDistance = dash.doubleRange("dashDistance", 4.0, 1.0, 10.0).slider(0.5)
