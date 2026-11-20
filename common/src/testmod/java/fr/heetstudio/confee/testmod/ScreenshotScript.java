@@ -52,7 +52,7 @@ public final class ScreenshotScript {
     /** Call at the end of every client tick. */
     public void tick(Minecraft mc) {
         if (index < 0) {
-            if (!(mc.screen instanceof TitleScreen) || mc.getOverlay() != null) {
+            if (!(mc.gui.screen() instanceof TitleScreen) || mc.gui.overlay() != null) {
                 return;
             }
             index = 0;
@@ -92,7 +92,7 @@ public final class ScreenshotScript {
                 if (Services.PLATFORM.isModLoaded(id)) {
                     Screen screen;
                     try {
-                        screen = configScreen.apply(id, mc.screen);
+                        screen = configScreen.apply(id, mc.gui.screen());
                     } catch (RuntimeException | LinkageError e) {
                         // a broken third-party screen must not stop the checks
                         ConfeeLog.error("[testmod] Config button of " + id + " failed", e instanceof RuntimeException re ? re : new RuntimeException(e));
@@ -118,9 +118,9 @@ public final class ScreenshotScript {
                 }
                 try {
                     forced.set(List.of(id));
-                    Screen on = configScreen.apply(id, mc.screen);
+                    Screen on = configScreen.apply(id, mc.gui.screen());
                     forced.set(List.of());
-                    Screen off = configScreen.apply(id, mc.screen);
+                    Screen off = configScreen.apply(id, mc.gui.screen());
                     ConfeeLog.info("[testmod] forceConfeeEditor {}: on={} off={}", id,
                             on == null ? "none" : on.getClass().getName(), off == null ? "none" : off.getClass().getName());
                 } catch (RuntimeException | LinkageError e) {
@@ -134,13 +134,13 @@ public final class ScreenshotScript {
             scale(mc, 2);
             // pickers open on their default style (the styles remembered by a previous run are forgotten)
             fr.heetstudio.confee.ConfeeSettings.pickerStylesValue().set(List.of());
-            fileSelect = ConfeeScreens.forMod(mc.screen, ConfeeTestmod.MOD_ID);
-            mc.setScreen(fileSelect);
+            fileSelect = ConfeeScreens.forMod(mc.gui.screen(), ConfeeTestmod.MOD_ID);
+            mc.gui.setScreen(fileSelect);
         });
         shot("01-file-select");
-        step(15, mc -> mc.setScreen(ConfeeTestmod.annotated.createScreen(fileSelect)));
+        step(15, mc -> mc.gui.setScreen(ConfeeTestmod.annotated.createScreen(fileSelect)));
         shot("02-general");
-        step(10, mc -> mc.screen.mouseScrolled(mc.screen.width / 2.0, mc.screen.height / 2.0, 0, -3));
+        step(10, mc -> mc.gui.screen().mouseScrolled(mc.gui.screen().width / 2.0, mc.gui.screen().height / 2.0, 0, -3));
         shot("03-general-scrolled");
         // the wheel over a text area that has nothing to scroll moves the panel (it used to get stuck)
         step(10, mc -> {
@@ -151,7 +151,7 @@ public final class ScreenshotScript {
             ConfeeWidget w = config(mc).focusedWidget();
             wheelBefore[0] = w == null ? 0 : w.y;
             if (w != null) {
-                mc.screen.mouseScrolled(w.x + w.width / 2.0, w.y + w.height / 2.0, 0, -2);
+                mc.gui.screen().mouseScrolled(w.x + w.width / 2.0, w.y + w.height / 2.0, 0, -2);
             }
         });
         step(5, mc -> {
@@ -200,7 +200,7 @@ public final class ScreenshotScript {
         shot("09-search");
         // preview column, conditions, collections, specialized fields (builder config)
         step(15, mc -> {
-            mc.setScreen(ConfeeTestmod.builder.createScreen(fileSelect));
+            mc.gui.setScreen(ConfeeTestmod.builder.createScreen(fileSelect));
             config(mc).focusOption("quality");
         });
         shot("29-preview-image");
@@ -233,12 +233,12 @@ public final class ScreenshotScript {
         shot("35-map");
         step(10, mc -> {
             config(mc).focusOption("waypoints");
-            mc.screen.mouseScrolled(mc.screen.width / 2.0, mc.screen.height / 2.0, 0, -10);
+            mc.gui.screen().mouseScrolled(mc.gui.screen().width / 2.0, mc.gui.screen().height / 2.0, 0, -10);
         });
         shot("36-object-list");
 
         // customization: banner, header, info, description, icons (annotation config)
-        step(15, mc -> mc.setScreen(ConfeeTestmod.annotated.createScreen(fileSelect)));
+        step(15, mc -> mc.gui.setScreen(ConfeeTestmod.annotated.createScreen(fileSelect)));
         shot("40-general-top");
         step(10, mc -> {
             config(mc).focusOption("item");
@@ -295,7 +295,7 @@ public final class ScreenshotScript {
             config(mc).focusOption("showHud");
             key(mc, GLFW.GLFW_KEY_ENTER, 0);
         });
-        step(5, mc -> mc.screen.mouseScrolled(mc.screen.width / 2.0, mc.screen.height / 2.0, 0, -1));
+        step(5, mc -> mc.gui.screen().mouseScrolled(mc.gui.screen().width / 2.0, mc.gui.screen().height / 2.0, 0, -1));
         step(5, mc -> {
             ConfeeWidget w = config(mc).focusedWidget();
             // the toggle of showHud is focused; "volume" is two rows below, its name just above its field
@@ -396,16 +396,16 @@ public final class ScreenshotScript {
         });
         shot("50c-mod-suggestions");
         step(5, mc -> key(mc, GLFW.GLFW_KEY_ESCAPE, 0));
-        step(15, mc -> mc.setScreen(ConfeeTestmod.themed.createScreen(fileSelect)));
+        step(15, mc -> mc.gui.setScreen(ConfeeTestmod.themed.createScreen(fileSelect)));
         shot("10-themed");
 
         // universal editor (spec 8) on the raw test mod, which does not use Confee
         step(15, mc -> {
-            rawSelect = ConfeeScreens.forMod(mc.screen, "confee_rawmod");
-            mc.setScreen(rawSelect);
+            rawSelect = ConfeeScreens.forMod(mc.gui.screen(), "confee_rawmod");
+            mc.gui.setScreen(rawSelect);
         });
         shot("14-raw-file-select");
-        step(15, mc -> mc.setScreen(ConfeeScreens.openExternal(rawSelect, "confee_rawmod", rawFile(mc))));
+        step(15, mc -> mc.gui.setScreen(ConfeeScreens.openExternal(rawSelect, "confee_rawmod", rawFile(mc))));
         shot("15-raw-general");
         // other mods' files: IDs and colors are recognized
         step(10, mc -> {
@@ -435,20 +435,20 @@ public final class ScreenshotScript {
             logLines(rawFile(mc), "maxParticles");
             ConfeeLog.info("[testmod] backup exists: {}",
                     Files.exists(mc.gameDirectory.toPath().resolve("config/confee/backups/confee_rawmod.toml")));
-            mc.setScreen(ConfeeScreens.openExternal(rawSelect, "confee_rawmod", rawFile(mc)));
+            mc.gui.setScreen(ConfeeScreens.openExternal(rawSelect, "confee_rawmod", rawFile(mc)));
         });
         shot("18-raw-after-save");
-        step(15, mc -> mc.setScreen(ConfeeScreens.openExternal(rawSelect, "confee_rawmod",
+        step(15, mc -> mc.gui.setScreen(ConfeeScreens.openExternal(rawSelect, "confee_rawmod",
                 mc.gameDirectory.toPath().resolve("config/confee_rawmod/notes.txt"))));
         shot("19-unreadable");
         // other formats (spec 7.1)
-        step(15, mc -> mc.setScreen(ConfeeScreens.forMod(fileSelect, "confee_rawmod")));
+        step(15, mc -> mc.gui.setScreen(ConfeeScreens.forMod(fileSelect, "confee_rawmod")));
         shot("25-all-formats");
-        step(15, mc -> mc.setScreen(ConfeeScreens.openExternal(rawSelect, "confee_rawmod",
+        step(15, mc -> mc.gui.setScreen(ConfeeScreens.openExternal(rawSelect, "confee_rawmod",
                 mc.gameDirectory.toPath().resolve("config/confee_rawmod/settings.yml"))));
         shot("26-yaml");
         step(15, mc -> {
-            mc.setScreen(ConfeeScreens.openExternal(rawSelect, "confee_rawmod",
+            mc.gui.setScreen(ConfeeScreens.openExternal(rawSelect, "confee_rawmod",
                     mc.gameDirectory.toPath().resolve("config/confee_rawmod/legacy.cfg")));
         });
         step(5, mc -> key(mc, GLFW.GLFW_KEY_TAB, GLFW.GLFW_MOD_CONTROL));
@@ -457,11 +457,11 @@ public final class ScreenshotScript {
             type(mc, "0");
         });
         shot("27-forge-cfg-bounds");
-        step(15, mc -> mc.setScreen(ConfeeScreens.openExternal(rawSelect, "confee_rawmod",
+        step(15, mc -> mc.gui.setScreen(ConfeeScreens.openExternal(rawSelect, "confee_rawmod",
                 mc.gameDirectory.toPath().resolve("config/confee_rawmod-server.properties"))));
         shot("28-properties");
         // spec 8.2 bis: lists of objects and lists of lists of other mods' files, element by element
-        step(15, mc -> mc.setScreen(ConfeeScreens.openExternal(rawSelect, "confee_rawmod",
+        step(15, mc -> mc.gui.setScreen(ConfeeScreens.openExternal(rawSelect, "confee_rawmod",
                 mc.gameDirectory.toPath().resolve("config/confee_rawmod/spawns.json"))));
         step(5, mc -> config(mc).openSection("spawns"));
         shot("60-raw-list-of-objects");
@@ -488,22 +488,22 @@ public final class ScreenshotScript {
         });
         step(10, mc -> logLines(mc.gameDirectory.toPath().resolve("config/confee_rawmod/spawns.json"),
                 "mob", "weight", "waves"));
-        step(15, mc -> mc.setScreen(ConfeeScreens.openExternal(rawSelect, "confee_rawmod",
+        step(15, mc -> mc.gui.setScreen(ConfeeScreens.openExternal(rawSelect, "confee_rawmod",
                 mc.gameDirectory.toPath().resolve("config/confee_rawmod/kits.yml"))));
         step(5, mc -> config(mc).openSection("kits"));
         shot("66-raw-yaml-list-of-mappings");
         step(5, mc -> config(mc).openSection("kits.[0]"));
         shot("67-raw-yaml-element");
-        step(15, mc -> mc.setScreen(ConfeeScreens.openExternal(rawSelect, "confee_rawmod", rawFile(mc))));
+        step(15, mc -> mc.gui.setScreen(ConfeeScreens.openExternal(rawSelect, "confee_rawmod", rawFile(mc))));
         step(5, mc -> config(mc).openSection("presets"));
         shot("68-raw-toml-array-of-tables");
         // a widget given by another mod to a value of this file (ConfeeWidgets.fileId)
-        step(15, mc -> mc.setScreen(ConfeeScreens.openExternal(rawSelect, "confee_rawmod",
+        step(15, mc -> mc.gui.setScreen(ConfeeScreens.openExternal(rawSelect, "confee_rawmod",
                 mc.gameDirectory.toPath().resolve("config/confee_rawmod/spawns.json"))));
         step(5, mc -> config(mc).openSection("spawns.[1]"));
         shot("69-raw-custom-widget");
         // HOCON (V1.1): includes, substitutions, concatenations, lists of objects
-        step(15, mc -> mc.setScreen(ConfeeScreens.openExternal(rawSelect, "confee_rawmod",
+        step(15, mc -> mc.gui.setScreen(ConfeeScreens.openExternal(rawSelect, "confee_rawmod",
                 mc.gameDirectory.toPath().resolve("config/confee_rawmod/server.conf"))));
         shot("70-hocon-general");
         step(5, mc -> config(mc).openSection("server"));
@@ -519,11 +519,11 @@ public final class ScreenshotScript {
             key(mc, GLFW.GLFW_KEY_ENTER, 0);
         });
         step(10, mc -> logLines(mc.gameDirectory.toPath().resolve("config/confee_rawmod/network.conf"), "port"));
-        step(15, mc -> mc.setScreen(ConfeeScreens.openExternal(rawSelect, "confee_rawmod",
+        step(15, mc -> mc.gui.setScreen(ConfeeScreens.openExternal(rawSelect, "confee_rawmod",
                 mc.gameDirectory.toPath().resolve("config/confee_rawmod/server.conf"))));
         step(5, mc -> config(mc).openSection("server"));
         shot("73-hocon-after-save");
-        step(15, mc -> mc.setScreen(ConfeeScreens.forMod(fileSelect, "confee")));
+        step(15, mc -> mc.gui.setScreen(ConfeeScreens.forMod(fileSelect, "confee")));
         shot("20-confee-settings");
         // ignoredMods: "+ Add", then the mod picker (only the mods the universal editor handles)
         step(10, mc -> {
@@ -542,7 +542,7 @@ public final class ScreenshotScript {
         shot("20c-force-editor-picker");
         step(5, mc -> {
             key(mc, GLFW.GLFW_KEY_ESCAPE, 0);
-            mc.setScreen(ConfeeScreens.forMod(fileSelect, "confee")); // drops the two empty entries (not saved)
+            mc.gui.setScreen(ConfeeScreens.forMod(fileSelect, "confee")); // drops the two empty entries (not saved)
         });
 
         if (forge()) {
@@ -553,7 +553,7 @@ public final class ScreenshotScript {
 
         step(15, mc -> {
             scale(mc, 3);
-            mc.setScreen(ConfeeTestmod.annotated.createScreen(fileSelect));
+            mc.gui.setScreen(ConfeeTestmod.annotated.createScreen(fileSelect));
         });
         shot("12-scale3");
         step(20, mc -> {
@@ -612,7 +612,7 @@ public final class ScreenshotScript {
                     ConfeeLog.info("[testmod] real file {}: no text or number value to edit", file.getFileName());
                     return;
                 }
-                mc.setScreen(ConfeeScreens.openExternal(rawSelect, "confee_rawmod", path));
+                mc.gui.setScreen(ConfeeScreens.openExternal(rawSelect, "confee_rawmod", path));
                 int dot = optionPath[0].lastIndexOf('.');
                 if (dot > 0) {
                     config(mc).openSection(optionPath[0].substring(0, dot));
@@ -696,7 +696,7 @@ public final class ScreenshotScript {
                             .createWorldDimensions(),
                     new TitleScreen());
         });
-        waitUntil(2400, mc -> mc.level != null && mc.player != null && mc.screen == null);
+        waitUntil(2400, mc -> mc.level != null && mc.player != null && mc.gui.screen() == null);
         step(40, mc -> {
             int inWorld = fr.heetstudio.confee.ui.RegistryEntries.ids(biomes).size();
             int inWorldTags = fr.heetstudio.confee.ui.RegistryEntries.tags(biomes).size();
@@ -704,7 +704,7 @@ public final class ScreenshotScript {
                     offWorld[0], offWorld[1]);
             ConfeeLog.info("[testmod] data pack biome in the world: {}",
                     fr.heetstudio.confee.ui.RegistryEntries.ids(biomes).contains("confee_pack:glow_meadow"));
-            mc.setScreen(ConfeeTestmod.annotated.createScreen(null));
+            mc.gui.setScreen(ConfeeTestmod.annotated.createScreen(null));
         });
         step(10, mc -> {
             config(mc).focusOption("spawnBiomes");
@@ -721,7 +721,7 @@ public final class ScreenshotScript {
         shot("54-world-preview");
         step(20, mc -> {
             // leave without saving the edits, then back to the title screen
-            mc.setScreen(null);
+            mc.gui.setScreen(null);
             if (mc.level != null) {
                 mc.level.disconnect(net.minecraft.network.chat.Component.empty());
             }
@@ -759,7 +759,7 @@ public final class ScreenshotScript {
     private void forgeSteps() {
         step(15, mc -> {
             rawSelect = ConfeeScreens.forMod(fileSelect, "confee_rawmod");
-            mc.setScreen(rawSelect);
+            mc.gui.setScreen(rawSelect);
         });
         shot("21-forge-file-select");
         step(15, mc -> {
@@ -784,7 +784,7 @@ public final class ScreenshotScript {
         });
         step(10, mc -> {
             logLines(mc.gameDirectory.toPath().resolve("config/confee_rawmod-forge-client.toml"), "zoom", "mode");
-            mc.setScreen(ConfeeScreens.forMod(fileSelect,
+            mc.gui.setScreen(ConfeeScreens.forMod(fileSelect,
                     Services.PLATFORM.isModLoaded("neoforge") ? "neoforge" : "forge"));
         });
         shot("24-forge-own-configs");
@@ -795,7 +795,7 @@ public final class ScreenshotScript {
     }
 
     private void shot(String name) {
-        step(5, mc -> Screenshot.grab(mc.gameDirectory, "confee-" + name + ".png", mc.getMainRenderTarget(), 1, message -> {
+        step(5, mc -> Screenshot.grab(mc.gameDirectory, "confee-" + name + ".png", mc.gameRenderer.mainRenderTarget(), 1, message -> {
         }));
     }
 
@@ -824,8 +824,8 @@ public final class ScreenshotScript {
             double x = w.x + w.width - 4;
             double y = w.y + w.height / 2.0;
             var click = new net.minecraft.client.input.MouseButtonEvent(x, y, new net.minecraft.client.input.MouseButtonInfo(0, 0));
-            mc.screen.mouseClicked(click, false);
-            mc.screen.mouseReleased(click);
+            mc.gui.screen().mouseClicked(click, false);
+            mc.gui.screen().mouseReleased(click);
         }
     }
 
@@ -845,16 +845,16 @@ public final class ScreenshotScript {
     }
 
     private static ConfigScreen config(Minecraft mc) {
-        return (ConfigScreen) mc.screen;
+        return (ConfigScreen) mc.gui.screen();
     }
 
     private static void key(Minecraft mc, int key, int modifiers) {
-        mc.screen.keyPressed(new net.minecraft.client.input.KeyEvent(key, 0, modifiers));
+        mc.gui.screen().keyPressed(new net.minecraft.client.input.KeyEvent(key, 0, modifiers));
     }
 
     private static void type(Minecraft mc, String text) {
         for (char c : text.toCharArray()) {
-            mc.screen.charTyped(new net.minecraft.client.input.CharacterEvent(c));
+            mc.gui.screen().charTyped(new net.minecraft.client.input.CharacterEvent(c));
         }
     }
 
