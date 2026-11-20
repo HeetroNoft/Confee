@@ -13,7 +13,7 @@ final class ScreenshotClient {
     }
 
     static void register() {
-        ScreenshotScript script = new ScreenshotScript((modId, parent) -> ModList.get().getModContainerById(modId)
+        ScreenshotScript script = new ScreenshotScript((modId, parent) -> ModList.getModContainerById(modId)
                 .flatMap(c -> ConfigScreenHandler.getScreenFactoryFor(c.getModInfo()))
                 .map(factory -> factory.apply(Minecraft.getInstance(), parent))
                 .orElse(null));

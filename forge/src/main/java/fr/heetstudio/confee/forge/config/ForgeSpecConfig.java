@@ -304,7 +304,7 @@ public final class ForgeSpecConfig implements EditableConfig {
     private void notifyMod() {
         try {
             spec.afterReload();
-            net.minecraftforge.fml.ModList.get().getModContainerById(modConfig.getModId()).ifPresent(container ->
+            net.minecraftforge.fml.ModList.getModContainerById(modConfig.getModId()).ifPresent(container ->
                     container.dispatchConfigEvent(net.minecraftforge.fml.config.IConfigEvent.reloading(modConfig)));
         } catch (RuntimeException e) {
             // a broken listener of the other mod must not crash the game (spec 14)

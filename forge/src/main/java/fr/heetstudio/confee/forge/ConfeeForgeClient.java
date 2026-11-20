@@ -70,7 +70,7 @@ final class ConfeeForgeClient {
     private static void registerScreens() {
         // Confee configs + mods whose config files were found (universal editor, spec 8.1)
         Set<String> withButton = ConfeeScreens.modsWithScreens();
-        ModList.get().forEachModContainer((modId, container) -> {
+        ModList.forEachModContainer((modId, container) -> {
             Optional<ConfigScreenHandler.ConfigScreenFactory> own =
                     container.getCustomExtension(ConfigScreenHandler.ConfigScreenFactory.class);
             if (own.isPresent()) {

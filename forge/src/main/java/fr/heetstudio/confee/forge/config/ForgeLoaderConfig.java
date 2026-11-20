@@ -31,7 +31,7 @@ public final class ForgeLoaderConfig implements LoaderConfig {
     /** ForgeConfigSpec-based configs of a mod: client, common, then server. */
     public static List<LoaderConfig> forMod(String modId) {
         List<ModConfig> configs = new ArrayList<>();
-        ConfigTracker.INSTANCE.configSets().values().forEach(set -> set.stream()
+        ConfigTracker.configSets().values().forEach(set -> set.stream()
                 .filter(c -> c.getModId().equals(modId) && c.getSpec() instanceof ForgeConfigSpec)
                 .forEach(configs::add));
         // Client, Common, Server (spec 10.4 A order), not Forge's enum order
@@ -46,7 +46,7 @@ public final class ForgeLoaderConfig implements LoaderConfig {
 
     public static Set<String> modIds() {
         Set<String> ids = new LinkedHashSet<>();
-        ConfigTracker.INSTANCE.configSets().values().forEach(set -> set.stream()
+        ConfigTracker.configSets().values().forEach(set -> set.stream()
                 .filter(c -> c.getSpec() instanceof ForgeConfigSpec)
                 .forEach(c -> ids.add(c.getModId())));
         return ids;

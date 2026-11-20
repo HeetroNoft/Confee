@@ -37,7 +37,7 @@ public final class ForgePlatform implements Platform {
     @Override
     public java.util.List<Path> getModRootPaths() {
         java.util.List<Path> roots = new java.util.ArrayList<>();
-        for (net.minecraftforge.forgespi.language.IModFileInfo file : ModList.get().getModFiles()) {
+        for (net.minecraftforge.forgespi.language.IModFileInfo file : ModList.getModFiles()) {
             try {
                 roots.add(file.getFile().getSecureJar().getRootPath());
             } catch (RuntimeException e) {
@@ -49,20 +49,20 @@ public final class ForgePlatform implements Platform {
 
     @Override
     public Collection<String> getModIds() {
-        return ModList.get().getMods().stream()
+        return ModList.getMods().stream()
                 .map(IModInfo::getModId)
                 .collect(Collectors.toUnmodifiableList());
     }
 
     @Override
     public Optional<String> getModDisplayName(String modId) {
-        return ModList.get().getModContainerById(modId)
+        return ModList.getModContainerById(modId)
                 .map(container -> container.getModInfo().getDisplayName());
     }
 
     @Override
     public Optional<String> getModDescription(String modId) {
-        return ModList.get().getModContainerById(modId)
+        return ModList.getModContainerById(modId)
                 .map(container -> container.getModInfo().getDescription())
                 .map(String::strip)
                 .filter(text -> !text.isEmpty());
@@ -70,9 +70,9 @@ public final class ForgePlatform implements Platform {
 
     @Override
     public Optional<Path> getModIcon(String modId) {
-        Optional<String> logo = ModList.get().getModContainerById(modId)
+        Optional<String> logo = ModList.getModContainerById(modId)
                 .flatMap(container -> container.getModInfo().getLogoFile());
-        net.minecraftforge.forgespi.language.IModFileInfo file = ModList.get().getModFileById(modId);
+        net.minecraftforge.forgespi.language.IModFileInfo file = ModList.getModFileById(modId);
         if (logo.isEmpty() || file == null) {
             return Optional.empty();
         }
@@ -85,7 +85,7 @@ public final class ForgePlatform implements Platform {
 
     @Override
     public boolean isModLoaded(String modId) {
-        return ModList.get().isLoaded(modId);
+        return ModList.isLoaded(modId);
     }
 
     @Override
@@ -101,7 +101,7 @@ public final class ForgePlatform implements Platform {
     @Override
     public java.util.Set<Path> getLoaderManagedConfigFiles() {
         Path dir = getConfigDir();
-        return net.minecraftforge.fml.config.ConfigTracker.INSTANCE.fileMap().keySet().stream()
+        return net.minecraftforge.fml.config.ConfigTracker.fileMap().keySet().stream()
                 .map(name -> dir.resolve(name).toAbsolutePath().normalize())
                 .collect(Collectors.toUnmodifiableSet());
     }
