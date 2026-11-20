@@ -1,7 +1,6 @@
 package fr.heetstudio.confee.rawmod;
 
 import net.neoforged.neoforge.common.ModConfigSpec;
-import net.neoforged.fml.ModLoadingContext;
 import net.neoforged.fml.common.Mod;
 import net.neoforged.fml.config.ModConfig;
 
@@ -18,18 +17,18 @@ public final class ConfeeRawmodNeoForge {
 
     private static ModConfigSpec.IntValue zoom;
 
-    public ConfeeRawmodNeoForge() {
-        // like a real mod: re-read the values when Forge says the config was reloaded
-        net.neoforged.fml.javafmlmod.FMLJavaModLoadingContext.get().getModEventBus().addListener(
+    public ConfeeRawmodNeoForge(net.neoforged.bus.api.IEventBus modBus, net.neoforged.fml.ModContainer container) {
+        // like a real mod: re-read the values when NeoForge says the config was reloaded
+        modBus.addListener(
                 (net.neoforged.fml.event.config.ModConfigEvent.Reloading event) -> {
                     if (event.getConfig().getType() == ModConfig.Type.CLIENT) {
                         org.slf4j.LoggerFactory.getLogger("confee_rawmod")
                                 .info("[rawmod] client config reloaded, zoom is now {}", zoom.get());
                     }
                 });
-        ModLoadingContext.get().registerConfig(ModConfig.Type.CLIENT, clientSpec(), "confee_rawmod-forge-client.toml");
-        ModLoadingContext.get().registerConfig(ModConfig.Type.COMMON, commonSpec(), "confee_rawmod-forge-common.toml");
-        ModLoadingContext.get().registerConfig(ModConfig.Type.SERVER, serverSpec(), "confee_rawmod-forge-server.toml");
+        container.registerConfig(ModConfig.Type.CLIENT, clientSpec(), "confee_rawmod-forge-client.toml");
+        container.registerConfig(ModConfig.Type.COMMON, commonSpec(), "confee_rawmod-forge-common.toml");
+        container.registerConfig(ModConfig.Type.SERVER, serverSpec(), "confee_rawmod-forge-server.toml");
     }
 
     private static ModConfigSpec clientSpec() {

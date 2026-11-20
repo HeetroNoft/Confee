@@ -2,7 +2,7 @@ package fr.heetstudio.confee.neoforge;
 
 import fr.heetstudio.confee.ConfeeMod;
 import net.neoforged.fml.common.Mod;
-import net.neoforged.fml.javafmlmod.FMLJavaModLoadingContext;
+import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.loading.FMLEnvironment;
 
 /**
@@ -11,10 +11,10 @@ import net.neoforged.fml.loading.FMLEnvironment;
 @Mod(ConfeeMod.MOD_ID)
 public final class ConfeeNeoForge {
 
-    public ConfeeNeoForge() {
+    public ConfeeNeoForge(IEventBus modBus) {
         ConfeeMod.init();
         if (FMLEnvironment.dist.isClient()) {
-            ConfeeNeoForgeClient.init(FMLJavaModLoadingContext.get().getModEventBus());
+            ConfeeNeoForgeClient.init(modBus);
         }
     }
 }

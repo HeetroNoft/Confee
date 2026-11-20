@@ -138,7 +138,7 @@ public final class NeoForgeSpecConfig implements EditableConfig {
         }
         builder.displayName(translated(valueSpec.getTranslationKey(), key))
                 .comment(valueSpec.getComment())
-                .requiresRestart(valueSpec.needsWorldRestart())
+                .requiresRestart(valueSpec.restartType() != ModConfigSpec.RestartType.NONE)
                 .readOnly(!editable)
                 .validator(value -> valueSpec.test(value))
                 .store(ValueStore.memory(current))
@@ -305,7 +305,8 @@ public final class NeoForgeSpecConfig implements EditableConfig {
     private void notifyMod() {
         try {
             spec.afterReload();
-            net.neoforged.fml.config.IConfigEvent.reloading(modConfig).post();
+            net.neoforged.fml.ModList.get().getModContainerById(modConfig.getModId()).ifPresent(container ->
+                    container.acceptEvent(new net.neoforged.fml.event.config.ModConfigEvent.Reloading(modConfig)));
         } catch (RuntimeException e) {
             // a broken listener of the other mod must not crash the game (spec 14)
             ConfeeLog.error("Reloading event of " + modConfig.getModId() + " failed", e);

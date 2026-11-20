@@ -4,7 +4,7 @@ import fr.heetstudio.confee.ConfeeLog;
 import fr.heetstudio.confee.core.EditableConfig;
 import fr.heetstudio.confee.platform.LoaderConfig;
 import net.neoforged.neoforge.common.ModConfigSpec;
-import net.neoforged.fml.config.ConfigTracker;
+import net.neoforged.fml.config.ModConfigs;
 import net.neoforged.fml.config.ModConfig;
 import net.neoforged.fml.loading.FMLPaths;
 import org.jetbrains.annotations.Nullable;
@@ -31,9 +31,9 @@ public final class NeoForgeLoaderConfig implements LoaderConfig {
     /** ModConfigSpec-based configs of a mod: client, common, then server. */
     public static List<LoaderConfig> forMod(String modId) {
         List<ModConfig> configs = new ArrayList<>();
-        ConfigTracker.INSTANCE.configSets().values().forEach(set -> set.stream()
-                .filter(c -> c.getModId().equals(modId) && c.getSpec() instanceof ModConfigSpec)
-                .forEach(configs::add));
+        ModConfigs.getModConfigs(modId).stream()
+                .filter(c -> c.getSpec() instanceof ModConfigSpec)
+                .forEach(configs::add);
         // Client, Common, Server (spec 10.4 A order), not Forge's enum order
         List<ModConfig.Type> order = List.of(ModConfig.Type.CLIENT, ModConfig.Type.COMMON, ModConfig.Type.STARTUP, ModConfig.Type.SERVER);
         configs.sort(Comparator.comparing((ModConfig c) -> order.indexOf(c.getType())).thenComparing(ModConfig::getFileName));
@@ -46,9 +46,11 @@ public final class NeoForgeLoaderConfig implements LoaderConfig {
 
     public static Set<String> modIds() {
         Set<String> ids = new LinkedHashSet<>();
-        ConfigTracker.INSTANCE.configSets().values().forEach(set -> set.stream()
-                .filter(c -> c.getSpec() instanceof ModConfigSpec)
-                .forEach(c -> ids.add(c.getModId())));
+        for (ModConfig.Type type : ModConfig.Type.values()) {
+            ModConfigs.getConfigSet(type).stream()
+                    .filter(c -> c.getSpec() instanceof ModConfigSpec)
+                    .forEach(c -> ids.add(c.getModId()));
+        }
         return ids;
     }
 
@@ -74,7 +76,7 @@ public final class NeoForgeLoaderConfig implements LoaderConfig {
 
     @Override
     public boolean loaded() {
-        return config.getConfigData() != null && config.getSpec() instanceof ModConfigSpec spec && spec.isLoaded();
+        return config.getLoadedConfig() != null && config.getSpec() instanceof ModConfigSpec spec && spec.isLoaded();
     }
 
     @Override

@@ -15,8 +15,7 @@ final class ScreenshotClient {
 
     static void register() {
         ScreenshotScript script = new ScreenshotScript((modId, parent) -> ModList.get().getModContainerById(modId)
-                .flatMap(c -> IConfigScreenFactory.getForMod(c.getModInfo()))
-                .map(factory -> factory.createScreen(Minecraft.getInstance(), parent))
+                .flatMap(c -> IConfigScreenFactory.getForMod(c.getModInfo()).map(factory -> factory.createScreen(c, parent)))
                 .orElse(null));
         NeoForge.EVENT_BUS.addListener((ClientTickEvent.Post event) -> script.tick(Minecraft.getInstance()));
     }

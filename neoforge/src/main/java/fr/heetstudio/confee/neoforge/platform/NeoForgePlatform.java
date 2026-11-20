@@ -101,7 +101,7 @@ public final class NeoForgePlatform implements Platform {
     @Override
     public java.util.Set<Path> getLoaderManagedConfigFiles() {
         Path dir = getConfigDir();
-        return net.neoforged.fml.config.ConfigTracker.INSTANCE.fileMap().keySet().stream()
+        return net.neoforged.fml.config.ModConfigs.getFileMap().keySet().stream()
                 .map(name -> dir.resolve(name).toAbsolutePath().normalize())
                 .collect(Collectors.toUnmodifiableSet());
     }

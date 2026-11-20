@@ -78,10 +78,11 @@ final class ConfeeNeoForgeClient {
                 NeoForgePlatform.markOwnConfigScreen(modId);
                 IConfigScreenFactory original = own.get();
                 container.registerExtensionPoint(IConfigScreenFactory.class,
-                        (IConfigScreenFactory) (minecraft, parent) -> forcedOr(original::createScreen, minecraft, parent, modId));
+                        (IConfigScreenFactory) (mod, parent) -> forcedOr((minecraft, p) -> original.createScreen(mod, p),
+                                Minecraft.getInstance(), parent, modId));
             } else if (withButton.contains(modId)) {
                 container.registerExtensionPoint(IConfigScreenFactory.class,
-                        (IConfigScreenFactory) (minecraft, parent) -> ConfeeScreens.forMod(parent, modId));
+                        (IConfigScreenFactory) (mod, parent) -> ConfeeScreens.forMod(parent, modId));
             }
         });
     }
