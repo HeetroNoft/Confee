@@ -24,7 +24,7 @@ public final class Draw {
 
     public static void outline(GuiGraphics g, int x, int y, int w, int h, int color) {
         if (w > 0 && h > 0) {
-            g.renderOutline(x, y, w, h, color);
+            g.submitOutline(x, y, w, h, color);
         }
     }
 

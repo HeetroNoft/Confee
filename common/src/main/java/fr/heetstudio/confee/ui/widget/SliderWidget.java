@@ -143,7 +143,7 @@ public class SliderWidget extends ConfeeWidget {
             return false;
         }
         double s = step > 0 ? step : (max - min) / 100;
-        set(value.getAsDouble() + direction * s * (Screen.hasShiftDown() ? 10 : 1));
+        set(value.getAsDouble() + direction * s * (net.minecraft.client.Minecraft.getInstance().hasShiftDown() ? 10 : 1));
         return true;
     }
 

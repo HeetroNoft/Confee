@@ -395,7 +395,7 @@ public class TextFieldWidget extends ConfeeWidget {
             return false;
         }
         box.setFocused(true);
-        box.mouseClicked(mx, my, button);
+        box.mouseClicked(new net.minecraft.client.input.MouseButtonEvent(mx, my, new net.minecraft.client.input.MouseButtonInfo(button, 0)), false);
         return true;
     }
 
@@ -447,7 +447,7 @@ public class TextFieldWidget extends ConfeeWidget {
                 return true;
             }
         }
-        boolean handled = box.keyPressed(key, scanCode, modifiers);
+        boolean handled = box.keyPressed(new net.minecraft.client.input.KeyEvent(key, scanCode, modifiers));
         if (handled) {
             updateSuggestions(false);
         }
@@ -456,7 +456,7 @@ public class TextFieldWidget extends ConfeeWidget {
 
     @Override
     public boolean charTyped(char c, int modifiers) {
-        boolean handled = enabled && box.charTyped(c, modifiers);
+        boolean handled = enabled && box.charTyped(new net.minecraft.client.input.CharacterEvent(c, modifiers));
         if (handled) {
             selectedSuggestion = -1;
             updateSuggestions(false);

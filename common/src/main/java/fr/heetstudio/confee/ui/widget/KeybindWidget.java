@@ -106,7 +106,7 @@ public class KeybindWidget extends ConfeeWidget {
         }
         if (listening) {
             if (key != GLFW.GLFW_KEY_ESCAPE) {
-                setter.accept(InputConstants.getKey(key, scanCode).getName());
+                setter.accept(InputConstants.getKey(new net.minecraft.client.input.KeyEvent(key, scanCode, 0)).getName());
             }
             listening = false;
             return true;

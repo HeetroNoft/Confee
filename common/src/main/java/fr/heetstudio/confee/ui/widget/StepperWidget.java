@@ -63,7 +63,7 @@ public class StepperWidget extends ConfeeWidget {
         ui.click();
         pressed = direction;
         pressedAt = ui.now();
-        stepBy.accept(direction * (Screen.hasShiftDown() ? 10 : 1));
+        stepBy.accept(direction * (net.minecraft.client.Minecraft.getInstance().hasShiftDown() ? 10 : 1));
     }
 
     @Override

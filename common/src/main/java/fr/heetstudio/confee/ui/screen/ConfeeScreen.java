@@ -10,6 +10,9 @@ import net.minecraft.client.gui.narration.NarratableEntry;
 import net.minecraft.client.gui.narration.NarratedElementType;
 import net.minecraft.client.gui.narration.NarrationElementOutput;
 import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.input.CharacterEvent;
+import net.minecraft.client.input.KeyEvent;
+import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.network.chat.Component;
 import net.minecraft.util.FormattedCharSequence;
 import org.jetbrains.annotations.Nullable;
@@ -276,7 +279,33 @@ public abstract class ConfeeScreen extends Screen {
 
     // ------------------------------------------------------------------ input
 
+    // Since 1.21.9 the game sends input events as objects; Confee's widgets keep plain values
     @Override
+    public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
+        return mouseClicked(event.x(), event.y(), event.button());
+    }
+
+    @Override
+    public boolean mouseReleased(MouseButtonEvent event) {
+        return mouseReleased(event.x(), event.y(), event.button());
+    }
+
+    @Override
+    public boolean mouseDragged(MouseButtonEvent event, double dx, double dy) {
+        return mouseDragged(event.x(), event.y(), event.button(), dx, dy);
+    }
+
+    @Override
+    public boolean keyPressed(KeyEvent event) {
+        return keyPressed(event.key(), event.scancode(), event.modifiers());
+    }
+
+    @Override
+    public boolean charTyped(CharacterEvent event) {
+        // characters outside the BMP are dropped, as before 1.21.9 (char)
+        return Character.isBmpCodePoint(event.codepoint()) && charTyped((char) event.codepoint(), event.modifiers());
+    }
+
     public boolean mouseClicked(double mx, double my, int button) {
         if (overlay != null) {
             return overlay.mouseClicked(mx, my, button);
@@ -300,7 +329,6 @@ public abstract class ConfeeScreen extends Screen {
         return false;
     }
 
-    @Override
     public boolean mouseReleased(double mx, double my, int button) {
         if (overlay != null) {
             return overlay.mouseReleased(mx, my, button);
@@ -317,7 +345,6 @@ public abstract class ConfeeScreen extends Screen {
         return false;
     }
 
-    @Override
     public boolean mouseDragged(double mx, double my, int button, double dx, double dy) {
         if (overlay != null) {
             return overlay.mouseDragged(mx, my, button, dx, dy);
@@ -352,7 +379,6 @@ public abstract class ConfeeScreen extends Screen {
         return false;
     }
 
-    @Override
     public boolean keyPressed(int key, int scanCode, int modifiers) {
         if (overlay != null) {
             return overlay.keyPressed(key, scanCode, modifiers);
@@ -377,7 +403,6 @@ public abstract class ConfeeScreen extends Screen {
         return false;
     }
 
-    @Override
     public boolean charTyped(char c, int modifiers) {
         if (overlay != null) {
             return overlay.charTyped(c, modifiers);

@@ -98,13 +98,13 @@ public class MultilineFieldWidget extends ConfeeWidget {
             return false;
         }
         box.setFocused(true);
-        box.mouseClicked(mx, my, button);
+        box.mouseClicked(new net.minecraft.client.input.MouseButtonEvent(mx, my, new net.minecraft.client.input.MouseButtonInfo(button, 0)), false);
         return true;
     }
 
     @Override
     public boolean mouseDragged(double mx, double my, int button, double dx, double dy) {
-        return box.mouseDragged(mx, my, button, dx, dy);
+        return box.mouseDragged(new net.minecraft.client.input.MouseButtonEvent(mx, my, new net.minecraft.client.input.MouseButtonInfo(button, 0)), dx, dy);
     }
 
     @Override
@@ -125,12 +125,12 @@ public class MultilineFieldWidget extends ConfeeWidget {
         if (key == GLFW.GLFW_KEY_TAB || key == GLFW.GLFW_KEY_ESCAPE) {
             return false;
         }
-        return box.keyPressed(key, scanCode, modifiers);
+        return box.keyPressed(new net.minecraft.client.input.KeyEvent(key, scanCode, modifiers));
     }
 
     @Override
     public boolean charTyped(char c, int modifiers) {
-        return enabled && box.charTyped(c, modifiers);
+        return enabled && box.charTyped(new net.minecraft.client.input.CharacterEvent(c, modifiers));
     }
 
     @Override
