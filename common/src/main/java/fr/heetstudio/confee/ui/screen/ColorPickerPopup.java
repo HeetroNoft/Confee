@@ -8,7 +8,7 @@ import fr.heetstudio.confee.ui.widget.TextFieldWidget;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.network.chat.Component;
 import org.jetbrains.annotations.Nullable;
-import org.lwjgl.glfw.GLFW;
+import com.mojang.blaze3d.platform.InputConstants;
 
 import java.util.Locale;
 import java.util.function.IntConsumer;
@@ -311,12 +311,12 @@ final class ColorPickerPopup implements Overlay {
 
     @Override
     public boolean keyPressed(int key, int scanCode, int modifiers) {
-        if (key == GLFW.GLFW_KEY_ESCAPE) {
+        if (key == InputConstants.KEY_ESCAPE) {
             ui.click();
             cancel();
             return true;
         }
-        if (key == GLFW.GLFW_KEY_ENTER || key == GLFW.GLFW_KEY_KP_ENTER) {
+        if (key == InputConstants.KEY_RETURN || key == InputConstants.KEY_NUMPADENTER) {
             ui.click();
             onClose.run();
             return true;

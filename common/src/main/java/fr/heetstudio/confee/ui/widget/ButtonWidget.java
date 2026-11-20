@@ -7,7 +7,7 @@ import fr.heetstudio.confee.ui.render.Icon;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.network.chat.Component;
 import org.jetbrains.annotations.Nullable;
-import org.lwjgl.glfw.GLFW;
+import com.mojang.blaze3d.platform.InputConstants;
 
 /**
  * Bedrock button (spec 10.3): light face, 1 px outline, 2 px bottom strip; pressed = strip gone, content 1 px lower.
@@ -130,7 +130,7 @@ public class ButtonWidget extends ConfeeWidget {
 
     @Override
     public boolean mouseClicked(double mx, double my, int button) {
-        if (button != GLFW.GLFW_MOUSE_BUTTON_LEFT || !enabled || !contains(mx, my)) {
+        if (button != InputConstants.MOUSE_BUTTON_LEFT || !enabled || !contains(mx, my)) {
             return false;
         }
         mouseDown = true;
@@ -151,7 +151,7 @@ public class ButtonWidget extends ConfeeWidget {
 
     @Override
     public boolean keyPressed(int key, int scanCode, int modifiers) {
-        if (enabled && (key == GLFW.GLFW_KEY_ENTER || key == GLFW.GLFW_KEY_KP_ENTER || key == GLFW.GLFW_KEY_SPACE)) {
+        if (enabled && (key == InputConstants.KEY_RETURN || key == InputConstants.KEY_NUMPADENTER || key == InputConstants.KEY_SPACE)) {
             keyPressedAt = ui.now();
             press();
             return true;

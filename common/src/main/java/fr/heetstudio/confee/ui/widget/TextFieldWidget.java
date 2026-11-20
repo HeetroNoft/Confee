@@ -10,7 +10,7 @@ import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.ItemStack;
 import org.jetbrains.annotations.Nullable;
-import org.lwjgl.glfw.GLFW;
+import com.mojang.blaze3d.platform.InputConstants;
 
 import java.util.List;
 import java.util.function.Consumer;
@@ -407,40 +407,40 @@ public class TextFieldWidget extends ConfeeWidget {
         }
         if (!suggestions.isEmpty()) {
             switch (key) {
-                case GLFW.GLFW_KEY_DOWN -> {
+                case InputConstants.KEY_DOWN -> {
                     selectedSuggestion = Math.min(suggestions.size() - 1, selectedSuggestion + 1);
                     keepSelectionVisible();
                     return true;
                 }
-                case GLFW.GLFW_KEY_UP -> {
+                case InputConstants.KEY_UP -> {
                     selectedSuggestion = Math.max(0, selectedSuggestion - 1);
                     keepSelectionVisible();
                     return true;
                 }
-                case GLFW.GLFW_KEY_PAGE_DOWN -> {
+                case InputConstants.KEY_PAGEDOWN -> {
                     selectedSuggestion = Math.min(suggestions.size() - 1, selectedSuggestion + VISIBLE_SUGGESTIONS);
                     keepSelectionVisible();
                     return true;
                 }
-                case GLFW.GLFW_KEY_PAGE_UP -> {
+                case InputConstants.KEY_PAGEUP -> {
                     selectedSuggestion = Math.max(0, selectedSuggestion - VISIBLE_SUGGESTIONS);
                     keepSelectionVisible();
                     return true;
                 }
-                case GLFW.GLFW_KEY_TAB, GLFW.GLFW_KEY_ENTER, GLFW.GLFW_KEY_KP_ENTER -> {
-                    if (selectedSuggestion >= 0 || key == GLFW.GLFW_KEY_TAB) {
+                case InputConstants.KEY_TAB, InputConstants.KEY_RETURN, InputConstants.KEY_NUMPADENTER -> {
+                    if (selectedSuggestion >= 0 || key == InputConstants.KEY_TAB) {
                         accept(suggestions.get(Math.max(0, selectedSuggestion)));
                         return true;
                     }
                 }
-                case GLFW.GLFW_KEY_ESCAPE -> {
+                case InputConstants.KEY_ESCAPE -> {
                     suggestions = List.of();
                     return true;
                 }
                 default -> {
                 }
             }
-        } else if (suggester != null && key == GLFW.GLFW_KEY_DOWN) {
+        } else if (suggester != null && key == InputConstants.KEY_DOWN) {
             // Down opens the list, even when the field is empty
             updateSuggestions(true);
             if (!suggestions.isEmpty()) {

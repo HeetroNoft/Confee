@@ -10,7 +10,7 @@ import fr.heetstudio.confee.ui.widget.IconButton;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
-import org.lwjgl.glfw.GLFW;
+import com.mojang.blaze3d.platform.InputConstants;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -124,9 +124,9 @@ public final class FileSelectScreen extends ConfeeScreen {
 
     @Override
     protected boolean shortcut(int key, int modifiers, boolean typing) {
-        if (key == GLFW.GLFW_KEY_DOWN || key == GLFW.GLFW_KEY_UP) {
+        if (key == InputConstants.KEY_DOWN || key == InputConstants.KEY_UP) {
             int index = buttons.indexOf(focus);
-            int next = Math.max(0, Math.min(buttons.size() - 1, index + (key == GLFW.GLFW_KEY_DOWN ? 1 : -1)));
+            int next = Math.max(0, Math.min(buttons.size() - 1, index + (key == InputConstants.KEY_DOWN ? 1 : -1)));
             if (!buttons.isEmpty()) {
                 setFocus(buttons.get(next));
             }
@@ -177,7 +177,7 @@ public final class FileSelectScreen extends ConfeeScreen {
 
         @Override
         public boolean mouseClicked(double mx, double my, int button) {
-            if (button == GLFW.GLFW_MOUSE_BUTTON_LEFT && enabled && contains(mx, my)) {
+            if (button == InputConstants.MOUSE_BUTTON_LEFT && enabled && contains(mx, my)) {
                 mouseDown = true;
                 return true;
             }
@@ -197,7 +197,7 @@ public final class FileSelectScreen extends ConfeeScreen {
 
         @Override
         public boolean keyPressed(int key, int scanCode, int modifiers) {
-            if (key == GLFW.GLFW_KEY_ENTER || key == GLFW.GLFW_KEY_KP_ENTER || key == GLFW.GLFW_KEY_SPACE) {
+            if (key == InputConstants.KEY_RETURN || key == InputConstants.KEY_NUMPADENTER || key == InputConstants.KEY_SPACE) {
                 ui.click();
                 onPress.run();
                 return true;

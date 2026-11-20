@@ -8,7 +8,6 @@ import fr.heetstudio.confee.ui.render.Icon;
 import fr.heetstudio.confee.ui.widget.ButtonWidget;
 import fr.heetstudio.confee.ui.widget.ConfeeWidget;
 import fr.heetstudio.confee.ui.widget.IconButton;
-import net.minecraft.util.Util;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
@@ -48,9 +47,9 @@ public final class UnreadableFileScreen extends ConfeeScreen {
     protected void build() {
         back = new IconButton(ui, Icon.BACK, Component.translatable("confee.nav.back"), 16, ui.theme()::titleBarText, this::onClose);
         openFile = new ButtonWidget(ui, Component.translatable("confee.button.open_file"), ButtonWidget.Style.PRIMARY,
-                () -> Util.getPlatform().openFile(config.file().toFile()));
+                () -> com.mojang.blaze3d.Blaze3D.openPath(config.file()));
         openFolder = new ButtonWidget(ui, Component.translatable("confee.button.open_folder"), ButtonWidget.Style.NORMAL,
-                () -> Util.getPlatform().openFile(config.file().getParent().toFile()));
+                () -> com.mojang.blaze3d.Blaze3D.openPath(config.file().getParent()));
         if (focus == null) {
             setFocus(openFile);
         }

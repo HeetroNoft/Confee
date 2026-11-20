@@ -5,7 +5,7 @@ import fr.heetstudio.confee.ui.render.Draw;
 import fr.heetstudio.confee.ui.render.Icon;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.network.chat.Component;
-import org.lwjgl.glfw.GLFW;
+import com.mojang.blaze3d.platform.InputConstants;
 
 import java.util.function.IntSupplier;
 
@@ -46,7 +46,7 @@ public class IconButton extends ConfeeWidget {
 
     @Override
     public boolean mouseClicked(double mx, double my, int button) {
-        if (button == GLFW.GLFW_MOUSE_BUTTON_LEFT && enabled && contains(mx, my)) {
+        if (button == InputConstants.MOUSE_BUTTON_LEFT && enabled && contains(mx, my)) {
             ui.click();
             onPress.run();
             return true;
@@ -56,7 +56,7 @@ public class IconButton extends ConfeeWidget {
 
     @Override
     public boolean keyPressed(int key, int scanCode, int modifiers) {
-        if (enabled && (key == GLFW.GLFW_KEY_ENTER || key == GLFW.GLFW_KEY_KP_ENTER || key == GLFW.GLFW_KEY_SPACE)) {
+        if (enabled && (key == InputConstants.KEY_RETURN || key == InputConstants.KEY_NUMPADENTER || key == InputConstants.KEY_SPACE)) {
             ui.click();
             onPress.run();
             return true;

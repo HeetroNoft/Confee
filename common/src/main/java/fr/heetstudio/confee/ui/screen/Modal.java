@@ -8,7 +8,7 @@ import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.network.chat.Component;
 import net.minecraft.util.FormattedCharSequence;
 import org.jetbrains.annotations.Nullable;
-import org.lwjgl.glfw.GLFW;
+import com.mojang.blaze3d.platform.InputConstants;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -137,13 +137,13 @@ public final class Modal implements Overlay {
     @Override
     public boolean keyPressed(int key, int scanCode, int modifiers) {
         switch (key) {
-            case GLFW.GLFW_KEY_ESCAPE -> {
+            case InputConstants.KEY_ESCAPE -> {
                 ui.click();
                 onCancel.run();
             }
-            case GLFW.GLFW_KEY_TAB -> moveFocus((modifiers & GLFW.GLFW_MOD_SHIFT) != 0 ? 1 : -1);
-            case GLFW.GLFW_KEY_LEFT -> moveFocus(1);
-            case GLFW.GLFW_KEY_RIGHT -> moveFocus(-1);
+            case InputConstants.KEY_TAB -> moveFocus((modifiers & InputConstants.MOD_SHIFT) != 0 ? 1 : -1);
+            case InputConstants.KEY_LEFT -> moveFocus(1);
+            case InputConstants.KEY_RIGHT -> moveFocus(-1);
             default -> {
                 if (!buttons.isEmpty()) {
                     buttons.get(focus).keyPressed(key, scanCode, modifiers);

@@ -7,7 +7,6 @@ import fr.heetstudio.confee.ui.render.Draw;
 import net.minecraft.network.chat.Component;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import org.jetbrains.annotations.Nullable;
-import org.lwjgl.glfw.GLFW;
 
 import java.util.function.Consumer;
 import java.util.function.Supplier;
@@ -105,18 +104,18 @@ public class KeybindWidget extends ConfeeWidget {
             return false;
         }
         if (listening) {
-            if (key != GLFW.GLFW_KEY_ESCAPE) {
+            if (key != InputConstants.KEY_ESCAPE) {
                 setter.accept(InputConstants.getKey(new net.minecraft.client.input.KeyEvent(key, scanCode, 0)).getName());
             }
             listening = false;
             return true;
         }
-        if (key == GLFW.GLFW_KEY_ENTER || key == GLFW.GLFW_KEY_KP_ENTER || key == GLFW.GLFW_KEY_SPACE) {
+        if (key == InputConstants.KEY_RETURN || key == InputConstants.KEY_NUMPADENTER || key == InputConstants.KEY_SPACE) {
             ui.click();
             listening = true;
             return true;
         }
-        if (key == GLFW.GLFW_KEY_DELETE || key == GLFW.GLFW_KEY_BACKSPACE) {
+        if (key == InputConstants.KEY_DELETE || key == InputConstants.KEY_BACKSPACE) {
             setter.accept(UNBOUND);
             return true;
         }

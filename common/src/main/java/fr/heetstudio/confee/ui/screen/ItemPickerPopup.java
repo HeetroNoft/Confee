@@ -10,7 +10,7 @@ import fr.heetstudio.confee.ui.widget.TextFieldWidget;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.network.chat.Component;
 import org.jetbrains.annotations.Nullable;
-import org.lwjgl.glfw.GLFW;
+import com.mojang.blaze3d.platform.InputConstants;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -403,43 +403,43 @@ final class ItemPickerPopup implements Overlay {
     @Override
     public boolean keyPressed(int key, int scanCode, int modifiers) {
         switch (key) {
-            case GLFW.GLFW_KEY_ESCAPE -> {
+            case InputConstants.KEY_ESCAPE -> {
                 ui.click();
                 onClose.run();
             }
-            case GLFW.GLFW_KEY_ENTER, GLFW.GLFW_KEY_KP_ENTER -> {
+            case InputConstants.KEY_RETURN, InputConstants.KEY_NUMPADENTER -> {
                 if (!shown.isEmpty()) {
                     pick(Math.min(selected, shown.size() - 1));
                 }
             }
-            case GLFW.GLFW_KEY_TAB -> {
+            case InputConstants.KEY_TAB -> {
                 // next allowed style (Shift: previous)
                 List<PickerStyle> allowed = styles.allowed();
                 if (allowed.size() > 1) {
                     int i = allowed.indexOf(style);
-                    int step = (modifiers & GLFW.GLFW_MOD_SHIFT) != 0 ? allowed.size() - 1 : 1;
+                    int step = (modifiers & InputConstants.MOD_SHIFT) != 0 ? allowed.size() - 1 : 1;
                     ui.click();
                     setStyle(allowed.get((Math.max(0, i) + step) % allowed.size()));
                 }
             }
-            case GLFW.GLFW_KEY_RIGHT -> {
+            case InputConstants.KEY_RIGHT -> {
                 if (columns > 1) {
                     move(1);
                 } else {
                     search.keyPressed(key, scanCode, modifiers);
                 }
             }
-            case GLFW.GLFW_KEY_LEFT -> {
+            case InputConstants.KEY_LEFT -> {
                 if (columns > 1) {
                     move(-1);
                 } else {
                     search.keyPressed(key, scanCode, modifiers);
                 }
             }
-            case GLFW.GLFW_KEY_DOWN -> move(columns);
-            case GLFW.GLFW_KEY_UP -> move(-columns);
-            case GLFW.GLFW_KEY_PAGE_DOWN -> move(columns * visibleRows);
-            case GLFW.GLFW_KEY_PAGE_UP -> move(-columns * visibleRows);
+            case InputConstants.KEY_DOWN -> move(columns);
+            case InputConstants.KEY_UP -> move(-columns);
+            case InputConstants.KEY_PAGEDOWN -> move(columns * visibleRows);
+            case InputConstants.KEY_PAGEUP -> move(-columns * visibleRows);
             default -> search.keyPressed(key, scanCode, modifiers);
         }
         return true;

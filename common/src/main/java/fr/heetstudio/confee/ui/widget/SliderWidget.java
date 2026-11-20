@@ -7,7 +7,7 @@ import fr.heetstudio.confee.ui.render.Draw;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
-import org.lwjgl.glfw.GLFW;
+import com.mojang.blaze3d.platform.InputConstants;
 
 import java.util.function.DoubleConsumer;
 import java.util.function.DoubleSupplier;
@@ -86,7 +86,7 @@ public class SliderWidget extends ConfeeWidget {
 
     @Override
     public boolean mouseClicked(double mx, double my, int button) {
-        if (button != GLFW.GLFW_MOUSE_BUTTON_LEFT || !enabled || !contains(mx, my)) {
+        if (button != InputConstants.MOUSE_BUTTON_LEFT || !enabled || !contains(mx, my)) {
             return false;
         }
         dragging = true;
@@ -130,13 +130,13 @@ public class SliderWidget extends ConfeeWidget {
         if (!enabled) {
             return false;
         }
-        int direction = key == GLFW.GLFW_KEY_RIGHT ? 1 : key == GLFW.GLFW_KEY_LEFT ? -1 : 0;
+        int direction = key == InputConstants.KEY_RIGHT ? 1 : key == InputConstants.KEY_LEFT ? -1 : 0;
         if (direction == 0) {
-            if (key == GLFW.GLFW_KEY_HOME) {
+            if (key == InputConstants.KEY_HOME) {
                 set(min);
                 return true;
             }
-            if (key == GLFW.GLFW_KEY_END) {
+            if (key == InputConstants.KEY_END) {
                 set(max);
                 return true;
             }

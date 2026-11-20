@@ -6,7 +6,7 @@ import fr.heetstudio.confee.ui.render.Draw;
 import fr.heetstudio.confee.ui.render.Icon;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.network.chat.Component;
-import org.lwjgl.glfw.GLFW;
+import com.mojang.blaze3d.platform.InputConstants;
 
 import java.util.List;
 import java.util.function.Consumer;
@@ -69,7 +69,7 @@ public class DropdownWidget<T> extends ChoiceWidget<T> {
 
     @Override
     public boolean mouseClicked(double mx, double my, int button) {
-        if (button != GLFW.GLFW_MOUSE_BUTTON_LEFT || !enabled || !contains(mx, my)) {
+        if (button != InputConstants.MOUSE_BUTTON_LEFT || !enabled || !contains(mx, my)) {
             return false;
         }
         mouseDown = true;
@@ -94,7 +94,7 @@ public class DropdownWidget<T> extends ChoiceWidget<T> {
         if (!enabled) {
             return false;
         }
-        if (key == GLFW.GLFW_KEY_ENTER || key == GLFW.GLFW_KEY_KP_ENTER || key == GLFW.GLFW_KEY_SPACE) {
+        if (key == InputConstants.KEY_RETURN || key == InputConstants.KEY_NUMPADENTER || key == InputConstants.KEY_SPACE) {
             ui.click();
             opener.open(this);
             return true;

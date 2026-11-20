@@ -106,7 +106,7 @@ public final class RegistryEntries {
             if (vanillaData == null) {
                 vanillaData = new ServerPacksSource(new DirectoryValidator(file -> false)).getVanillaPack();
             }
-            var resource = vanillaData.getResource(PackType.SERVER_DATA, Identifier.fromNamespaceAndPath(tag.getNamespace(), path));
+            var resource = vanillaData.fullResources().getResource(PackType.SERVER_DATA, Identifier.fromNamespaceAndPath(tag.getNamespace(), path));
             if (resource != null) {
                 try (var in = resource.get()) {
                     jsons.add(new String(in.readAllBytes(), java.nio.charset.StandardCharsets.UTF_8));
@@ -186,7 +186,7 @@ public final class RegistryEntries {
             if (vanillaData == null) {
                 vanillaData = new ServerPacksSource(new DirectoryValidator(file -> false)).getVanillaPack();
             }
-            var resource = vanillaData.getResource(PackType.SERVER_DATA, Identifier.fromNamespaceAndPath(id.getNamespace(), path));
+            var resource = vanillaData.fullResources().getResource(PackType.SERVER_DATA, Identifier.fromNamespaceAndPath(id.getNamespace(), path));
             if (resource != null) {
                 try (var in = resource.get()) {
                     jsons.add(new String(in.readAllBytes(), java.nio.charset.StandardCharsets.UTF_8));
@@ -297,8 +297,8 @@ public final class RegistryEntries {
             if (vanillaData == null) {
                 vanillaData = new ServerPacksSource(new DirectoryValidator(file -> false)).getVanillaPack();
             }
-            for (String namespace : vanillaData.getNamespaces(PackType.SERVER_DATA)) {
-                vanillaData.listResources(PackType.SERVER_DATA, namespace, dir, (id, stream) -> addJson(out, id, dir));
+            for (String namespace : vanillaData.fullResources().getNamespaces(PackType.SERVER_DATA)) {
+                vanillaData.fullResources().listResources(PackType.SERVER_DATA, namespace, dir, (id, stream) -> addJson(out, id, dir));
             }
         } catch (RuntimeException e) {
             ConfeeLog.warn("Cannot read the game data files: {}", e.toString());

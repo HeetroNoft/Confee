@@ -36,7 +36,7 @@ import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 import org.jetbrains.annotations.Nullable;
-import org.lwjgl.glfw.GLFW;
+import com.mojang.blaze3d.platform.InputConstants;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -257,7 +257,7 @@ public final class ConfigScreen extends ConfeeScreen {
             // spec 8.3: the mod may only read its file at startup
             rows.add(new Row.Banner(ui, Component.translatable("confee.banner.raw_file"),
                     new ButtonWidget(ui, Component.translatable("confee.button.open_file"), ButtonWidget.Style.NORMAL,
-                            () -> net.minecraft.util.Util.getPlatform().openFile(external.file().toFile()))));
+                            () -> com.mojang.blaze3d.Blaze3D.openPath(external.file()))));
         }
         if (schema.source() == ConfigSource.FORGE_SPEC && schema.scope() == fr.heetstudio.confee.api.ConfigScope.SERVER) {
             // spec 8.4: server configs are read-only until the server sync arrives
@@ -1174,23 +1174,23 @@ public final class ConfigScreen extends ConfeeScreen {
 
     @Override
     protected boolean shortcut(int key, int modifiers, boolean typing) {
-        boolean ctrl = (modifiers & GLFW.GLFW_MOD_CONTROL) != 0;
-        boolean shift = (modifiers & GLFW.GLFW_MOD_SHIFT) != 0;
+        boolean ctrl = (modifiers & InputConstants.MOD_CONTROL) != 0;
+        boolean shift = (modifiers & InputConstants.MOD_SHIFT) != 0;
         if (categories.size() >= 2) {
             // spec 10.3: [ ] or Ctrl+Tab switch categories
-            if ((ctrl && key == GLFW.GLFW_KEY_TAB) || (!typing && (key == GLFW.GLFW_KEY_LEFT_BRACKET || key == GLFW.GLFW_KEY_RIGHT_BRACKET))) {
-                int direction = key == GLFW.GLFW_KEY_LEFT_BRACKET || (key == GLFW.GLFW_KEY_TAB && shift) ? -1 : 1;
+            if ((ctrl && key == InputConstants.KEY_TAB) || (!typing && (key == InputConstants.KEY_LBRACKET || key == InputConstants.KEY_RBRACKET))) {
+                int direction = key == InputConstants.KEY_LBRACKET || (key == InputConstants.KEY_TAB && shift) ? -1 : 1;
                 ui.click();
                 selectCategory(Math.floorMod(selected + direction, categories.size()));
                 return true;
             }
         }
-        if (ctrl && key == GLFW.GLFW_KEY_F) {
+        if (ctrl && key == InputConstants.KEY_F) {
             setFocus(search);
             return true;
         }
-        if (!typing && (key == GLFW.GLFW_KEY_PAGE_DOWN || key == GLFW.GLFW_KEY_PAGE_UP)) {
-            scroll += (key == GLFW.GLFW_KEY_PAGE_DOWN ? 1 : -1) * (viewport[3] - viewport[1] - 20);
+        if (!typing && (key == InputConstants.KEY_PAGEDOWN || key == InputConstants.KEY_PAGEUP)) {
+            scroll += (key == InputConstants.KEY_PAGEDOWN ? 1 : -1) * (viewport[3] - viewport[1] - 20);
             return true;
         }
         return false;

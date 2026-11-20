@@ -16,7 +16,7 @@ import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.network.chat.Component;
 import net.minecraft.util.FormattedCharSequence;
 import org.jetbrains.annotations.Nullable;
-import org.lwjgl.glfw.GLFW;
+import com.mojang.blaze3d.platform.InputConstants;
 
 import java.util.List;
 
@@ -297,7 +297,7 @@ public abstract class ConfeeScreen extends Screen {
 
     @Override
     public boolean keyPressed(KeyEvent event) {
-        return keyPressed(event.key(), event.scancode(), event.modifiers());
+        return keyPressed(event.key(), event.keycode(), event.modifiers());
     }
 
     @Override
@@ -383,15 +383,15 @@ public abstract class ConfeeScreen extends Screen {
         if (overlay != null) {
             return overlay.keyPressed(key, scanCode, modifiers);
         }
-        boolean ctrl = (modifiers & GLFW.GLFW_MOD_CONTROL) != 0;
-        if (key == GLFW.GLFW_KEY_TAB && !ctrl) {
-            moveFocus((modifiers & GLFW.GLFW_MOD_SHIFT) != 0);
+        boolean ctrl = (modifiers & InputConstants.MOD_CONTROL) != 0;
+        if (key == InputConstants.KEY_TAB && !ctrl) {
+            moveFocus((modifiers & InputConstants.MOD_SHIFT) != 0);
             return true;
         }
         if (focus != null && focus.keyPressed(key, scanCode, modifiers)) {
             return true;
         }
-        if (key == GLFW.GLFW_KEY_ESCAPE) {
+        if (key == InputConstants.KEY_ESCAPE) {
             requestClose();
             return true;
         }

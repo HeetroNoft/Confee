@@ -70,7 +70,7 @@ public final class ModIcons {
                 {
                     if (smooth) {
                         sampler = com.mojang.blaze3d.systems.RenderSystem.getSamplerCache()
-                                .getClampToEdge(com.mojang.blaze3d.textures.FilterMode.LINEAR);
+                                .getClampToEdge(com.mojang.renderpearl.api.textures.FilterMode.LINEAR);
                     }
                 }
             };

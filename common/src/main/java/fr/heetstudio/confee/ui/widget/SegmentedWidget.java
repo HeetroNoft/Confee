@@ -6,7 +6,7 @@ import fr.heetstudio.confee.ui.render.Draw;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.network.chat.Component;
 import org.jetbrains.annotations.Nullable;
-import org.lwjgl.glfw.GLFW;
+import com.mojang.blaze3d.platform.InputConstants;
 
 import java.util.List;
 import java.util.function.Consumer;
@@ -137,7 +137,7 @@ public class SegmentedWidget<T> extends ChoiceWidget<T> {
 
     @Override
     public boolean mouseClicked(double mx, double my, int button) {
-        if (button != GLFW.GLFW_MOUSE_BUTTON_LEFT || !enabled || !contains(mx, my)) {
+        if (button != InputConstants.MOUSE_BUTTON_LEFT || !enabled || !contains(mx, my)) {
             return false;
         }
         pressedIndex = indexAt(mx);
@@ -163,7 +163,7 @@ public class SegmentedWidget<T> extends ChoiceWidget<T> {
         if (!enabled) {
             return false;
         }
-        int direction = key == GLFW.GLFW_KEY_RIGHT ? 1 : key == GLFW.GLFW_KEY_LEFT ? -1 : 0;
+        int direction = key == InputConstants.KEY_RIGHT ? 1 : key == InputConstants.KEY_LEFT ? -1 : 0;
         if (direction == 0) {
             return false;
         }

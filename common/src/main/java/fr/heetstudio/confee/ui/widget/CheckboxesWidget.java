@@ -6,7 +6,7 @@ import fr.heetstudio.confee.ui.render.Draw;
 import fr.heetstudio.confee.ui.render.Icon;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.network.chat.Component;
-import org.lwjgl.glfw.GLFW;
+import com.mojang.blaze3d.platform.InputConstants;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -117,11 +117,11 @@ public class CheckboxesWidget<E> extends ConfeeWidget {
         }
         int columns = columns(width);
         switch (key) {
-            case GLFW.GLFW_KEY_RIGHT -> cursor = Math.min(values.size() - 1, cursor + 1);
-            case GLFW.GLFW_KEY_LEFT -> cursor = Math.max(0, cursor - 1);
-            case GLFW.GLFW_KEY_DOWN -> cursor = Math.min(values.size() - 1, cursor + columns);
-            case GLFW.GLFW_KEY_UP -> cursor = Math.max(0, cursor - columns);
-            case GLFW.GLFW_KEY_SPACE, GLFW.GLFW_KEY_ENTER, GLFW.GLFW_KEY_KP_ENTER -> toggle(cursor);
+            case InputConstants.KEY_RIGHT -> cursor = Math.min(values.size() - 1, cursor + 1);
+            case InputConstants.KEY_LEFT -> cursor = Math.max(0, cursor - 1);
+            case InputConstants.KEY_DOWN -> cursor = Math.min(values.size() - 1, cursor + columns);
+            case InputConstants.KEY_UP -> cursor = Math.max(0, cursor - columns);
+            case InputConstants.KEY_SPACE, InputConstants.KEY_RETURN, InputConstants.KEY_NUMPADENTER -> toggle(cursor);
             default -> {
                 return false;
             }

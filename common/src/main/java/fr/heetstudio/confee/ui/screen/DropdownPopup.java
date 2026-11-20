@@ -6,7 +6,7 @@ import fr.heetstudio.confee.ui.render.Draw;
 import fr.heetstudio.confee.ui.widget.DropdownWidget;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.network.chat.Component;
-import org.lwjgl.glfw.GLFW;
+import com.mojang.blaze3d.platform.InputConstants;
 
 /**
  * Popup list of a dropdown (spec 10.3): over the screen, scrollable when long, current value highlighted with the
@@ -141,10 +141,10 @@ final class DropdownPopup implements Overlay {
     public boolean keyPressed(int key, int scanCode, int modifiers) {
         int count = dropdown.values().size();
         switch (key) {
-            case GLFW.GLFW_KEY_ESCAPE -> close.run();
-            case GLFW.GLFW_KEY_UP -> move(-1, count);
-            case GLFW.GLFW_KEY_DOWN -> move(1, count);
-            case GLFW.GLFW_KEY_ENTER, GLFW.GLFW_KEY_KP_ENTER, GLFW.GLFW_KEY_SPACE -> {
+            case InputConstants.KEY_ESCAPE -> close.run();
+            case InputConstants.KEY_UP -> move(-1, count);
+            case InputConstants.KEY_DOWN -> move(1, count);
+            case InputConstants.KEY_RETURN, InputConstants.KEY_NUMPADENTER, InputConstants.KEY_SPACE -> {
                 ui.click();
                 dropdown.chooseIndex(highlighted);
                 close.run();

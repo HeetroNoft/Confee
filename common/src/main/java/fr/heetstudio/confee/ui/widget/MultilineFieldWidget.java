@@ -7,7 +7,7 @@ import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.MultiLineEditBox;
 import net.minecraft.network.chat.Component;
 import org.jetbrains.annotations.Nullable;
-import org.lwjgl.glfw.GLFW;
+import com.mojang.blaze3d.platform.InputConstants;
 
 import java.util.function.Consumer;
 
@@ -122,7 +122,7 @@ public class MultilineFieldWidget extends ConfeeWidget {
             return false;
         }
         // Tab moves the focus; Escape closes the screen
-        if (key == GLFW.GLFW_KEY_TAB || key == GLFW.GLFW_KEY_ESCAPE) {
+        if (key == InputConstants.KEY_TAB || key == InputConstants.KEY_ESCAPE) {
             return false;
         }
         return box.keyPressed(new net.minecraft.client.input.KeyEvent(key, scanCode, modifiers));

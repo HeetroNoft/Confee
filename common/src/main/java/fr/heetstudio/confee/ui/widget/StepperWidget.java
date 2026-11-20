@@ -8,7 +8,7 @@ import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 import org.jetbrains.annotations.Nullable;
-import org.lwjgl.glfw.GLFW;
+import com.mojang.blaze3d.platform.InputConstants;
 
 import java.util.function.IntConsumer;
 
@@ -93,8 +93,8 @@ public class StepperWidget extends ConfeeWidget {
         if (!enabled) {
             return false;
         }
-        if (key == GLFW.GLFW_KEY_UP || key == GLFW.GLFW_KEY_DOWN) {
-            step(key == GLFW.GLFW_KEY_UP ? 1 : -1);
+        if (key == InputConstants.KEY_UP || key == InputConstants.KEY_DOWN) {
+            step(key == InputConstants.KEY_UP ? 1 : -1);
             return true;
         }
         return field.keyPressed(key, scanCode, modifiers);

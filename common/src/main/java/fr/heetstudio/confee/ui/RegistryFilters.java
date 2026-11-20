@@ -142,7 +142,7 @@ public final class RegistryFilters {
             try {
                 Minecraft mc = Minecraft.getInstance();
                 FeatureFlagSet flags = mc.level != null ? mc.level.enabledFeatures() : FeatureFlags.DEFAULT_FLAGS;
-                HolderLookup.Provider lookup = mc.level != null ? mc.level.registryAccess() : VanillaRegistries.createLookup();
+                HolderLookup.Provider lookup = mc.level != null ? mc.level.registryAccess() : VanillaRegistries.createWorldLookup();
                 // only this tab: outside a world some tabs (tools: goat horns) need tags that only a world binds (1.20.5+)
                 CreativeModeTab tab = BuiltInRegistries.CREATIVE_MODE_TAB.getValue(
                         Identifier.fromNamespaceAndPath("minecraft", f.name().toLowerCase(Locale.ROOT)));

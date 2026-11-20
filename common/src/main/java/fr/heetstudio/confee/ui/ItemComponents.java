@@ -33,7 +33,7 @@ final class ItemComponents {
         }
         bindingTried = true;
         try {
-            BuiltInRegistries.DATA_COMPONENT_INITIALIZERS.build(VanillaRegistries.createLookup()).stream()
+            BuiltInRegistries.DATA_COMPONENT_INITIALIZERS.build(VanillaRegistries.createWorldLookup()).stream()
                     .filter(pending -> pending.key().equals(Registries.ITEM))
                     .forEach(DataComponentInitializers.PendingComponents::apply);
         } catch (RuntimeException | LinkageError e) {
