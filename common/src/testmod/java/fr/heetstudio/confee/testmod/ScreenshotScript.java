@@ -80,13 +80,14 @@ public final class ScreenshotScript {
     }
 
     private boolean forge() {
-        return Services.PLATFORM.getPlatformName().equals("Forge");
+        // Forge and NeoForge share the config spec system (spec 8.4)
+        return Services.PLATFORM.getPlatformName().endsWith("Forge");
     }
 
     private void script() {
         step(5, mc -> {
             // spec 8.1 / 15: Confee screens for Confee and raw mods; mods with their own screen keep it
-            for (String id : List.of("confee", ConfeeTestmod.MOD_ID, "confee_rawmod", "forge", "minecraft", "modmenu",
+            for (String id : List.of("confee", ConfeeTestmod.MOD_ID, "confee_rawmod", "forge", "neoforge", "minecraft", "modmenu",
                     "cloth-config", "cloth_config", "yet_another_config_lib_v3", "configured")) {
                 if (Services.PLATFORM.isModLoaded(id)) {
                     Screen screen;
@@ -139,7 +140,7 @@ public final class ScreenshotScript {
         shot("01-file-select");
         step(15, mc -> mc.setScreen(ConfeeTestmod.annotated.createScreen(fileSelect)));
         shot("02-general");
-        step(10, mc -> mc.screen.mouseScrolled(mc.screen.width / 2.0, mc.screen.height / 2.0, -3));
+        step(10, mc -> mc.screen.mouseScrolled(mc.screen.width / 2.0, mc.screen.height / 2.0, 0, -3));
         shot("03-general-scrolled");
         // the wheel over a text area that has nothing to scroll moves the panel (it used to get stuck)
         step(10, mc -> {
@@ -150,7 +151,7 @@ public final class ScreenshotScript {
             ConfeeWidget w = config(mc).focusedWidget();
             wheelBefore[0] = w == null ? 0 : w.y;
             if (w != null) {
-                mc.screen.mouseScrolled(w.x + w.width / 2.0, w.y + w.height / 2.0, -2);
+                mc.screen.mouseScrolled(w.x + w.width / 2.0, w.y + w.height / 2.0, 0, -2);
             }
         });
         step(5, mc -> {
@@ -232,7 +233,7 @@ public final class ScreenshotScript {
         shot("35-map");
         step(10, mc -> {
             config(mc).focusOption("waypoints");
-            mc.screen.mouseScrolled(mc.screen.width / 2.0, mc.screen.height / 2.0, -10);
+            mc.screen.mouseScrolled(mc.screen.width / 2.0, mc.screen.height / 2.0, 0, -10);
         });
         shot("36-object-list");
 
@@ -294,7 +295,7 @@ public final class ScreenshotScript {
             config(mc).focusOption("showHud");
             key(mc, GLFW.GLFW_KEY_ENTER, 0);
         });
-        step(5, mc -> mc.screen.mouseScrolled(mc.screen.width / 2.0, mc.screen.height / 2.0, -1));
+        step(5, mc -> mc.screen.mouseScrolled(mc.screen.width / 2.0, mc.screen.height / 2.0, 0, -1));
         step(5, mc -> {
             ConfeeWidget w = config(mc).focusedWidget();
             // the toggle of showHud is focused; "volume" is two rows below, its name just above its field
@@ -658,14 +659,18 @@ public final class ScreenshotScript {
             offWorld[0] = fr.heetstudio.confee.ui.RegistryEntries.ids(biomes).size();
             offWorld[1] = fr.heetstudio.confee.ui.RegistryEntries.tags(biomes).size();
             ConfeeLog.info("[testmod] outside a world: {} biomes, {} biome tags", offWorld[0], offWorld[1]);
+            // the run window may not have the focus: no pause menu over the world
+            mc.options.pauseOnLostFocus = false;
             Path save = mc.gameDirectory.toPath().resolve("saves/confee-test");
             deleteTree(save);
             // a data pack of the world that adds a biome: only the world knows it
             try {
                 Path pack = save.resolve("datapacks/confee_test_pack");
                 Files.createDirectories(pack.resolve("data/confee_pack/worldgen/biome"));
+                int packFormat = net.minecraft.SharedConstants.getCurrentVersion()
+                        .getPackVersion(net.minecraft.server.packs.PackType.SERVER_DATA);
                 Files.writeString(pack.resolve("pack.mcmeta"),
-                        "{\"pack\": {\"pack_format\": 15, \"description\": \"Confee test biome\"}}");
+                        "{\"pack\": {\"pack_format\": " + packFormat + ", \"description\": \"Confee test biome\"}}");
                 Files.writeString(pack.resolve("data/confee_pack/worldgen/biome/glow_meadow.json"), String.join("\n",
                         "{",
                         "  \"has_precipitation\": true, \"temperature\": 0.8, \"downfall\": 0.4,",
@@ -717,8 +722,7 @@ public final class ScreenshotScript {
             if (mc.level != null) {
                 mc.level.disconnect();
             }
-            mc.clearLevel();
-            mc.setScreen(new TitleScreen());
+            mc.disconnect(new TitleScreen());
         });
         waitUntil(600, mc -> mc.level == null && mc.getSingleplayerServer() == null);
     }
@@ -777,7 +781,8 @@ public final class ScreenshotScript {
         });
         step(10, mc -> {
             logLines(mc.gameDirectory.toPath().resolve("config/confee_rawmod-forge-client.toml"), "zoom", "mode");
-            mc.setScreen(ConfeeScreens.forMod(fileSelect, "forge"));
+            mc.setScreen(ConfeeScreens.forMod(fileSelect,
+                    Services.PLATFORM.isModLoaded("neoforge") ? "neoforge" : "forge"));
         });
         shot("24-forge-own-configs");
     }
