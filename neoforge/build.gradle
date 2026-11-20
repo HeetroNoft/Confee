@@ -1,0 +1,136 @@
+plugins {
+    id 'net.neoforged.gradle.userdev'
+}
+
+// NeoForge has its own jar since 1.20.2 (spec 4.1). Same layout as the Forge module.
+// Test mods (spec 15): never part of the published jar.
+// - testmod: uses Confee (annotations, builder, theme)
+// - rawmod: does NOT use Confee and has no screen (universal editor)
+sourceSets {
+    testmod {
+        compileClasspath += main.compileClasspath + main.output
+        runtimeClasspath += main.runtimeClasspath + main.output
+    }
+    rawmod {
+        compileClasspath += main.compileClasspath
+        runtimeClasspath += main.runtimeClasspath
+    }
+}
+// one dev mod per source set (NeoGradle groups source sets by mod identifier)
+sourceSets.main.runs { modIdentifier 'confee' }
+sourceSets.testmod.runs { modIdentifier 'confee_testmod' }
+sourceSets.rawmod.runs { modIdentifier 'confee_rawmod' }
+
+repositories {
+    maven {
+        name = 'Modrinth'
+        url = 'https://api.modrinth.com/maven'
+        content { includeGroup 'maven.modrinth' }
+    }
+}
+
+dependencies {
+    implementation "net.neoforged:neoforge:${neoforge_version}"
+    compileOnly project(':common')
+    testmodImplementation "net.neoforged:neoforge:${neoforge_version}"
+    rawmodImplementation "net.neoforged:neoforge:${neoforge_version}"
+
+    // Cohabitation test (spec 15), dev runs only: a mod with its own config screen
+    runtimeOnly "maven.modrinth:cloth-config:${cloth_config_neoforge_version}"
+}
+
+runs {
+    configureEach {
+        systemProperty 'forge.logging.console.level', 'debug'
+        modSource project.sourceSets.main
+    }
+    client {
+        workingDirectory project.file('run')
+    }
+    server {
+        workingDirectory project.file('run-server')
+        argument '--nogui'
+    }
+    testmodClient {
+        runType 'client'
+        workingDirectory project.file('run')
+        modSource project.sourceSets.testmod
+        modSource project.sourceSets.rawmod
+    }
+    testmodScreenshots {
+        runType 'client'
+        workingDirectory project.file('run-shots')
+        systemProperty 'confee.testmod.screenshots', 'true'
+        arguments '--width', '1280', '--height', '720'
+        modSource project.sourceSets.testmod
+        modSource project.sourceSets.rawmod
+    }
+    testmodServer {
+        runType 'server'
+        workingDirectory project.file('run-server')
+        argument '--nogui'
+        modSource project.sourceSets.testmod
+        modSource project.sourceSets.rawmod
+    }
+}
+
+tasks.withType(JavaCompile).matching { it.name == 'compileJava' }.configureEach {
+    source(project(':common').sourceSets.main.allSource)
+}
+tasks.named('compileTestmodJava', JavaCompile) {
+    source(project(':common').sourceSets.testmod.java)
+}
+tasks.named('sourcesJar', Jar) {
+    from(project(':common').sourceSets.main.allSource)
+}
+processResources {
+    from project(':common').sourceSets.main.resources
+}
+tasks.named('processTestmodResources', ProcessResources) {
+    from(project(':common').file('src/testmod/resources'))
+}
+
+// Sample config files of other mods (spec 15), copied into each run folder without overwriting your edits
+def fixtures = project(':common').file('src/testmod/fixtures/config')
+['run', 'run-shots', 'run-server'].each { dirName ->
+    def taskName = "installTestFixtures" + dirName.split('-').collect { it.capitalize() }.join('')
+    tasks.register(taskName) {
+        doLast {
+            fileTree(fixtures).visit { details ->
+                def target = file("${dirName}/config/${details.relativePath}")
+                if (!details.directory && !target.exists()) {
+                    target.parentFile.mkdirs()
+                    target.bytes = details.file.bytes
+                }
+            }
+        }
+    }
+}
+tasks.matching { it.name == 'runTestmodClient' }.configureEach { dependsOn 'installTestFixturesRun' }
+tasks.matching { it.name == 'runTestmodServer' }.configureEach { dependsOn 'installTestFixturesRunServer' }
+tasks.matching { it.name == 'runTestmodScreenshots' }.configureEach { dependsOn 'installTestFixturesRunShots' }
+
+// Publishing (spec 16). Always a dry run unless CONFEE_PUBLISH=true; tokens only come from environment variables.
+apply plugin: 'me.modmuss50.mod-publish-plugin'
+publishMods {
+    file = jar.archiveFile
+    changelog = providers.provider { rootProject.versionChangelog() }
+    type = providers.provider { me.modmuss50.mpp.ReleaseType.of(release_type) }
+    version = "${mod_version}+${minecraft_version}-neoforge"
+    displayName = "Confee ${mod_version} (NeoForge ${minecraft_version})"
+    modLoaders.add('neoforge')
+    dryRun = providers.environmentVariable('CONFEE_PUBLISH').map { it != 'true' }.orElse(true)
+
+    modrinth {
+        accessToken = providers.environmentVariable('MODRINTH_TOKEN')
+        projectId = providers.environmentVariable('MODRINTH_PROJECT_ID').orElse(modrinth_project_id)
+        minecraftVersions.addAll(minecraft_versions.split(','))
+    }
+    curseforge {
+        accessToken = providers.environmentVariable('CURSEFORGE_TOKEN')
+        projectId = providers.environmentVariable('CURSEFORGE_PROJECT_ID').orElse(curseforge_project_id)
+        minecraftVersions.addAll(minecraft_versions.split(','))
+        clientRequired = true
+        serverRequired = false
+    }
+}

@@ -1,6 +1,7 @@
 plugins {
     id 'fabric-loom' version '1.7-SNAPSHOT' apply false
     id 'net.minecraftforge.gradle' version '[6.0.24,6.2)' apply false
+    id 'net.neoforged.gradle.userdev' version '7.0.165' apply false
     id 'org.spongepowered.gradle.vanilla' version '0.2.1-SNAPSHOT' apply false
     id 'me.modmuss50.mod-publish-plugin' version '0.8.4' apply false
 }
@@ -70,7 +71,9 @@ subprojects {
                 minecraft_version_range    : minecraft_version_range,
                 fabric_loader_version      : fabric_loader_version,
                 fabric_loader_min_version  : fabric_loader_min_version,
-                forge_loader_version_range : forge_loader_version_range
+                forge_loader_version_range : forge_loader_version_range,
+                neoforge_loader_version_range : neoforge_loader_version_range,
+                neoforge_version_range     : neoforge_version_range
         ]
         inputs.properties(props)
         filesMatching(['pack.mcmeta', 'fabric.mod.json', 'META-INF/mods.toml']) {

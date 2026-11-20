@@ -40,15 +40,15 @@ $tasks = [ordered]@{
     'fabric'        = @(':fabric:runTestmodClient', 'Minecraft client on Fabric with Mod Menu and the test mods')
     'forge'         = @(':forge:runTestmodClient', 'Minecraft client on Forge with the test mods')
     'quilt'         = @('quilt:runTestmodClient', 'Minecraft client on Quilt (Quilted Fabric API) with the Fabric release jar')
-    'neoforge'      = @('neoforge:runTestmodClient', 'Minecraft client on NeoForge 1.20.1 with the test mods')
+    'neoforge'      = @(':neoforge:runTestmodClient', 'Minecraft client on NeoForge with the test mods')
     'fabric-server' = @(':fabric:runTestmodServer', 'Fabric dedicated server (checks nothing client-only is loaded)')
     'forge-server'  = @(':forge:runTestmodServer', 'Forge dedicated server (needs eula=true in forge/run-server/eula.txt)')
     'quilt-server'  = @('quilt:runTestmodServer', 'Quilt dedicated server with the Fabric release jar')
-    'neoforge-server' = @('neoforge:runTestmodServer', 'NeoForge dedicated server')
+    'neoforge-server' = @(':neoforge:runTestmodServer', 'NeoForge dedicated server')
     'shots-fabric'  = @(':fabric:runTestmodScreenshots', 'Automatic screenshots on Fabric -> fabric/run-shots/screenshots')
     'shots-forge'   = @(':forge:runTestmodScreenshots', 'Automatic screenshots on Forge -> forge/run-shots/screenshots')
     'shots-quilt'   = @('quilt:runTestmodScreenshots', 'Automatic screenshots on Quilt -> testenv/quilt/run-shots/screenshots')
-    'shots-neoforge' = @('neoforge:runTestmodScreenshots', 'Automatic screenshots on NeoForge -> testenv/neoforge/run-shots/screenshots')
+    'shots-neoforge' = @(':neoforge:runTestmodScreenshots', 'Automatic screenshots on NeoForge -> neoforge/run-shots/screenshots')
     'shots-all'     = @('all', 'Automatic screenshots on the four loaders, one after the other')
     'test'          = @(':common:test', 'Unit tests')
     'build'         = @('build', 'Full build with unit tests')
@@ -80,18 +80,13 @@ if (-not $jdk) {
 
 $javaHome = "-Dorg.gradle.java.home=$($jdk -replace '\\', '/')"
 
-# Runs one task. "quilt:<task>" and "neoforge:<task>" are separate builds in testenv/ (their Gradle plugins cannot
-# share the main build); Quilt first needs the Fabric release jar from the main build.
+# Runs one task. "quilt:<task>" is a separate build in testenv/quilt (its Gradle plugin cannot share the main build);
+# it first needs the Fabric release jar from the main build.
 function Invoke-ConfeeTask([string] $gradleTask) {
     if ($gradleTask -like 'quilt:*') {
         & "$root\gradlew.bat" $javaHome ':fabric:remapJar' | Out-Host
         if ($LASTEXITCODE -ne 0) { return $LASTEXITCODE }
         & "$root\gradlew.bat" $javaHome '-p' "$root\testenv\quilt" ($gradleTask -replace '^quilt:', '') | Out-Host
-        return $LASTEXITCODE
-    }
-    if ($gradleTask -like 'neoforge:*') {
-        # own wrapper: NeoGradle 6 needs Gradle 8.1
-        & "$root\testenv\neoforge\gradlew.bat" $javaHome '-p' "$root\testenv\neoforge" ($gradleTask -replace '^neoforge:', '') | Out-Host
         return $LASTEXITCODE
     }
     & "$root\gradlew.bat" $javaHome $gradleTask | Out-Host
@@ -106,7 +101,7 @@ Push-Location $root
 try {
     if ($gradleTask -eq 'all') {
         $code = 0
-        foreach ($t in @(':fabric:runTestmodScreenshots', 'quilt:runTestmodScreenshots', ':forge:runTestmodScreenshots', 'neoforge:runTestmodScreenshots')) {
+        foreach ($t in @(':fabric:runTestmodScreenshots', 'quilt:runTestmodScreenshots', ':forge:runTestmodScreenshots', ':neoforge:runTestmodScreenshots')) {
             Write-Host "`n== $t" -ForegroundColor Green
             $result = Invoke-ConfeeTask $t
             if ($result -ne 0) {
@@ -127,11 +122,12 @@ if ($Task -eq 'publish-dry' -and $code -eq 0 -and $env:CONFEE_PUBLISH -ne 'true'
 }
 
 if ($Task -eq 'jars' -and $code -eq 0) {
-    Write-Host "`nJars to copy into the 'mods' folder of a Minecraft 1.20.1 instance:" -ForegroundColor Green
-    Get-ChildItem "$root\fabric\build\libs", "$root\forge\build\libs" -Filter '*.jar' |
+    $mcVersion = ((Get-Content "$root\gradle.properties") -match '^minecraft_versions=' -replace '^minecraft_versions=', '') -replace ',', ', '
+    Write-Host "`nJars to copy into the 'mods' folder of a Minecraft $mcVersion instance:" -ForegroundColor Green
+    Get-ChildItem "$root\fabric\build\libs", "$root\neoforge\build\libs", "$root\forge\build\libs" -Filter '*.jar' |
         Where-Object { $_.Name -notmatch 'sources' } |
         ForEach-Object { Write-Host "  $($_.FullName)" }
     Write-Host "`n  Fabric/Quilt: also needs Fabric API (and Mod Menu to see the Config buttons)."
-    Write-Host '  Forge/NeoForge 1.20.1: nothing else needed.'
+    Write-Host '  NeoForge, Forge: nothing else needed.'
 }
 exit $code
