@@ -3,7 +3,7 @@
     Runs Confee in development, without remembering Gradle flags.
 
 .DESCRIPTION
-    Picks a JDK 17 for Gradle (your global ~/.gradle/gradle.properties points to a JDK 25 that Gradle 8.8
+    Picks a JDK 21 for Gradle (your global ~/.gradle/gradle.properties points to a JDK 25 that Gradle 8.8
     cannot run), then starts the requested task.
 
 .EXAMPLE
@@ -64,18 +64,20 @@ if ($Task -eq 'help') {
     exit 0
 }
 
-# A JDK 17 for Gradle: the one Gradle downloaded itself, else JAVA_HOME
+# A JDK 21 for Gradle (Minecraft 1.20.5+ needs Gradle itself on Java 21): one Gradle downloaded, an installed
+# Adoptium JDK, else JAVA_HOME
 $jdk = $null
-$jdks = Join-Path $env:USERPROFILE '.gradle\jdks'
-if (Test-Path $jdks) {
-    $jdk = Get-ChildItem $jdks -Directory | Where-Object { $_.Name -match '17' -and (Test-Path (Join-Path $_.FullName 'bin\java.exe')) } |
+$candidates = @((Join-Path $env:USERPROFILE '.gradle\jdks'), (Join-Path $env:ProgramFiles 'Eclipse Adoptium')) | Where-Object { Test-Path $_ }
+foreach ($dir in $candidates) {
+    $jdk = Get-ChildItem $dir -Directory | Where-Object { $_.Name -match '(^|[-_])21' -and (Test-Path (Join-Path $_.FullName 'bin\java.exe')) } |
         Select-Object -First 1 -ExpandProperty FullName
+    if ($jdk) { break }
 }
 if (-not $jdk -and $env:JAVA_HOME) {
     $jdk = $env:JAVA_HOME
 }
 if (-not $jdk) {
-    Write-Error 'No JDK 17 found. Run any Gradle task once so the toolchain downloads it, or set JAVA_HOME to a JDK 17 or 21.'
+    Write-Error 'No JDK 21 found. Install one (Adoptium) or set JAVA_HOME to a JDK 21.'
 }
 
 $javaHome = "-Dorg.gradle.java.home=$($jdk -replace '\\', '/')"

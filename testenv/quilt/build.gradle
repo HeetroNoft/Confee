@@ -13,11 +13,11 @@ file('../../gradle.properties').withInputStream { props.load(it) }
 props.each { k, v -> ext.set(k, v) }
 
 java {
-    toolchain.languageVersion = JavaLanguageVersion.of(17)
+    toolchain.languageVersion = JavaLanguageVersion.of(21)
 }
 tasks.withType(JavaCompile).configureEach {
     options.encoding = 'UTF-8'
-    options.release.set(17)
+    options.release.set(21)
 }
 
 repositories {
