@@ -668,7 +668,7 @@ public final class ScreenshotScript {
                 Path pack = save.resolve("datapacks/confee_test_pack");
                 Files.createDirectories(pack.resolve("data/confee_pack/worldgen/biome"));
                 int packFormat = net.minecraft.SharedConstants.getCurrentVersion()
-                        .packVersion(net.minecraft.server.packs.PackType.SERVER_DATA);
+                        .packVersion(net.minecraft.server.packs.PackType.SERVER_DATA).major();
                 Files.writeString(pack.resolve("pack.mcmeta"),
                         "{\"pack\": {\"pack_format\": " + packFormat + ", \"description\": \"Confee test biome\"}}");
                 Files.writeString(pack.resolve("data/confee_pack/worldgen/biome/glow_meadow.json"), String.join("\n",
@@ -821,15 +821,16 @@ public final class ScreenshotScript {
         if (w != null) {
             double x = w.x + w.width - 4;
             double y = w.y + w.height / 2.0;
-            mc.screen.mouseClicked(x, y, 0);
-            mc.screen.mouseReleased(x, y, 0);
+            var click = new net.minecraft.client.input.MouseButtonEvent(x, y, new net.minecraft.client.input.MouseButtonInfo(0, 0));
+            mc.screen.mouseClicked(click, false);
+            mc.screen.mouseReleased(click);
         }
     }
 
     /** Moves the cursor (GUI coordinates): GLFW position + the game's mouse handler (dev names). */
     private static void moveMouse(Minecraft mc, double guiX, double guiY) {
         double scale = mc.getWindow().getGuiScale();
-        long window = mc.getWindow().getWindow();
+        long window = mc.getWindow().handle();
         GLFW.glfwSetCursorPos(window, guiX * scale, guiY * scale);
         try {
             java.lang.reflect.Method onMove = net.minecraft.client.MouseHandler.class
@@ -846,12 +847,12 @@ public final class ScreenshotScript {
     }
 
     private static void key(Minecraft mc, int key, int modifiers) {
-        mc.screen.keyPressed(key, 0, modifiers);
+        mc.screen.keyPressed(new net.minecraft.client.input.KeyEvent(key, 0, modifiers));
     }
 
     private static void type(Minecraft mc, String text) {
         for (char c : text.toCharArray()) {
-            mc.screen.charTyped(c, 0);
+            mc.screen.charTyped(new net.minecraft.client.input.CharacterEvent(c, 0));
         }
     }
 
