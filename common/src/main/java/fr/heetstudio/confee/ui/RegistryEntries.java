@@ -12,7 +12,7 @@ import net.minecraft.server.packs.PackType;
 import net.minecraft.server.packs.VanillaPackResources;
 import net.minecraft.server.packs.repository.ServerPacksSource;
 import net.minecraft.world.level.validation.DirectoryValidator;
-import net.minecraft.tags.TagManager;
+import net.minecraft.core.registries.Registries;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
@@ -100,13 +100,13 @@ public final class RegistryEntries {
             }
         }
         // outside a world: the tag files ("values": IDs, "#tags", or {"id": ..., "required": false})
-        String path = TagManager.getTagDir((ResourceKey) key(registry)) + "/" + tag.getPath() + ".json";
+        String path = Registries.tagsDirPath((ResourceKey) key(registry)) + "/" + tag.getPath() + ".json";
         List<String> jsons = new ArrayList<>();
         try {
             if (vanillaData == null) {
                 vanillaData = new ServerPacksSource(new DirectoryValidator(file -> false)).getVanillaPack();
             }
-            var resource = vanillaData.getResource(PackType.SERVER_DATA, new ResourceLocation(tag.getNamespace(), path));
+            var resource = vanillaData.getResource(PackType.SERVER_DATA, ResourceLocation.fromNamespaceAndPath(tag.getNamespace(), path));
             if (resource != null) {
                 try (var in = resource.get()) {
                     jsons.add(new String(in.readAllBytes(), java.nio.charset.StandardCharsets.UTF_8));
@@ -146,6 +146,68 @@ public final class RegistryEntries {
         return out;
     }
 
+    /**
+     * Items an enchantment applies to, as an item tag ("#minecraft:enchantable/sword"), or null when unknown. Since
+     * 1.21 enchantments are data: read from the loaded world, else from the enchantment's data file.
+     */
+    @Nullable
+    public static synchronized String enchantmentSupportedItems(ResourceLocation id) {
+        List<String> found = cached("enchantment-items|" + id, () -> {
+            Set<String> out = new HashSet<>();
+            RegistryAccess world = world();
+            if (world != null) {
+                world.registry(Registries.ENCHANTMENT).flatMap(reg -> reg.getOptional(id))
+                        .flatMap(enchantment -> enchantment.definition().supportedItems().unwrapKey())
+                        .ifPresent(tag -> out.add("#" + tag.location()));
+                if (!out.isEmpty()) {
+                    return out;
+                }
+            }
+            for (String json : dataJsons(id, Registries.elementsDirPath(Registries.ENCHANTMENT))) {
+                try {
+                    var value = com.google.gson.JsonParser.parseString(json).getAsJsonObject().get("supported_items");
+                    if (value != null && value.isJsonPrimitive()) {
+                        out.add(value.getAsString());
+                    }
+                } catch (RuntimeException e) {
+                    ConfeeLog.warn("Cannot read the enchantment {}: {}", id, e.toString());
+                }
+            }
+            return out;
+        });
+        return found.isEmpty() ? null : found.get(0);
+    }
+
+    /** Contents of {@code data/<namespace>/<dir>/<path>.json} in the game and in every mod. */
+    private static List<String> dataJsons(ResourceLocation id, String dir) {
+        String path = dir + "/" + id.getPath() + ".json";
+        List<String> jsons = new ArrayList<>();
+        try {
+            if (vanillaData == null) {
+                vanillaData = new ServerPacksSource(new DirectoryValidator(file -> false)).getVanillaPack();
+            }
+            var resource = vanillaData.getResource(PackType.SERVER_DATA, ResourceLocation.fromNamespaceAndPath(id.getNamespace(), path));
+            if (resource != null) {
+                try (var in = resource.get()) {
+                    jsons.add(new String(in.readAllBytes(), java.nio.charset.StandardCharsets.UTF_8));
+                }
+            }
+        } catch (IOException | RuntimeException e) {
+            ConfeeLog.warn("Cannot read {}: {}", path, e.toString());
+        }
+        for (Path root : Services.PLATFORM.getModRootPaths()) {
+            Path file = root.resolve("data").resolve(id.getNamespace()).resolve(path);
+            if (Files.isRegularFile(file)) {
+                try {
+                    jsons.add(Files.readString(file));
+                } catch (IOException e) {
+                    ConfeeLog.warn("Cannot read {}: {}", file, e.toString());
+                }
+            }
+        }
+        return jsons;
+    }
+
     private interface Loader {
         Set<String> load();
     }
@@ -177,7 +239,7 @@ public final class RegistryEntries {
     }
 
     private static ResourceKey<? extends Registry<?>> key(String registry) {
-        return ResourceKey.createRegistryKey(new ResourceLocation(registry));
+        return ResourceKey.createRegistryKey(ResourceLocation.parse(registry));
     }
 
     @SuppressWarnings({"unchecked", "rawtypes"})
@@ -189,7 +251,7 @@ public final class RegistryEntries {
                 return found;
             }
         }
-        return Optional.ofNullable(BuiltInRegistries.REGISTRY.get(new ResourceLocation(registry)));
+        return Optional.ofNullable(BuiltInRegistries.REGISTRY.get(ResourceLocation.parse(registry)));
     }
 
     private static Set<String> loadIds(String registry) {
@@ -199,7 +261,7 @@ public final class RegistryEntries {
             found.get().keySet().forEach(id -> out.add(id.toString()));
         } else {
             // world registry outside a world: the data files
-            String dir = new ResourceLocation(registry).getPath();
+            String dir = ResourceLocation.parse(registry).getPath();
             out.addAll(dataFiles(dir));
             if ("minecraft:dimension".equals(registry)) {
                 out.addAll(VANILLA_DIMENSIONS);
@@ -221,7 +283,7 @@ public final class RegistryEntries {
         }
         if (out.isEmpty()) {
             // outside a world (tags are only bound in a world): the tag files
-            for (String id : dataFiles(TagManager.getTagDir((ResourceKey) key(registry)))) {
+            for (String id : dataFiles(Registries.tagsDirPath((ResourceKey) key(registry)))) {
                 out.add("#" + id);
             }
         }
@@ -257,7 +319,7 @@ public final class RegistryEntries {
                         files.filter(p -> p.toString().endsWith(".json")).forEach(p -> {
                             String rel = folder.relativize(p).toString().replace('\\', '/');
                             String id = namespace + ":" + rel.substring(0, rel.length() - ".json".length());
-                            if (ResourceLocation.isValidResourceLocation(id)) {
+                            if (ResourceLocation.tryParse(id) != null) {
                                 out.add(id);
                             }
                         });

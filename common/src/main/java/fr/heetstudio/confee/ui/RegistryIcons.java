@@ -9,12 +9,9 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.effect.MobEffect;
 import net.minecraft.world.entity.EntityType;
-import net.minecraft.world.item.EnchantedBookItem;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.SpawnEggItem;
-import net.minecraft.world.item.enchantment.Enchantment;
-import net.minecraft.world.item.enchantment.EnchantmentInstance;
 import net.minecraft.world.level.material.Fluid;
 import org.jetbrains.annotations.Nullable;
 
@@ -82,9 +79,8 @@ public final class RegistryIcons {
                 return egg == null ? ItemStack.EMPTY : new ItemStack(egg);
             }
             if (ENCHANTMENT.equals(registry)) {
-                Enchantment enchantment = lookup(BuiltInRegistries.ENCHANTMENT, id);
-                return enchantment == null ? ItemStack.EMPTY
-                        : EnchantedBookItem.createForEnchantment(new EnchantmentInstance(enchantment, enchantment.getMaxLevel()));
+                // since 1.21 enchantments are data, only known in a world: the same enchanted book for all of them
+                return new ItemStack(Items.ENCHANTED_BOOK);
             }
             if (FLUID.equals(registry)) {
                 Fluid fluid = lookup(BuiltInRegistries.FLUID, id);

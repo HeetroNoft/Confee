@@ -672,7 +672,7 @@ public final class AnnotationConfigs {
 
         @Override
         public void set(Object value) {
-            super.set(new net.minecraft.resources.ResourceLocation((String) value));
+            super.set(net.minecraft.resources.ResourceLocation.parse((String) value));
         }
     }
 }

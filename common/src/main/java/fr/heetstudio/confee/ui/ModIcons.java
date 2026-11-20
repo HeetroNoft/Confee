@@ -68,7 +68,7 @@ public final class ModIcons {
             // a large logo drawn small looks better smoothed; pixel-art icons stay sharp
             texture.setFilter(image.getWidth() > 64 || image.getHeight() > 64, false);
             String safe = modId.toLowerCase(Locale.ROOT).replaceAll("[^a-z0-9_.-]", "_");
-            ResourceLocation location = new ResourceLocation("confee", "mod_icon/" + safe);
+            ResourceLocation location = ResourceLocation.fromNamespaceAndPath("confee", "mod_icon/" + safe);
             Minecraft.getInstance().getTextureManager().register(location, texture);
             return Optional.of(new Icon(location, image.getWidth(), image.getHeight()));
         } catch (Exception e) {

@@ -69,7 +69,7 @@ class AnnotationConfigsTest {
 
         public List<String> blacklist = new ArrayList<>(List.of("minecraft:dirt"));
 
-        public ResourceLocation item = new ResourceLocation("minecraft", "stone");
+        public ResourceLocation item = ResourceLocation.fromNamespaceAndPath("minecraft", "stone");
 
         public Advanced advanced = new Advanced();
 
@@ -165,7 +165,7 @@ class AnnotationConfigsTest {
         config.reload();
         FullConfig values = config.get();
         assertEquals(10.0, values.dashDistance);
-        assertEquals(new ResourceLocation("mymod", "gem"), values.item);
+        assertEquals(ResourceLocation.fromNamespaceAndPath("mymod", "gem"), values.item);
         assertFalse(values.showHud);
 
         // change a field from code, save, file is updated

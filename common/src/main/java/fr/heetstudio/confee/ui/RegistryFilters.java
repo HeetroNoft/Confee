@@ -24,7 +24,6 @@ import net.minecraft.world.item.CreativeModeTabs;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
-import net.minecraft.world.item.enchantment.Enchantment;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
@@ -109,14 +108,14 @@ public final class RegistryFilters {
             return effect != null && BuiltInRegistries.MOB_EFFECT.containsKey(id) && effect.getCategory().name().equals(f.name());
         }
         if (filter instanceof EnchantmentFilter f) {
-            if (!BuiltInRegistries.ENCHANTMENT.containsKey(id)) {
-                return false;
-            }
-            Enchantment enchantment = BuiltInRegistries.ENCHANTMENT.get(id);
+            // since 1.21 enchantments are data: tags and data files, like biomes
             return switch (f) {
-                case TREASURE -> enchantment.isTreasureOnly();
-                case CURSE -> enchantment.isCurse();
-                default -> supportedTags(f).contains(enchantment.getSupportedItems());
+                case TREASURE -> RegistryEntries.tagMembers("minecraft:enchantment", "minecraft:treasure").contains(id.toString());
+                case CURSE -> RegistryEntries.tagMembers("minecraft:enchantment", "minecraft:curse").contains(id.toString());
+                default -> {
+                    String items = RegistryEntries.enchantmentSupportedItems(id);
+                    yield items != null && supportedTags(f).stream().anyMatch(tag -> items.equals("#" + tag.location()));
+                }
             };
         }
         if (filter instanceof BiomeFilter f) {
@@ -147,7 +146,7 @@ public final class RegistryFilters {
                 HolderLookup.Provider lookup = mc.level != null ? mc.level.registryAccess() : VanillaRegistries.createLookup();
                 CreativeModeTabs.tryRebuildTabContents(flags, false, lookup);
                 CreativeModeTab tab = BuiltInRegistries.CREATIVE_MODE_TAB.get(
-                        new ResourceLocation("minecraft", f.name().toLowerCase(Locale.ROOT)));
+                        ResourceLocation.fromNamespaceAndPath("minecraft", f.name().toLowerCase(Locale.ROOT)));
                 if (tab != null) {
                     for (ItemStack stack : tab.getDisplayItems()) {
                         items.add(stack.getItem());

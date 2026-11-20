@@ -55,7 +55,7 @@ class CustomizationTest {
         public boolean showHud = true;
 
         @Item
-        public ResourceLocation item = new ResourceLocation("minecraft", "diamond");
+        public ResourceLocation item = ResourceLocation.fromNamespaceAndPath("minecraft", "diamond");
 
         @Block
         public List<String> blocks = List.of("minecraft:stone");
