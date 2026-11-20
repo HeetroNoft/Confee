@@ -2,7 +2,9 @@
 
 ![Confee is in beta. Things may still break or change between versions. Back up your config folder before editing other mods' files, and please report any issue on the issue tracker.](docs/publishing/beta-warning.png)
 
-Config library for Minecraft mods. Declare your options in one class: Confee writes the file, loads it, validates it,
+Config library for mod developers. It also adds an in-game config menu to mods that don't have one.
+
+Declare your options in one class: Confee writes the file, loads it, validates it,
 and gives your mod a Bedrock-style config screen in Mod Menu and in the Forge/NeoForge mod list. You write no screen
 or integration code.
 
