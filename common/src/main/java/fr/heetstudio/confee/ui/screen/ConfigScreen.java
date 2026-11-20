@@ -349,7 +349,7 @@ public final class ConfigScreen extends ConfeeScreen {
         ConfigScreen next = new ConfigScreen(parent, handle);
         String categoryPath = categories.isEmpty() ? "" : categories.get(Math.min(selected, categories.size() - 1)).section().path();
         next.restore(categoryPath, nav.stream().map(Section::path).toList(), scroll);
-        minecraft.setScreen(next);
+        minecraft.gui.setScreen(next);
     }
 
     /** Opens the category and the sub-screens at these paths, as far as they still exist. */
@@ -1231,7 +1231,7 @@ public final class ConfigScreen extends ConfeeScreen {
             restore.button(Component.translatable("confee.button.restore"), true, () -> {
                 closeOverlay();
                 if (external.restoreOriginal()) {
-                    minecraft.setScreen(new ConfigScreen(parent, external));
+                    minecraft.gui.setScreen(new ConfigScreen(parent, external));
                 }
             });
             restore.button(Component.translatable("confee.button.cancel"), false, this::closeOverlay);

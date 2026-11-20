@@ -5,7 +5,6 @@ import fr.heetstudio.confee.core.ConfigSource;
 import fr.heetstudio.confee.core.Node;
 import fr.heetstudio.confee.core.Section;
 import fr.heetstudio.confee.platform.Services;
-import net.minecraft.client.resources.language.I18n;
 import net.minecraft.network.chat.Component;
 import org.jetbrains.annotations.Nullable;
 
@@ -25,7 +24,7 @@ public final class Labels {
 
     public static Component name(ConfigSchema schema, Node node, String path) {
         String key = translationKey(schema, path);
-        if (schema.source() != ConfigSource.RAW_FILE && I18n.exists(key)) {
+        if (schema.source() != ConfigSource.RAW_FILE && net.minecraft.locale.Language.getInstance().has(key)) {
             return Component.translatable(key);
         }
         if (node.displayName() != null) {
@@ -38,7 +37,7 @@ public final class Labels {
     @Nullable
     public static Component description(ConfigSchema schema, Node node, String path) {
         String key = translationKey(schema, path) + ".tooltip";
-        if (schema.source() != ConfigSource.RAW_FILE && I18n.exists(key)) {
+        if (schema.source() != ConfigSource.RAW_FILE && net.minecraft.locale.Language.getInstance().has(key)) {
             return Component.translatable(key);
         }
         return node.comment() == null ? null : Component.literal(node.comment());
@@ -54,7 +53,7 @@ public final class Labels {
             return null;
         }
         String key = translationKey(schema, option.path()) + ".description";
-        if (I18n.exists(key)) {
+        if (net.minecraft.locale.Language.getInstance().has(key)) {
             return Component.translatable(key);
         }
         return text(option.description());
@@ -66,7 +65,7 @@ public final class Labels {
         if (text == null) {
             return null;
         }
-        return I18n.exists(text) ? Component.translatable(text) : Component.literal(text);
+        return net.minecraft.locale.Language.getInstance().has(text) ? Component.translatable(text) : Component.literal(text);
     }
 
     public static Component section(ConfigSchema schema, Section section) {
@@ -80,7 +79,7 @@ public final class Labels {
         if (unit == null) {
             return null;
         }
-        return I18n.exists(unit) ? Component.translatable(unit) : Component.literal(unit);
+        return net.minecraft.locale.Language.getInstance().has(unit) ? Component.translatable(unit) : Component.literal(unit);
     }
 
     public static Component enumValue(Object value) {

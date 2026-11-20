@@ -45,7 +45,7 @@ final class ConfeeForgeClient {
      * opening is not seen: the first client tick after loading registers the screens instead.
      */
     private static void onClientTick(TickEvent.ClientTickEvent.Post event) {
-        if (Minecraft.getInstance().getOverlay() == null) {
+        if (Minecraft.getInstance().gui.overlay() == null) {
             registerOnce();
         }
     }

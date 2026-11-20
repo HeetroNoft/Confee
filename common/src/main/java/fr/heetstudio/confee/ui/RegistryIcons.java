@@ -4,7 +4,6 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
-import net.minecraft.client.resources.language.I18n;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
@@ -53,7 +52,7 @@ public final class RegistryIcons {
             if (effect == null) {
                 return false;
             }
-            Identifier sprite = net.minecraft.client.gui.Gui.getMobEffectSprite(BuiltInRegistries.MOB_EFFECT.wrapAsHolder(effect));
+            Identifier sprite = net.minecraft.client.gui.Hud.getMobEffectSprite(BuiltInRegistries.MOB_EFFECT.wrapAsHolder(effect));
             g.blitSprite(RenderPipelines.GUI_TEXTURED, sprite, x, y, size, size);
             return true;
         }
@@ -128,7 +127,7 @@ public final class RegistryIcons {
             return null;
         }
         String key = kind + "." + rl.getNamespace() + "." + rl.getPath().replace('/', '.');
-        return I18n.exists(key) ? Component.translatable(key) : null;
+        return net.minecraft.locale.Language.getInstance().has(key) ? Component.translatable(key) : null;
     }
 
     @Nullable

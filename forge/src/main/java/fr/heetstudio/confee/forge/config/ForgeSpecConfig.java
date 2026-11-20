@@ -239,7 +239,7 @@ public final class ForgeSpecConfig implements EditableConfig {
     }
 
     private static String translated(@Nullable String translationKey, String key) {
-        if (translationKey != null && I18n.exists(translationKey)) {
+        if (translationKey != null && net.minecraft.locale.Language.getInstance().has(translationKey)) {
             return I18n.get(translationKey);
         }
         return ValueText.humanize(key);

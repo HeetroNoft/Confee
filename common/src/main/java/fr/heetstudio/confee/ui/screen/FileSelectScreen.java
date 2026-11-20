@@ -70,7 +70,7 @@ public final class FileSelectScreen extends ConfeeScreen {
         back = new IconButton(ui, Icon.BACK, Component.translatable("confee.nav.back"), 16, ui.theme()::titleBarText, this::onClose);
         buttons.clear();
         for (Entry entry : entries) {
-            FileButton button = new FileButton(ui, entry, () -> minecraft.setScreen(entry.open().apply(this)));
+            FileButton button = new FileButton(ui, entry, () -> minecraft.gui.setScreen(entry.open().apply(this)));
             button.setEnabled(entry.disabledReason() == null);
             buttons.add(button);
         }

@@ -14,7 +14,6 @@ import fr.heetstudio.confee.ui.render.Draw;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
-import net.minecraft.client.resources.language.I18n;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 import net.minecraft.server.packs.resources.Resource;
@@ -148,7 +147,7 @@ final class PreviewPanel {
         }
         if (preview.text() != null) {
             String text = preview.text();
-            Component component = I18n.exists(text) ? Component.translatable(text) : Component.literal(text);
+            Component component = net.minecraft.locale.Language.getInstance().has(text) ? Component.translatable(text) : Component.literal(text);
             paragraph(g, component, x + PAD, y, w, t.textOnDark());
         }
         g.disableScissor();

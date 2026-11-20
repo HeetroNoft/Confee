@@ -432,7 +432,7 @@ public abstract class ConfeeScreen extends Screen {
     @Override
     public void onClose() {
         closeOverlay();
-        minecraft.setScreen(parent);
+        minecraft.gui.setScreen(parent);
     }
 
     // ------------------------------------------------------------------ narration (spec 10.5)
