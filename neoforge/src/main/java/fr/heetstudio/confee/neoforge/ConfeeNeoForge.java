@@ -13,7 +13,7 @@ public final class ConfeeNeoForge {
 
     public ConfeeNeoForge(IEventBus modBus) {
         ConfeeMod.init();
-        if (FMLEnvironment.dist.isClient()) {
+        if (FMLEnvironment.getDist().isClient()) {
             ConfeeNeoForgeClient.init(modBus);
         }
     }

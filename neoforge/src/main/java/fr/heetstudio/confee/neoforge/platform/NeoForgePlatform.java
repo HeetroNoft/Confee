@@ -3,7 +3,6 @@ package fr.heetstudio.confee.neoforge.platform;
 import fr.heetstudio.confee.platform.Platform;
 import net.neoforged.fml.ModList;
 import net.neoforged.fml.loading.FMLEnvironment;
-import net.neoforged.fml.loading.FMLLoader;
 import net.neoforged.fml.loading.FMLPaths;
 import net.neoforged.neoforgespi.language.IModInfo;
 
@@ -26,12 +25,12 @@ public final class NeoForgePlatform implements Platform {
 
     @Override
     public boolean isClient() {
-        return FMLEnvironment.dist.isClient();
+        return FMLEnvironment.getDist().isClient();
     }
 
     @Override
     public boolean isDevelopmentEnvironment() {
-        return !FMLLoader.isProduction();
+        return !FMLEnvironment.isProduction();
     }
 
     @Override
@@ -39,7 +38,7 @@ public final class NeoForgePlatform implements Platform {
         java.util.List<Path> roots = new java.util.ArrayList<>();
         for (net.neoforged.neoforgespi.language.IModFileInfo file : ModList.get().getModFiles()) {
             try {
-                roots.add(file.getFile().getSecureJar().getRootPath());
+                roots.addAll(contentRoots(file.getFile()));
             } catch (RuntimeException e) {
                 // a mod file without readable contents: skipped
             }
@@ -77,10 +76,16 @@ public final class NeoForgePlatform implements Platform {
             return Optional.empty();
         }
         try {
-            return Optional.of(file.getFile().findResource(logo.get()));
+            for (Path root : contentRoots(file.getFile())) {
+                Path icon = root.resolve(logo.get());
+                if (java.nio.file.Files.isRegularFile(icon)) {
+                    return Optional.of(icon);
+                }
+            }
         } catch (RuntimeException e) {
-            return Optional.empty();
+            // unreadable mod file: no icon
         }
+        return Optional.empty();
     }
 
     @Override
@@ -116,5 +121,30 @@ public final class NeoForgePlatform implements Platform {
     @Override
     public java.util.Set<String> getModsWithOwnConfigScreen() {
         return java.util.Set.copyOf(OWN_CONFIG_SCREENS);
+    }
+
+    private static final java.util.Map<Path, java.nio.file.FileSystem> JAR_FILE_SYSTEMS = new java.util.concurrent.ConcurrentHashMap<>();
+
+    /**
+     * Folders holding the files of a mod. Since NeoForge 21.9 a mod's contents are given as their folders (development)
+     * or jar files: a jar is opened once as a zip file system, kept open while the game runs.
+     */
+    private static java.util.List<Path> contentRoots(net.neoforged.neoforgespi.locating.IModFile file) {
+        java.util.List<Path> roots = new java.util.ArrayList<>();
+        for (Path path : file.getContents().getContentRoots()) {
+            if (java.nio.file.Files.isDirectory(path)) {
+                roots.add(path);
+            } else if (java.nio.file.Files.isRegularFile(path)) {
+                java.nio.file.FileSystem fs = JAR_FILE_SYSTEMS.computeIfAbsent(path, jar -> {
+                    try {
+                        return java.nio.file.FileSystems.newFileSystem(jar);
+                    } catch (java.io.IOException e) {
+                        throw new java.io.UncheckedIOException(e);
+                    }
+                });
+                roots.add(fs.getPath("/"));
+            }
+        }
+        return roots;
     }
 }

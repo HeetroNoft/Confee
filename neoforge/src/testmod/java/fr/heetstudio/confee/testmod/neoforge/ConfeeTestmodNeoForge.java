@@ -10,10 +10,10 @@ public final class ConfeeTestmodNeoForge {
 
     public ConfeeTestmodNeoForge() {
         ConfeeTestmod.init();
-        if (FMLEnvironment.dist.isClient()) {
+        if (FMLEnvironment.getDist().isClient()) {
             fr.heetstudio.confee.testmod.ConfeeTestmodClient.init();
         }
-        if (FMLEnvironment.dist.isClient() && ScreenshotScript.enabled()) {
+        if (FMLEnvironment.getDist().isClient() && ScreenshotScript.enabled()) {
             ScreenshotClient.register();
         }
     }
