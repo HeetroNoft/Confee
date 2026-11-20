@@ -23,82 +23,81 @@ sourceSets.each {
     it.java.destinationDirectory = dir
 }
 
+// ForgeGradle 7 (Forge 61+, Gradle 9): runs are Slime Launcher configurations, each with its own mods
+// Runs with other names than Forge's own (client, server) get no launch settings: they copy Forge's
+def forgeClient = { spec ->
+    spec.mainClass = 'net.minecraftforge.bootstrap.ForgeBootstrap'
+    spec.args '--gameDir', '.', '--launchTarget', 'forge_userdev_client', '--version', 'MOD_DEV',
+            '--assetIndex', '{asset_index}', '--assetsDir', '{assets_root}'
+    spec.jvmArgs '-Djava.net.preferIPv6Addresses=system'
+    spec.environment 'MCP_MAPPINGS', '{mcp_mappings}'
+}
+def forgeServer = { spec ->
+    spec.mainClass = 'net.minecraftforge.bootstrap.ForgeBootstrap'
+    spec.args '--gameDir', '.', '--launchTarget', 'forge_userdev_server'
+    spec.jvmArgs '-Djava.net.preferIPv6Addresses=system'
+    spec.environment 'MCP_MAPPINGS', '{mcp_mappings}'
+}
+def testMods = { spec ->
+    spec.mods {
+        confee { source sourceSets.main }
+        confee_testmod { source sourceSets.testmod }
+        confee_rawmod { source sourceSets.rawmod }
+    }
+}
 minecraft {
     mappings channel: 'official', version: minecraft_version
-    copyIdeResources = true
 
     runs {
         configureEach {
-            property 'forge.logging.console.level', 'debug'
+            systemProperty 'forge.logging.console.level', 'debug'
+        }
+        register('client') {
+            workingDir = project.file('run')
             mods {
-                confee {
-                    source sourceSets.main
-                }
+                confee { source sourceSets.main }
             }
         }
-        client {
-            workingDirectory project.file('run')
-        }
-        server {
-            workingDirectory project.file('run-server')
+        register('server') {
+            workingDir = project.file('run-server')
             args '--nogui'
-        }
-        testmodClient {
-            parent runs.client
-            workingDirectory project.file('run')
-            taskName 'runTestmodClient'
             mods {
-                confee_testmod {
-                    source sourceSets.testmod
-                }
-                confee_rawmod {
-                    source sourceSets.rawmod
-                }
+                confee { source sourceSets.main }
             }
         }
-        testmodScreenshots {
-            parent runs.client
-            workingDirectory project.file('run-shots')
-            taskName 'runTestmodScreenshots'
-            property 'confee.testmod.screenshots', 'true'
+        register('testmodClient') {
+            forgeClient(it)
+            workingDir = project.file('run')
+            testMods(it)
+        }
+        register('testmodScreenshots') {
+            forgeClient(it)
+            workingDir = project.file('run-shots')
+            systemProperty 'confee.testmod.screenshots', 'true'
             args '--width', '1280', '--height', '720'
-            mods {
-                confee_testmod {
-                    source sourceSets.testmod
-                }
-                confee_rawmod {
-                    source sourceSets.rawmod
-                }
-            }
+            testMods(it)
         }
-        testmodServer {
-            parent runs.server
-            workingDirectory project.file('run-server')
-            taskName 'runTestmodServer'
+        register('testmodServer') {
+            forgeServer(it)
+            workingDir = project.file('run-server')
             args '--nogui'
-            mods {
-                confee_testmod {
-                    source sourceSets.testmod
-                }
-                confee_rawmod {
-                    source sourceSets.rawmod
-                }
-            }
+            testMods(it)
         }
     }
 }
 
 repositories {
-    maven {
-        name = 'Modrinth'
-        url = 'https://api.modrinth.com/maven'
-        content { includeGroup 'maven.modrinth' }
-    }
+    minecraft.mavenizer(it)
+    maven fg.forgeMaven
+    maven fg.minecraftLibsMaven
 }
 
 dependencies {
-    minecraft "net.minecraftforge:forge:${minecraft_version}-${forge_version}"
+    implementation minecraft.dependency("net.minecraftforge:forge:${minecraft_version}-${forge_version}")
     compileOnly project(':common')
+    // ForgeGradle 7 runs use the main runtime classpath: the test mods are added to it (dev runs only, never in the jar)
+    runtimeOnly sourceSets.testmod.output
+    runtimeOnly sourceSets.rawmod.output
 
     // Cohabitation tests (spec 15): no Cloth Config / YACL build for Forge on this Minecraft version
 }

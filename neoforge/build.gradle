@@ -1,8 +1,9 @@
 plugins {
-    id 'net.neoforged.gradle.userdev'
+    id 'net.neoforged.moddev'
 }
 
 // NeoForge has its own jar since 1.20.2 (spec 4.1). Same layout as the Forge module.
+// Built with ModDevGradle since 1.21.11: NeoGradle 7 does not run on Gradle 9.
 // Test mods (spec 15): never part of the published jar.
 // - testmod: uses Confee (annotations, builder, theme)
 // - rawmod: does NOT use Confee and has no screen (universal editor)
@@ -16,61 +17,65 @@ sourceSets {
         runtimeClasspath += main.runtimeClasspath
     }
 }
-// one dev mod per source set (NeoGradle groups source sets by mod identifier)
-sourceSets.main.runs { modIdentifier 'confee' }
-sourceSets.testmod.runs { modIdentifier 'confee_testmod' }
-sourceSets.rawmod.runs { modIdentifier 'confee_rawmod' }
-
-repositories {
-    maven {
-        name = 'Modrinth'
-        url = 'https://api.modrinth.com/maven'
-        content { includeGroup 'maven.modrinth' }
-    }
-}
 
 dependencies {
-    implementation "net.neoforged:neoforge:${neoforge_version}"
     compileOnly project(':common')
-    testmodImplementation "net.neoforged:neoforge:${neoforge_version}"
-    rawmodImplementation "net.neoforged:neoforge:${neoforge_version}"
+    testmodRuntimeOnly sourceSets.rawmod.output
 
     // Cohabitation test (spec 15): left out since NeoForge 21.6, whose warning screen about Cloth Config's
     // @OnlyIn annotations stops the automatic screenshots (Cloth Config is still checked on Fabric)
 }
 
-runs {
-    configureEach {
-        systemProperty 'forge.logging.console.level', 'debug'
-        modSource project.sourceSets.main
+neoForge {
+    version = neoforge_version
+    addModdingDependenciesTo sourceSets.testmod
+    addModdingDependenciesTo sourceSets.rawmod
+
+    mods {
+        confee {
+            sourceSet sourceSets.main
+        }
+        confee_testmod {
+            sourceSet sourceSets.testmod
+        }
+        confee_rawmod {
+            sourceSet sourceSets.rawmod
+        }
     }
-    client {
-        workingDirectory project.file('run')
-    }
-    server {
-        workingDirectory project.file('run-server')
-        argument '--nogui'
-    }
-    testmodClient {
-        runType 'client'
-        workingDirectory project.file('run')
-        modSource project.sourceSets.testmod
-        modSource project.sourceSets.rawmod
-    }
-    testmodScreenshots {
-        runType 'client'
-        workingDirectory project.file('run-shots')
-        systemProperty 'confee.testmod.screenshots', 'true'
-        arguments '--width', '1280', '--height', '720'
-        modSource project.sourceSets.testmod
-        modSource project.sourceSets.rawmod
-    }
-    testmodServer {
-        runType 'server'
-        workingDirectory project.file('run-server')
-        argument '--nogui'
-        modSource project.sourceSets.testmod
-        modSource project.sourceSets.rawmod
+
+    runs {
+        configureEach {
+            systemProperty 'forge.logging.console.level', 'debug'
+        }
+        client {
+            client()
+            gameDirectory = project.file('run')
+            loadedMods = [mods.confee]
+        }
+        server {
+            server()
+            gameDirectory = project.file('run-server')
+            programArgument '--nogui'
+            loadedMods = [mods.confee]
+        }
+        testmodClient {
+            client()
+            gameDirectory = project.file('run')
+            sourceSet = sourceSets.testmod
+        }
+        testmodScreenshots {
+            client()
+            gameDirectory = project.file('run-shots')
+            sourceSet = sourceSets.testmod
+            systemProperty 'confee.testmod.screenshots', 'true'
+            programArguments.addAll('--width', '1280', '--height', '720')
+        }
+        testmodServer {
+            server()
+            gameDirectory = project.file('run-server')
+            sourceSet = sourceSets.testmod
+            programArgument '--nogui'
+        }
     }
 }
 
