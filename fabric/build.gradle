@@ -146,7 +146,7 @@ publishMods {
     changelog = providers.provider { rootProject.versionChangelog() }
     type = providers.provider { me.modmuss50.mpp.ReleaseType.of(release_type) }
     version = "${mod_version}+${minecraft_version}-fabric"
-    displayName = "Confee ${mod_version} (Fabric/Quilt ${minecraft_version})"
+    displayName = "Confee ${mod_version} (Fabric/Quilt ${rootProject.mcLabel()})"
     modLoaders.addAll('fabric', 'quilt')
     dryRun = providers.environmentVariable('CONFEE_PUBLISH').map { it != 'true' }.orElse(true)
 
