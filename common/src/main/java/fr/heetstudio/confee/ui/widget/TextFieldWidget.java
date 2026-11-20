@@ -72,7 +72,7 @@ public class TextFieldWidget extends ConfeeWidget {
         box.setTextColor(ui.theme().textOnDark());
         box.setTextColorUneditable(ui.theme().textDisabled());
         box.setValue(text);
-        box.moveCursorToStart();
+        box.moveCursorToStart(false);
         if (filter != null) {
             box.setFilter(filter);
         }
@@ -142,7 +142,7 @@ public class TextFieldWidget extends ConfeeWidget {
         if (!text.equals(box.getValue())) {
             box.setResponder(s -> { });
             box.setValue(text);
-            box.moveCursorToStart();
+            box.moveCursorToStart(false);
             box.setResponder(responder);
         }
     }
@@ -150,7 +150,7 @@ public class TextFieldWidget extends ConfeeWidget {
     /** Replaces the text as if typed (the edit callback runs). */
     public void setTextAndNotify(String text) {
         box.setValue(text);
-        box.moveCursorToEnd();
+        box.moveCursorToEnd(false);
     }
 
     public void setResponder(Consumer<String> onEdit) {
@@ -359,7 +359,7 @@ public class TextFieldWidget extends ConfeeWidget {
     private void accept(String suggestion) {
         ui.click();
         box.setValue(suggestion);
-        box.moveCursorToEnd();
+        box.moveCursorToEnd(false);
         suggestions = List.of();
         selectedSuggestion = -1;
     }
@@ -373,7 +373,7 @@ public class TextFieldWidget extends ConfeeWidget {
         box.setFocused(focused);
         if (gained) {
             // keyboard focus: caret at the end, ready to type (a mouse click then places it precisely)
-            box.moveCursorToEnd();
+            box.moveCursorToEnd(false);
         }
         if (!focused) {
             suggestions = List.of();
@@ -471,7 +471,7 @@ public class TextFieldWidget extends ConfeeWidget {
 
     @Override
     public void tick() {
-        box.tick();
+        // the vanilla cursor blinks on its own since 1.20.2
     }
 
     @Override

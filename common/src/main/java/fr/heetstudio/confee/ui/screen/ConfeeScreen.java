@@ -331,7 +331,7 @@ public abstract class ConfeeScreen extends Screen {
     }
 
     @Override
-    public boolean mouseScrolled(double mx, double my, double delta) {
+    public boolean mouseScrolled(double mx, double my, double scrollX, double delta) {
         if (overlay != null) {
             return overlay.mouseScrolled(mx, my, delta);
         }

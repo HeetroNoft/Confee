@@ -125,7 +125,7 @@ public class MultilineFieldWidget extends ConfeeWidget {
         // the vanilla box always takes the wheel, even when its text fits or it is already at the top / bottom: the
         // wheel then goes to the option panel, so the screen keeps scrolling when the mouse passes over the box
         double before = box.scroll();
-        box.mouseScrolled(mx, my, delta);
+        box.mouseScrolled(mx, my, 0, delta);
         return box.scroll() != before;
     }
 
@@ -153,7 +153,7 @@ public class MultilineFieldWidget extends ConfeeWidget {
 
     @Override
     public void tick() {
-        box.tick();
+        // the vanilla cursor blinks on its own since 1.20.2
     }
 
     @Override

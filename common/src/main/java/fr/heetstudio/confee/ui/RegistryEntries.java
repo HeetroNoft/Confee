@@ -11,6 +11,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.PackType;
 import net.minecraft.server.packs.VanillaPackResources;
 import net.minecraft.server.packs.repository.ServerPacksSource;
+import net.minecraft.world.level.validation.DirectoryValidator;
 import net.minecraft.tags.TagManager;
 import org.jetbrains.annotations.Nullable;
 
@@ -103,7 +104,7 @@ public final class RegistryEntries {
         List<String> jsons = new ArrayList<>();
         try {
             if (vanillaData == null) {
-                vanillaData = new ServerPacksSource().getVanillaPack();
+                vanillaData = new ServerPacksSource(new DirectoryValidator(file -> false)).getVanillaPack();
             }
             var resource = vanillaData.getResource(PackType.SERVER_DATA, new ResourceLocation(tag.getNamespace(), path));
             if (resource != null) {
@@ -232,7 +233,7 @@ public final class RegistryEntries {
         Set<String> out = new HashSet<>();
         try {
             if (vanillaData == null) {
-                vanillaData = new ServerPacksSource().getVanillaPack();
+                vanillaData = new ServerPacksSource(new DirectoryValidator(file -> false)).getVanillaPack();
             }
             for (String namespace : vanillaData.getNamespaces(PackType.SERVER_DATA)) {
                 vanillaData.listResources(PackType.SERVER_DATA, namespace, dir, (id, stream) -> addJson(out, id, dir));
