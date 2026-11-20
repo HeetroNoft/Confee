@@ -7,6 +7,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraftforge.client.ConfigScreenHandler;
 import net.minecraftforge.client.event.ScreenEvent;
+import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.fml.ModList;
@@ -28,14 +29,29 @@ final class ConfeeForgeClient {
     static void init(IEventBus modBus) {
         ConfeeScreens.initClient();
         MinecraftForge.EVENT_BUS.addListener(ConfeeForgeClient::onScreenOpening);
+        MinecraftForge.EVENT_BUS.addListener(ConfeeForgeClient::onClientTick);
     }
 
     /**
-     * Confee goes last: its screens are registered when the first screen opens (the title screen), after the client
+     * Confee goes last: its screens are registered when the first screen opens or on the first tick after loading, after the client
      * setup of every mod. A mod or a screen provider such as Configured that registers its factory during its own
      * setup keeps it (Confee only wraps it), whatever the loading order.
      */
     private static void onScreenOpening(ScreenEvent.Opening event) {
+        registerOnce();
+    }
+
+    /**
+     * Since 1.20.2 the title screen is set behind the loading overlay, before the mods are constructed, so its
+     * opening is not seen: the first client tick after loading registers the screens instead.
+     */
+    private static void onClientTick(TickEvent.ClientTickEvent event) {
+        if (event.phase == TickEvent.Phase.END && Minecraft.getInstance().getOverlay() == null) {
+            registerOnce();
+        }
+    }
+
+    private static void registerOnce() {
         if (screensRegistered) {
             return;
         }
