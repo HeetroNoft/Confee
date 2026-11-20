@@ -116,10 +116,10 @@ public class AnnotatedTestConfig {
 
     @Item
     @Comment("Item: icon, suggestions, picker and automatic preview")
-    public ResourceLocation item = new ResourceLocation("minecraft", "diamond");
+    public ResourceLocation item = ResourceLocation.fromNamespaceAndPath("minecraft", "diamond");
 
     @Block
-    public ResourceLocation favoriteBlock = new ResourceLocation("minecraft", "grass_block");
+    public ResourceLocation favoriteBlock = ResourceLocation.fromNamespaceAndPath("minecraft", "grass_block");
 
     @Suggestions({"north", "south", "east", "west", "up", "down"})
     @Description("Suggestions given by the mod (press Down).")
