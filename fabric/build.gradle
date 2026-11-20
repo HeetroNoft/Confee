@@ -1,5 +1,6 @@
 plugins {
-    id 'fabric-loom'
+    // Minecraft 26.1+ is not obfuscated: the non-remapping Loom
+    id 'net.fabricmc.fabric-loom'
 }
 
 repositories {
@@ -26,19 +27,18 @@ repositories {
 
 dependencies {
     minecraft "com.mojang:minecraft:${minecraft_version}"
-    mappings loom.officialMojangMappings()
-    modImplementation "net.fabricmc:fabric-loader:${fabric_loader_version}"
-    modImplementation "net.fabricmc.fabric-api:fabric-api:${fabric_api_version}"
+    implementation "net.fabricmc:fabric-loader:${fabric_loader_version}"
+    implementation "net.fabricmc.fabric-api:fabric-api:${fabric_api_version}"
 
     // Optional: Confee works without Mod Menu (spec 9.1)
-    modCompileOnly("com.terraformersmc:modmenu:${modmenu_version}") { transitive = false }
+    compileOnly("com.terraformersmc:modmenu:${modmenu_version}") { transitive = false }
     // -PnoModMenu: runs without Mod Menu, to check Confee works without it
     if (!project.hasProperty('noModMenu')) {
-        modLocalRuntime("com.terraformersmc:modmenu:${modmenu_version}") { transitive = false }
+        localRuntime("com.terraformersmc:modmenu:${modmenu_version}") { transitive = false }
     }
 
     // Cohabitation tests (spec 15), dev runs only: mods with their own config screens
-    modLocalRuntime "maven.modrinth:cloth-config:${cloth_config_fabric_version}"
+    localRuntime "maven.modrinth:cloth-config:${cloth_config_fabric_version}"
     // YACL: no build for this Minecraft version that this Loom can read (class tweaker format)
     localRuntime "org.quiltmc.parsers:json:0.2.1"
     localRuntime "me.shedaniel.cloth:basic-math:0.6.1"
@@ -142,7 +142,7 @@ processResources {
 // Publishing (spec 16). Always a dry run unless CONFEE_PUBLISH=true; tokens only come from environment variables.
 apply plugin: 'me.modmuss50.mod-publish-plugin'
 publishMods {
-    file = remapJar.archiveFile
+    file = jar.archiveFile
     changelog = providers.provider { rootProject.versionChangelog() }
     type = providers.provider { me.modmuss50.mpp.ReleaseType.of(release_type) }
     version = "${mod_version}+${minecraft_version}-fabric"

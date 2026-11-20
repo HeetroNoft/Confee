@@ -1,9 +1,12 @@
 plugins {
-    id 'org.spongepowered.gradle.vanilla'
+    // Minecraft 26.1+ is not obfuscated and VanillaGradle cannot set it up: ModDevGradle in vanilla mode (NeoForm)
+    id 'net.neoforged.moddev'
 }
 
-minecraft {
-    version(minecraft_version)
+neoForge {
+    neoFormVersion = neoform_version
+    // the unit tests and the test mod also need Minecraft's classes
+    addModdingDependenciesTo sourceSets.test
 }
 
 // Test mod (spec 15): shared code, compiled by each loader module. Never published.

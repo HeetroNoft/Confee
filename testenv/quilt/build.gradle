@@ -1,5 +1,7 @@
 plugins {
     id 'java'
+    // Quilt Loom cannot set up Minecraft 26.1+ (not obfuscated, no mappings): from 26.1 on, Quilt is checked with a
+    // Quilt server running the release jar instead of these dev runs
     id 'org.quiltmc.loom' version '1.14.3'
 }
 
@@ -13,11 +15,11 @@ file('../../gradle.properties').withInputStream { props.load(it) }
 props.each { k, v -> ext.set(k, v) }
 
 java {
-    toolchain.languageVersion = JavaLanguageVersion.of(21)
+    toolchain.languageVersion = JavaLanguageVersion.of(25)
 }
 tasks.withType(JavaCompile).configureEach {
     options.encoding = 'UTF-8'
-    options.release.set(21)
+    options.release.set(25)
 }
 
 repositories {
@@ -108,7 +110,7 @@ def releaseJar = new File(repo, "fabric/build/libs/confee-${mod_version}+${minec
     tasks.register("installConfee${suffix}") {
         doLast {
             if (!releaseJar.exists()) {
-                throw new GradleException("Build the Fabric jar first (main build: :fabric:remapJar): ${releaseJar}")
+                throw new GradleException("Build the Fabric jar first (main build: :fabric:jar): ${releaseJar}")
             }
             def mods = file("${dirName}/mods")
             mods.mkdirs()

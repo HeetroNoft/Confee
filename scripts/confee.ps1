@@ -3,8 +3,8 @@
     Runs Confee in development, without remembering Gradle flags.
 
 .DESCRIPTION
-    Picks a JDK 21 for Gradle (your global ~/.gradle/gradle.properties points to a JDK 25 that Gradle 8.8
-    cannot run), then starts the requested task.
+    Picks a JDK 25 for Gradle (Minecraft 26.1+ needs Gradle itself on Java 25), then starts the requested
+    task.
 
 .EXAMPLE
     .\scripts\confee.ps1 fabric        # Minecraft client, Fabric + Mod Menu + test mods
@@ -64,12 +64,12 @@ if ($Task -eq 'help') {
     exit 0
 }
 
-# A JDK 21 for Gradle (Minecraft 1.20.5+ needs Gradle itself on Java 21): one Gradle downloaded, an installed
+# A JDK 25 for Gradle (Minecraft 26.1+ needs Gradle itself on Java 25): one Gradle downloaded, an installed
 # Adoptium JDK, else JAVA_HOME
 $jdk = $null
 $candidates = @((Join-Path $env:USERPROFILE '.gradle\jdks'), (Join-Path $env:ProgramFiles 'Eclipse Adoptium')) | Where-Object { Test-Path $_ }
 foreach ($dir in $candidates) {
-    $jdk = Get-ChildItem $dir -Directory | Where-Object { $_.Name -match '(^|[-_])21' -and (Test-Path (Join-Path $_.FullName 'bin\java.exe')) } |
+    $jdk = Get-ChildItem $dir -Directory | Where-Object { $_.Name -match '(^|[-_])25' -and (Test-Path (Join-Path $_.FullName 'bin\java.exe')) } |
         Select-Object -First 1 -ExpandProperty FullName
     if ($jdk) { break }
 }
@@ -77,7 +77,7 @@ if (-not $jdk -and $env:JAVA_HOME) {
     $jdk = $env:JAVA_HOME
 }
 if (-not $jdk) {
-    Write-Error 'No JDK 21 found. Install one (Adoptium) or set JAVA_HOME to a JDK 21.'
+    Write-Error 'No JDK 25 found. Install one (Adoptium) or set JAVA_HOME to a JDK 25.'
 }
 
 $javaHome = "-Dorg.gradle.java.home=$($jdk -replace '\\', '/')"
@@ -86,7 +86,7 @@ $javaHome = "-Dorg.gradle.java.home=$($jdk -replace '\\', '/')"
 # it first needs the Fabric release jar from the main build.
 function Invoke-ConfeeTask([string] $gradleTask) {
     if ($gradleTask -like 'quilt:*') {
-        & "$root\gradlew.bat" $javaHome ':fabric:remapJar' | Out-Host
+        & "$root\gradlew.bat" $javaHome ':fabric:jar' | Out-Host
         if ($LASTEXITCODE -ne 0) { return $LASTEXITCODE }
         & "$root\gradlew.bat" $javaHome '-p' "$root\testenv\quilt" ($gradleTask -replace '^quilt:', '') | Out-Host
         return $LASTEXITCODE
