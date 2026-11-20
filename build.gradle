@@ -6,6 +6,12 @@ plugins {
     id 'me.modmuss50.mod-publish-plugin' version '0.8.4' apply false
 }
 
+// Minecraft versions of the jars, for titles: "1.20.3-1.20.4" (or one version)
+ext.mcLabel = { ->
+    def versions = minecraft_versions.split(',')
+    return versions.size() > 1 ? "${versions.first()}-${versions.last()}" : versions[0]
+}
+
 // Changelog of the published version only: the "## <mod_version> ..." section of CHANGELOG.md
 ext.versionChangelog = { ->
     def lines = rootProject.file('CHANGELOG.md').readLines('UTF-8')
