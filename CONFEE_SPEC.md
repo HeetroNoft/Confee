@@ -94,6 +94,7 @@ Loaders : Fabric, Quilt, Forge, NeoForge. Première cible : **Minecraft 1.20.1**
 - ✅ DÉCIDÉ (Lucas, 2026-11-20) : chaque branche après 1.20.1 publie **3 jars : Fabric (+ Quilt), NeoForge, Forge**. Ports faits dans l'ordre chronologique, chaque branche partant de la précédente.
 - ✅ DÉCIDÉ (Lucas, 2026-11-20) : un port n'est publié (GitHub, Modrinth, CurseForge) qu'une fois le build, les tests unitaires et le script de captures passés sur chacun de ses loaders.
 - **Multi-loader** : structure **MultiLoader** (modules `common` / `fabric` / `forge`, Fabric Loom + ForgeGradle, VanillaGradle pour `common`).
+  - Adaptations imposées par les versions récentes (2026-11-20) : module `neoforge` à partir de 1.20.2 (NeoGradle 7, puis ModDevGradle à partir de 1.21.11 car NeoGradle ne tourne pas sous Gradle 9) ; ForgeGradle 7 + Gradle 9 à partir de 1.21.11 (Forge 61+) ; à partir de 26.1 (Minecraft non obfusqué), `common` passe par ModDevGradle en mode vanilla (NeoForm), VanillaGradle ne sachant pas préparer ces versions, et Fabric par le Loom sans remapping (`net.fabricmc.fabric-loom`).
 - **JDK** : toolchain Gradle automatique (foojay) → Java 17 téléchargé par Gradle, rien à installer.
 - **Aucune dépendance runtime obligatoire** pour le joueur hormis le loader (et Fabric API côté Fabric). Mod Menu = dépendance **optionnelle**.
 

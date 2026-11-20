@@ -8,7 +8,7 @@ Declare your options in one class: Confee writes the file, loads it, validates i
 and gives your mod a Bedrock-style config screen in Mod Menu and in the Forge/NeoForge mod list. You write no screen
 or integration code.
 
-Minecraft 1.21.11 · Fabric, Quilt, NeoForge, Forge · Java 21 · LGPL-3.0
+Minecraft 26.1 – 26.1.2 · Fabric, Quilt, NeoForge, Forge · Java 25 · LGPL-3.0
 
 > **Playing, not coding?** Confee also adds a **Config** button to mods that have none. See [For players](docs/players.md).
 
@@ -28,13 +28,13 @@ repositories {
 
 dependencies {
     // Fabric, Quilt (Loom)
-    modImplementation 'maven.modrinth:confee:<version>+1.21.11-fabric'
+    modImplementation 'maven.modrinth:confee:<version>+26.1.2-fabric'
 
     // NeoForge (NeoGradle)
-    implementation 'maven.modrinth:confee:<version>+1.21.11-neoforge'
+    implementation 'maven.modrinth:confee:<version>+26.1.2-neoforge'
 
     // Forge (ForgeGradle)
-    implementation fg.deobf('maven.modrinth:confee:<version>+1.21.11-forge')
+    implementation fg.deobf('maven.modrinth:confee:<version>+26.1.2-forge')
 }
 ```
 

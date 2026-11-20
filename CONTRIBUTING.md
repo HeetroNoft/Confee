@@ -34,7 +34,7 @@ dedicated server.
 
 ## Rules the code follows
 
-- Java 21 only (Minecraft 1.20.5+), no Kotlin.
+- Java 25 only (Minecraft 26.1+), no Kotlin.
 - NeoForge and Forge each have their own jar since 1.20.2. The Fabric jar must also run on Quilt.
 - No client class (`Screen`, `Minecraft`, rendering…) in code that a dedicated server loads.
 - `fr.heetstudio.confee.api` is the public API. Do not break it without saying so in the pull request; everything
