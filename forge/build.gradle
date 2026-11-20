@@ -145,7 +145,7 @@ publishMods {
     changelog = providers.provider { rootProject.versionChangelog() }
     type = providers.provider { me.modmuss50.mpp.ReleaseType.of(release_type) }
     version = "${mod_version}+${minecraft_version}-forge"
-    displayName = "Confee ${mod_version} (Forge ${minecraft_version})"
+    displayName = "Confee ${mod_version} (Forge ${rootProject.mcLabel()})"
     modLoaders.add('forge')
     dryRun = providers.environmentVariable('CONFEE_PUBLISH').map { it != 'true' }.orElse(true)
 
