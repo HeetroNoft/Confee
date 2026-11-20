@@ -4,8 +4,7 @@ Draft to review before the first release. Nothing here is published automaticall
 
 ## Summary (Modrinth "summary", 256 characters max)
 
-Config library with auto-generated Bedrock-style screens, and an in-game editor that adds a Config button to mods
-that have none and edits their config files safely.
+Config library for mod developers. It also adds an in-game config menu to mods that don't have one.
 
 ## Categories / tags (spec 16)
 
