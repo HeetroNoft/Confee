@@ -24,7 +24,11 @@ public final class Draw {
 
     public static void outline(GuiGraphics g, int x, int y, int w, int h, int color) {
         if (w > 0 && h > 0) {
-            g.submitOutline(x, y, w, h, color);
+            // four fills rather than submitOutline, which ignores the scissor area since 1.21.9
+            g.fill(x, y, x + w, y + 1, color);
+            g.fill(x, y + h - 1, x + w, y + h, color);
+            g.fill(x, y + 1, x + 1, y + h - 1, color);
+            g.fill(x + w - 1, y + 1, x + w, y + h - 1, color);
         }
     }
 
