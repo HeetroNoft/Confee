@@ -30,9 +30,6 @@ minecraft {
     runs {
         configureEach {
             property 'forge.logging.console.level', 'debug'
-            // lets third-party mixin mods (YACL, cohabitation tests) run in dev
-            property 'mixin.env.remapRefMap', 'true'
-            property 'mixin.env.refMapRemappingFile', "${projectDir}/build/createSrgToMcp/output.srg"
             mods {
                 confee {
                     source sourceSets.main
@@ -140,7 +137,6 @@ tasks.matching { it.name == 'runTestmodClient' }.configureEach { dependsOn 'inst
 tasks.matching { it.name == 'runTestmodServer' }.configureEach { dependsOn 'installTestFixturesRunServer' }
 tasks.matching { it.name == 'runTestmodScreenshots' }.configureEach { dependsOn 'installTestFixturesRunShots' }
 
-jar.finalizedBy('reobfJar')
 
 // Publishing (spec 16). Always a dry run unless CONFEE_PUBLISH=true; tokens only come from environment variables.
 apply plugin: 'me.modmuss50.mod-publish-plugin'
@@ -166,8 +162,7 @@ publishMods {
         serverRequired = false
     }
 }
-// The upload tasks read the jar file: it must be reobfuscated (SRG names) before they run
-tasks.matching { it.name in ['publishMods', 'publishModrinth', 'publishCurseforge'] }.configureEach { dependsOn 'reobfJar' }
+// Forge 50+ runs on Mojang names: the jar is published as built, without reobfuscation
 
 // Shared testmod resources (preview images...)
 tasks.named('processTestmodResources', ProcessResources) {
