@@ -668,7 +668,7 @@ public final class ScreenshotScript {
                 Path pack = save.resolve("datapacks/confee_test_pack");
                 Files.createDirectories(pack.resolve("data/confee_pack/worldgen/biome"));
                 int packFormat = net.minecraft.SharedConstants.getCurrentVersion()
-                        .getPackVersion(net.minecraft.server.packs.PackType.SERVER_DATA);
+                        .packVersion(net.minecraft.server.packs.PackType.SERVER_DATA);
                 Files.writeString(pack.resolve("pack.mcmeta"),
                         "{\"pack\": {\"pack_format\": " + packFormat + ", \"description\": \"Confee test biome\"}}");
                 Files.writeString(pack.resolve("data/confee_pack/worldgen/biome/glow_meadow.json"), String.join("\n",
@@ -721,9 +721,9 @@ public final class ScreenshotScript {
             // leave without saving the edits, then back to the title screen
             mc.setScreen(null);
             if (mc.level != null) {
-                mc.level.disconnect();
+                mc.level.disconnect(net.minecraft.network.chat.Component.empty());
             }
-            mc.disconnect(new TitleScreen());
+            mc.disconnect(new TitleScreen(), false);
         });
         waitUntil(600, mc -> mc.level == null && mc.getSingleplayerServer() == null);
     }
@@ -793,7 +793,7 @@ public final class ScreenshotScript {
     }
 
     private void shot(String name) {
-        step(5, mc -> Screenshot.grab(mc.gameDirectory, "confee-" + name + ".png", mc.getMainRenderTarget(), message -> {
+        step(5, mc -> Screenshot.grab(mc.gameDirectory, "confee-" + name + ".png", mc.getMainRenderTarget(), 1, message -> {
         }));
     }
 
