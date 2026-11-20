@@ -27,8 +27,8 @@ public final class ConfeeRawmodNeoForge {
                     }
                 });
         container.registerConfig(ModConfig.Type.CLIENT, clientSpec(), "confee_rawmod-forge-client.toml");
-        container.registerConfig(ModConfig.Type.COMMON, commonSpec(), "confee_rawmod-forge-common.toml");
-        container.registerConfig(ModConfig.Type.SERVER, serverSpec(), "confee_rawmod-forge-server.toml");
+        container.registerConfig(ModConfig.Type.LOCAL, commonSpec(), "confee_rawmod-forge-common.toml");
+        container.registerConfig(ModConfig.Type.SYNCED, serverSpec(), "confee_rawmod-forge-server.toml");
     }
 
     private static ModConfigSpec clientSpec() {

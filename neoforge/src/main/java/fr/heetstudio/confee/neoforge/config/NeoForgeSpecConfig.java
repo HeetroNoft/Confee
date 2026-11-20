@@ -49,14 +49,14 @@ public final class NeoForgeSpecConfig implements EditableConfig {
     NeoForgeSpecConfig(ModConfig modConfig, ModConfigSpec spec, Path filePath) {
         this.modConfig = modConfig;
         this.spec = spec;
-        this.readOnly = modConfig.getType() == ModConfig.Type.SERVER;
+        this.readOnly = modConfig.getType() == ModConfig.Type.SYNCED;
         Section root = Section.root(null);
         walk(spec.getSpec(), spec.getValues(), new ArrayList<>(), root);
         ConfigScope scope = switch (modConfig.getType()) {
             case CLIENT -> ConfigScope.CLIENT;
-            // STARTUP (NeoForge 20.5+): a common config read once at launch
-            case COMMON, STARTUP -> ConfigScope.COMMON;
-            case SERVER -> ConfigScope.SERVER;
+            // NeoForge 26.3: LOCAL is the former COMMON, SYNCED the former SERVER; STARTUP is read once at launch
+            case LOCAL, STARTUP -> ConfigScope.COMMON;
+            case SYNCED -> ConfigScope.SERVER;
         };
         this.schema = new ConfigSchema(modConfig.getModId(), type(modConfig), scope, ConfigFormat.TOML, filePath,
                 Theme.DEFAULT, ConfigSource.FORGE_SPEC, root);

@@ -35,7 +35,7 @@ public final class NeoForgeLoaderConfig implements LoaderConfig {
                 .filter(c -> c.getSpec() instanceof ModConfigSpec)
                 .forEach(configs::add);
         // Client, Common, Server (spec 10.4 A order), not Forge's enum order
-        List<ModConfig.Type> order = List.of(ModConfig.Type.CLIENT, ModConfig.Type.COMMON, ModConfig.Type.STARTUP, ModConfig.Type.SERVER);
+        List<ModConfig.Type> order = List.of(ModConfig.Type.CLIENT, ModConfig.Type.LOCAL, ModConfig.Type.STARTUP, ModConfig.Type.SYNCED);
         configs.sort(Comparator.comparing((ModConfig c) -> order.indexOf(c.getType())).thenComparing(ModConfig::getFileName));
         List<LoaderConfig> out = new ArrayList<>();
         for (ModConfig c : configs) {
@@ -71,7 +71,7 @@ public final class NeoForgeLoaderConfig implements LoaderConfig {
 
     @Override
     public boolean readOnly() {
-        return config.getType() == ModConfig.Type.SERVER;
+        return config.getType() == ModConfig.Type.SYNCED;
     }
 
     @Override
@@ -86,7 +86,7 @@ public final class NeoForgeLoaderConfig implements LoaderConfig {
             return null;
         }
         try {
-            Path path = config.getType() == ModConfig.Type.SERVER ? config.getFullPath()
+            Path path = config.getType() == ModConfig.Type.SYNCED ? config.getFullPath()
                     : FMLPaths.CONFIGDIR.get().resolve(config.getFileName());
             return new NeoForgeSpecConfig(config, (ModConfigSpec) config.getSpec(), path);
         } catch (RuntimeException e) {
