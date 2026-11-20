@@ -88,7 +88,8 @@ Toutes tranchées par Lucas le 2026-11-19 et reportées dans `CONFEE_SPEC.md` (�
       - `26.2` : fabric MgZflMWQ, neoforge KrHLKJU7, forge pVWjCH6I
       - `26.3` : fabric txUYL3KE, neoforge nllwjiqs, forge 2yZRTn9r
 - [ ] Limites connues des ports : NeoForge 26.1+ hors monde : les items n'ont que leur modèle et leur nom (icônes OK, filtre « ingrédients » vide tant qu'aucun monde n'est chargé). NeoForge 21.6+ : pas de Cloth Config dans les lancements de dev (écran d'avertissement).
-- [ ] À décider par Lucas : le jar Forge 0.1.0 sur Modrinth (et sans doute CurseForge) est cassé (non réobfusqué).
+- [ ] Jar Forge 0.1.0 cassé (non réobfusqué) : **supprimé de Modrinth** (version `WjjCG70R`, 2026-11-21). Reste à le
+      retirer de CurseForge à la main (fichier `9704564`, l'API d'upload ne permet pas de supprimer).
 
 ## 4. Limites connues (V1.1 / V2)
 
