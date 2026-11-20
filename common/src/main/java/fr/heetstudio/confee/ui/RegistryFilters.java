@@ -147,6 +147,7 @@ public final class RegistryFilters {
                 CreativeModeTab tab = BuiltInRegistries.CREATIVE_MODE_TAB.getValue(
                         Identifier.fromNamespaceAndPath("minecraft", f.name().toLowerCase(Locale.ROOT)));
                 if (tab != null) {
+                    ItemComponents.ensureBound();
                     tab.buildContents(new CreativeModeTab.ItemDisplayParameters(flags, false, lookup));
                     for (ItemStack stack : tab.getDisplayItems()) {
                         items.add(stack.getItem());

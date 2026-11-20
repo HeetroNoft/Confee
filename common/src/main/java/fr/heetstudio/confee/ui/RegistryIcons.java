@@ -2,7 +2,7 @@ package fr.heetstudio.confee.ui;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.RenderPipelines;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.client.resources.language.I18n;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -44,7 +44,7 @@ public final class RegistryIcons {
     }
 
     /** Draws the icon of an entry in a {@code size} box; false when it has none (unknown ID...). */
-    public static boolean draw(GuiGraphics g, @Nullable String registry, String id, int x, int y, int size) {
+    public static boolean draw(GuiGraphicsExtractor g, @Nullable String registry, String id, int x, int y, int size) {
         if (registry != null && fr.heetstudio.confee.core.PseudoRegistries.isModList(registry)) {
             return ModIcons.draw(g, id, x, y, size);
         }
@@ -71,24 +71,34 @@ public final class RegistryIcons {
             return ItemStack.EMPTY;
         }
         return STACKS.computeIfAbsent(registry + "|" + id, k -> {
-            if (ITEM.equals(registry) || BLOCK.equals(registry)) {
-                return ItemIcons.stack(registry, id);
+            try {
+                return buildStack(registry, id);
+            } catch (RuntimeException e) {
+                // an item that cannot be built (26.1+: components not bound outside a world) gets no icon
+                return ItemStack.EMPTY;
             }
-            if (ENTITY.equals(registry)) {
-                EntityType<?> type = lookup(BuiltInRegistries.ENTITY_TYPE, id);
-                SpawnEggItem egg = type == null ? null : SpawnEggItem.byId(type);
-                return egg == null ? ItemStack.EMPTY : new ItemStack(egg);
-            }
-            if (ENCHANTMENT.equals(registry)) {
-                // since 1.21 enchantments are data, only known in a world: the same enchanted book for all of them
-                return new ItemStack(Items.ENCHANTED_BOOK);
-            }
-            if (FLUID.equals(registry)) {
-                Fluid fluid = lookup(BuiltInRegistries.FLUID, id);
-                return fluid == null || fluid.getBucket() == Items.AIR ? ItemStack.EMPTY : new ItemStack(fluid.getBucket());
-            }
-            return ItemStack.EMPTY;
         });
+    }
+
+    private static ItemStack buildStack(String registry, String id) {
+        ItemComponents.ensureBound();
+        if (ITEM.equals(registry) || BLOCK.equals(registry)) {
+            return ItemIcons.stack(registry, id);
+        }
+        if (ENTITY.equals(registry)) {
+            EntityType<?> type = lookup(BuiltInRegistries.ENTITY_TYPE, id);
+            return type == null ? ItemStack.EMPTY
+                    : SpawnEggItem.byId(type).map(egg -> ItemComponents.stack(egg.value())).orElse(ItemStack.EMPTY);
+        }
+        if (ENCHANTMENT.equals(registry)) {
+            // since 1.21 enchantments are data, only known in a world: the same enchanted book for all of them
+            return ItemComponents.stack(Items.ENCHANTED_BOOK);
+        }
+        if (FLUID.equals(registry)) {
+            Fluid fluid = lookup(BuiltInRegistries.FLUID, id);
+            return fluid == null || fluid.getBucket() == Items.AIR ? ItemStack.EMPTY : ItemComponents.stack(fluid.getBucket());
+        }
+        return ItemStack.EMPTY;
     }
 
     /** Translated name of the entry when the game knows one ("Zombie", "Plains", "Speed"...), else null. */

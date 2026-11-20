@@ -1,7 +1,7 @@
 package fr.heetstudio.confee.ui;
 
 import fr.heetstudio.confee.ui.screen.Textures;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.Identifier;
@@ -40,29 +40,29 @@ public final class ItemIcons {
                     return ItemStack.EMPTY;
                 }
                 Block block = BuiltInRegistries.BLOCK.getValue(rl);
-                return block.asItem() == Items.AIR ? ItemStack.EMPTY : new ItemStack(block.asItem());
+                return block.asItem() == Items.AIR ? ItemStack.EMPTY : ItemComponents.stack(block.asItem());
             }
             if ("minecraft:item".equals(registry) && BuiltInRegistries.ITEM.containsKey(rl)) {
-                return new ItemStack(BuiltInRegistries.ITEM.getValue(rl));
+                return ItemComponents.stack(BuiltInRegistries.ITEM.getValue(rl));
             }
             return ItemStack.EMPTY;
         });
     }
 
     /** Draws an item at {@code size} pixels (16 = native size). */
-    public static void drawItem(GuiGraphics g, ItemStack stack, int x, int y, int size) {
+    public static void drawItem(GuiGraphicsExtractor g, ItemStack stack, int x, int y, int size) {
         if (stack.isEmpty()) {
             return;
         }
         if (size == 16) {
-            g.renderItem(stack, x, y);
+            g.item(stack, x, y);
             return;
         }
         float scale = size / 16f;
         g.pose().pushMatrix();
         g.pose().translate(x, y);
         g.pose().scale(scale, scale);
-        g.renderItem(stack, 0, 0);
+        g.item(stack, 0, 0);
         g.pose().popMatrix();
     }
 
@@ -70,7 +70,7 @@ public final class ItemIcons {
      * Icon of a category / decoration: an item ID, or a texture ({@code ns:textures/....png}) drawn in a
      * {@code size}×{@code size} box. Unknown items draw nothing.
      */
-    public static void drawIcon(GuiGraphics g, @Nullable String spec, int x, int y, int size) {
+    public static void drawIcon(GuiGraphicsExtractor g, @Nullable String spec, int x, int y, int size) {
         if (spec == null) {
             return;
         }
