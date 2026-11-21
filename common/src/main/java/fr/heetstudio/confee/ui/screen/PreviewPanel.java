@@ -47,12 +47,26 @@ final class PreviewPanel {
     private final Map<Option<?>, PreviewRenderer> renderers = new HashMap<>();
     private final Set<Option<?>> brokenRenderers = new HashSet<>();
     private final int width;
+    /** Pending values of the config and theme, for the renderers (spec 10.6). */
+    private final fr.heetstudio.confee.api.PreviewContext context;
 
     PreviewPanel(Ui ui, ConfigSchema schema, EditSession session, int width) {
         this.ui = ui;
         this.schema = schema;
         this.session = session;
         this.width = width;
+        this.context = new fr.heetstudio.confee.api.PreviewContext() {
+            @Override
+            @SuppressWarnings({"unchecked", "rawtypes"})
+            public Object value(String path) {
+                return path == null ? null : schema.root().findOption(path).map(o -> session.get((Option) o)).orElse(null);
+            }
+
+            @Override
+            public Theme theme() {
+                return ui.theme();
+            }
+        };
     }
 
     int width() {
@@ -200,7 +214,7 @@ final class PreviewPanel {
             int h = Math.min(MAX_MEDIA_H, Math.max(8, renderer.height(w)));
             Draw.rect(g, x, y, w, h, ui.theme().panelBgDeep());
             g.enableScissor(x, y, x + w, y + h);
-            renderer.render(g, x, y, w, h, value, delta);
+            renderer.render(g, x, y, w, h, value, context, delta);
             g.disableScissor();
             return y + h;
         } catch (RuntimeException | LinkageError e) {
