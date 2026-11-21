@@ -90,6 +90,11 @@ final class ListRow extends OptionRow {
                     field.setSuggester(option.allowDuplicates() ? suggester
                             : text -> withoutUsed(suggester.apply(text), this));
                 }
+                Component worldHint = fr.heetstudio.confee.ui.Suggestions.worldHint(option);
+                if (worldHint != null) {
+                    field.setHint(worldHint);
+                    field.setPersistentHint(worldHint);
+                }
                 if (fr.heetstudio.confee.ui.RegistryIcons.hasIcons(registry)) {
                     TextFieldWidget f = field;
                     field.setIconRegistry(registry);
@@ -186,7 +191,8 @@ final class ListRow extends OptionRow {
             Validated<Object> check = parsed.ok() ? option.validateElement(parsed.value()) : null;
             String text = entry.field.text().trim();
             if (!parsed.ok() || check == null || !check.isOk()) {
-                entry.field.setError(problemText.apply(parsed.ok() ? ValueText.Problem.INVALID : parsed.problem()));
+                entry.field.setError(check != null && check.reason() != null ? ValueText.reason(check.reason())
+                        : problemText.apply(parsed.ok() ? ValueText.Problem.INVALID : parsed.problem()));
                 ok = false;
             } else if (accepted != null && !text.isEmpty() && !text.startsWith("#") && !accepted.test(text)) {
                 entry.field.setError(Component.translatable("confee.error.filtered", text));
