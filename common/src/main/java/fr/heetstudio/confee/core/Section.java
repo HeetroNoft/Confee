@@ -23,6 +23,8 @@ public final class Section implements Node {
     private final List<Placed> decorations = new ArrayList<>();
     @Nullable
     private String icon;
+    @Nullable
+    private fr.heetstudio.confee.api.Preview preview;
     private String path = "";
     @Nullable
     private ListActions listActions;
@@ -84,6 +86,37 @@ public final class Section implements Node {
     /** Dotted path from the root ({@code ""} for the root). */
     public String path() {
         return path;
+    }
+
+    /** Preview shown for the options of this section that have none ({@code @Preview} on a section), or null. */
+    @Nullable
+    public fr.heetstudio.confee.api.Preview preview() {
+        return preview;
+    }
+
+    public void setPreview(@Nullable fr.heetstudio.confee.api.Preview preview) {
+        this.preview = preview;
+    }
+
+    /**
+     * Preview of an option: its own, else the one of the closest section around it that has one, else null.
+     */
+    @Nullable
+    public fr.heetstudio.confee.api.Preview previewOf(Option<?> option) {
+        if (option.preview() != null) {
+            return option.preview();
+        }
+        fr.heetstudio.confee.api.Preview found = preview;
+        Section current = this;
+        String[] parts = option.path().split("\\.");
+        for (int i = 0; i < parts.length - 1 && current != null; i++) {
+            Node child = current.find(parts[i]).orElse(null);
+            current = child instanceof Section s ? s : null;
+            if (current != null && current.preview != null) {
+                found = current.preview;
+            }
+        }
+        return found;
     }
 
     /** Icon (item ID or texture) shown on the category button / navigation row, or null. */
