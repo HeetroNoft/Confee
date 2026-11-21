@@ -1,0 +1,8 @@
+# Written by the test mod before it used Confee (moved by @Config(legacyFiles)).
+# These comments are not Confee's: they are dropped when the file is moved.
+outlineWidth = 4
+singleSnbt = "{legacy:1b}"
+
+[outline]
+# Default: true
+rare = false

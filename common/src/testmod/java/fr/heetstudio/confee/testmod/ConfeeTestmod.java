@@ -23,6 +23,7 @@ public final class ConfeeTestmod {
 
     public static ConfeeConfig<AnnotatedTestConfig> annotated;
     public static ConfeeConfig<ThemedTestConfig> themed;
+    public static ConfeeConfig<ExtrasTestConfig> extras;
     public static ConfeeConfig<Void> builder;
     public static ConfigValue<Double> builderDashDistance;
 
@@ -32,6 +33,7 @@ public final class ConfeeTestmod {
     public static void init() {
         annotated = Confee.register(AnnotatedTestConfig.class);
         themed = Confee.register(ThemedTestConfig.class);
+        extras = Confee.register(ExtrasTestConfig.class);
         builder = registerBuilderConfig();
 
         AnnotatedTestConfig values = annotated.get();
