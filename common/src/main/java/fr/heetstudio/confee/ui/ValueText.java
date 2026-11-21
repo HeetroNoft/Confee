@@ -164,6 +164,7 @@ public final class ValueText {
         return switch (validated.status()) {
             case OK -> new Parsed(validated.value(), null);
             case CORRECTED -> new Parsed(null, Problem.OUT_OF_RANGE);
+            case KEPT -> new Parsed(null, Problem.REFUSED, validated.reason());
             case REPLACED_BY_DEFAULT -> validated.reason() != null ? new Parsed(null, Problem.REFUSED, validated.reason())
                     : new Parsed(null, problemFor(option, raw));
         };
