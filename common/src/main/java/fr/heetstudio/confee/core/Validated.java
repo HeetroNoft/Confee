@@ -8,9 +8,14 @@ import org.jetbrains.annotations.Nullable;
  * @param value   the value to use (corrected or default when needed)
  * @param status  what happened to the raw value
  * @param message human readable reason when {@code status != OK}, for the log
+ * @param reason  message of the mod's own validator ({@code ValueValidator}): translation key or text, else null
  * <p>Internal: may change without notice.</p>
  */
-public record Validated<T>(T value, Status status, @Nullable String message) {
+public record Validated<T>(T value, Status status, @Nullable String message, @Nullable String reason) {
+
+    public Validated(T value, Status status, @Nullable String message) {
+        this(value, status, message, null);
+    }
 
     public enum Status {
         /** The raw value was valid and is used as is. */
@@ -31,6 +36,11 @@ public record Validated<T>(T value, Status status, @Nullable String message) {
 
     public static <T> Validated<T> replaced(T value, String message) {
         return new Validated<>(value, Status.REPLACED_BY_DEFAULT, message);
+    }
+
+    /** Refused by the mod's own validator: the default is used, {@code reason} is shown on the screen. */
+    public static <T> Validated<T> refused(T value, String message, String reason) {
+        return new Validated<>(value, Status.REPLACED_BY_DEFAULT, message, reason);
     }
 
     public boolean isOk() {

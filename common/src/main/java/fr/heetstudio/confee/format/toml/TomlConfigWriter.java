@@ -30,17 +30,20 @@ public final class TomlConfigWriter {
     private final Map<String, List<ParsedValue>> unknownByTable = new LinkedHashMap<>();
     @Nullable
     private final ParsedDocument previous;
+    /** {@code Default: x} line under each hint ({@code @Config(writeDefaults = true)}). */
+    private final boolean writeDefaults;
 
-    private TomlConfigWriter(String lineSeparator, @Nullable ParsedDocument previous) {
+    private TomlConfigWriter(String lineSeparator, @Nullable ParsedDocument previous, boolean writeDefaults) {
         this.nl = lineSeparator;
         this.previous = previous;
+        this.writeDefaults = writeDefaults;
     }
 
     /**
      * @param previous the current file content, if it exists and could be parsed: its unknown keys are kept
      */
     public static String write(ConfigSchema schema, String lineSeparator, @Nullable ParsedDocument previous) {
-        TomlConfigWriter writer = new TomlConfigWriter(lineSeparator, previous);
+        TomlConfigWriter writer = new TomlConfigWriter(lineSeparator, previous, schema.writeDefaults());
         writer.collectUnknown(schema.root());
         writer.writeDocument(schema.root());
         return writer.out.toString();
@@ -154,6 +157,10 @@ public final class TomlConfigWriter {
         String hint = hint(option);
         if (hint != null) {
             comment(hint);
+        }
+        String defaultLine = writeDefaults ? fr.heetstudio.confee.format.ConfigTree.defaultHint(option) : null;
+        if (defaultLine != null) {
+            comment(defaultLine);
         }
         out.append(TomlValues.key(option.key())).append(" = ").append(value(option, option.get(), nl)).append(nl);
     }

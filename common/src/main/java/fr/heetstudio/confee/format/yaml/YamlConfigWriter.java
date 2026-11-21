@@ -21,14 +21,16 @@ public final class YamlConfigWriter {
 
     private final StringBuilder out = new StringBuilder();
     private final String nl;
+    private final boolean writeDefaults;
 
-    private YamlConfigWriter(String lineSeparator) {
+    private YamlConfigWriter(String lineSeparator, boolean writeDefaults) {
         this.nl = lineSeparator;
+        this.writeDefaults = writeDefaults;
     }
 
     public static String write(ConfigSchema schema, String lineSeparator, @Nullable ParsedDocument previous) {
         ConfigTree.Group tree = ConfigTree.build(schema.root(), previous, false);
-        YamlConfigWriter writer = new YamlConfigWriter(lineSeparator);
+        YamlConfigWriter writer = new YamlConfigWriter(lineSeparator, schema.writeDefaults());
         if (tree.comment != null) {
             writer.comment(tree.comment, "");
             writer.out.append(lineSeparator);
@@ -46,7 +48,7 @@ public final class YamlConfigWriter {
             first = false;
             if (item instanceof ConfigTree.Leaf leaf) {
                 Option<?> option = leaf.option();
-                comment(ConfigTree.commentOf(option), indent);
+                comment(ConfigTree.commentOf(option, writeDefaults), indent);
                 out.append(indent).append(key(option.key())).append(':');
                 value(ConfigTree.portable(option, option.get()), indent);
             } else if (item instanceof ConfigTree.Raw raw) {
