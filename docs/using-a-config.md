@@ -30,6 +30,24 @@ written.
   comments it writes with `#:` (`//:` in JSON5). Comments players add by hand (`#`, `//`) are kept when the file
   is saved, and only the values that changed are rewritten.
 - In `.properties` files, keys are flat (`dash.distance=4.0`) and lists are comma-separated.
+- `@Config(writeDefaults = true)` (builder: `.writeDefaults()`) adds a `Default: <value>` comment under each option
+  (maps, lists of objects and multi-line texts excepted).
+
+## Moving an old config file
+
+Your mod had its own config file before Confee, or it had another name? List it in `legacyFiles` (relative to the
+`config/` folder, in the config's format):
+
+```java
+@Config(modId = "examplemod", name = "common", legacyFiles = "ExampleMod-common.toml")
+
+Confee.builder("examplemod").name("common").legacyFiles("ExampleMod-common.toml");
+```
+
+When `config/examplemod-common.toml` does not exist yet, Confee reads the first legacy file it finds, keeps its values,
+writes it as the Confee file with Confee's comments only (the old comments of the options are dropped, unknown keys are
+kept) and removes the old file. A name that only differs by its case (`ExampleMod` / `examplemod`) is handled too. If
+the old file cannot be read, it is left alone and the defaults are used.
 
 ## Robustness
 

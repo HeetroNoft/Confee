@@ -248,6 +248,7 @@ if (CONFIG.get().showHud) { ... }
 | `@RequiresRestart`                                         | champ           | Icône « ! » jaune + message « redémarrage requis ».                                                   |
 | `@Hidden`                                                  | champ           | Sauvegardé dans le fichier mais absent de l'écran.                                                    |
 | `@Pattern(regex)` / `@MaxLength(n)`                        | String          | Validation de texte.                                                                                  |
+| `@Validator(Classe)` ✅ (Lucas, 0.3.0)                      | tout            | Vérification du mod (`ValueValidator<T>` : `null` = valide, sinon message = clé de traduction ou texte). Après les vérifications de Confee ; sur une liste de valeurs simples : **chaque valeur**. Fichier : valeur par défaut + warning ; écran : message du mod sous le champ, « Enregistrer » bloqué. Validateur qui lève une exception → valeur acceptée + warning. Tourne aussi côté serveur. Builder : `.validator(...)`. |
 | `@Color(alpha = false)`                                    | int             | Afficher comme couleur.                                                                               |
 | `@Key(value)`                                              | champ           | Nom de la clé dans le fichier si différent du nom Java.                                               |
 | `@Preview(image, text, renderer)` ✅                        | champ           | Aperçu dans la 3e colonne (voir §10.7). Tout est optionnel.                                           |
@@ -272,6 +273,7 @@ if (CONFIG.get().showHud) { ... }
 | `@Keybind` ✅                                               | String          | Touche (`key.keyboard.g`, `key.mouse.right`) : clic puis appui ; Suppr = aucune touche.               |
 | `Set<Enum>` / `EnumSet` ✅                                   | type de champ   | Cases à cocher (plusieurs valeurs d'un enum, sans doublon, ordre de l'enum).                          |
 | `@Widget(Classe)` ✅                                        | champ           | Widget du mod (`OptionWidget`, client uniquement) à la place de celui de Confee.                      |
+| API widgets du mod ✅ (Lucas, 0.3.0)                         | `OptionWidget`  | `error()` (message rouge sous le widget, bloque « Enregistrer »), `capturesText()`, `focusBounds()` + `revealFocus()` (seule la partie focalisée est ramenée à l'écran), `renderOverlay` / `overlayBounds` / `overlayClicked` / `overlayScrolled` (contenu par-dessus les options suivantes tant que le widget a le focus), `viewportHeight()`. Hauteur max d'un widget : 4000. Aides publiques `ConfeeDraw` (bouton, bouton d'accent, texte sans ombre, anneau de focus) et `ConfeeIcons` (icône / nom d'une entrée de registre, aussi depuis l'écran titre). `SuggestionProvider#needsWorld()` → indice grisé « ouvrez un monde » dans un champ vide hors monde. |
 | `@Category(value, icon)` / `@Icon` ✅                       | champ / classe `@Section` | Icône (ID d'item ou texture `.png`) de la catégorie / de la ligne de navigation.            |
 | `@Layout(...)` ✅                                           | classe          | Mise en page : largeur du panneau et de l'aperçu, sidebar masquée, bannière, fond en texture.         |
 | champ `Decoration` ✅                                       | champ public    | Élément d'écran non enregistré, à sa place parmi les options : titre, séparateur, texte (info/avertissement), image, bouton d'action. `visibleIf` et icône possibles. |
@@ -401,6 +403,8 @@ Là, Confee peut ré-écrire le fichier entier, avec :
 - l'ordre de déclaration des options,
 - les commentaires `@Comment` au-dessus de chaque clé,
 - un commentaire d'en-tête indiquant les bornes / valeurs possibles (ex. `# Range: 1.0 ~ 10.0`, `# Allowed: EASY, NORMAL, HARD`),
+- ✅ DÉCIDÉ (Lucas, 0.3.0) : `@Config(writeDefaults = true)` / `.writeDefaults()` → ligne `#: Default: <valeur>` sous les bornes (pas pour les maps, listes d'objets, textes multi-lignes),
+- ✅ DÉCIDÉ (Lucas, 0.3.0) : `@Config(legacyFiles = {...})` / `.legacyFiles(...)` (chemins relatifs à `config/`, même format) : si le fichier Confee n'existe pas, le 1er ancien fichier trouvé est lu, réécrit comme fichier Confee **sans fusion des commentaires** (commentaires Confee seulement, clés inconnues gardées) puis supprimé ; nom qui ne diffère que par la casse géré (déplacement via un nom temporaire) ; ancien fichier illisible → laissé tel quel, défauts. Remplace `fileName` et `migrateComments` (une seule option),
 - une table TOML par catégorie (`[dash]`).
 
 ### 7.4 Bibliothèques 🟡 À VALIDER
@@ -698,6 +702,7 @@ Indicateur « modifié » : 🟡 petit point `accent` à gauche du label quand l
 - 3e colonne **à droite** du panneau (~ 150 px), présente seulement si au moins une option de l'écran déclare un aperçu.
 - Montre l'option **survolée**, sinon celle qui a le focus clavier (reste affichée quand la souris part ailleurs).
 - Contenu, tout optionnel et combinable : **image** (texture d'un resource pack ; `{value}` remplacé par la valeur en minuscules, ex. `quality_{value}.png`), **rendu personnalisé** (`PreviewRenderer`, classe client, créée seulement à l'affichage, erreurs attrapées → message), **texte** (texte brut avec codes `§`, ou clé de traduction).
+- ✅ DÉCIDÉ (Lucas, 0.3.0) : `PreviewRenderer#render(..., PreviewContext context, delta)` : `context.value(chemin)` = valeur **en attente** (écran, pas encore enregistrée) d'une autre option de la même config, `context.theme()` = thème de l'écran. Les deux `render` sont des méthodes `default` (l'ancienne reste appelée par défaut : compatible binaire ; une lambda `PreviewRenderer` ne compile plus, il faut une classe).
 - Écran trop étroit : colonne **masquée**.
 - Les sections (tables TOML) dont le fichier porte un commentaire l'affichent en tooltip sur le bouton de catégorie / la ligne de navigation.
 
