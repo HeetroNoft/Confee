@@ -50,7 +50,8 @@ Translations take priority over these, see [Translations](translations.md).
 | Annotation | On | Effect |
 | --- | --- | --- |
 | `@Pattern("regex")`, `@MaxLength(n)` | String, List of String | Text validation (of each value, on a list). |
-| `@Validator(MyCheck.class)` | any | Your own check (`ValueValidator<T>`: return null, or the message shown under the field). Each value, on a list of simple values. Runs on the server too. |
+| `@Validator(MyCheck.class)` | any | Your own check (`ValueValidator<T>`: return null, or the message shown under the field). Each value, on a list of simple values. Runs on the server too. `onFileError = OnFileError.KEEP` keeps a refused value of the file as written (the screen shows its error). |
+| `@ItemStack` | String, List of String | A whole item stack written as SNBT in the format of the Minecraft version: item (search by name, picker), count, extra data. `count`, `components`, `maxCount` (0 = stack size, -1 = no limit), `onFileError`. |
 | `@Multiline` | String | Multi-line text area. |
 | `@Suggestions({"a", "b"}, provider = ...)` | String, ResourceLocation, List&lt;String&gt; | Values suggested while typing (fixed and/or from a `SuggestionProvider`). |
 | `@Keybind` | String | A key such as `key.keyboard.g`, set by pressing it. |
