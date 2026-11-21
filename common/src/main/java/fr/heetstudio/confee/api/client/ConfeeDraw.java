@@ -49,6 +49,48 @@ public final class ConfeeDraw {
         Draw.textCentered(g, font, text, x + width / 2, y + (height - 2 - 8) / 2 + (down ? 1 : 0), colors[2]);
     }
 
+    /**
+     * Repeats a texture over an area (a stone brick wall...), clipped to it.
+     *
+     * @param texture a block or item texture of the atlas ({@code minecraft:block/stone_bricks}) or a texture file
+     *                ending with {@code .png} ({@code examplemod:textures/gui/tile.png})
+     * @return false when the texture does not exist
+     */
+    public static boolean tiled(GuiGraphicsExtractor g, String texture, int x, int y, int width, int height) {
+        try {
+            return fr.heetstudio.confee.ui.render.Tiles.tiled(g, texture, x, y, width, height);
+        } catch (RuntimeException e) {
+            return false;
+        }
+    }
+
+    /**
+     * Draws a mob standing in a box (centered, feet at the bottom): its model, like in the inventory, when a world is
+     * loaded; else a front view drawn from its skin for humanoid mobs (zombie, husk, drowned, skeleton, stray, wither
+     * skeleton, player). With an outline, the front view is used: a 1 pixel line around the silhouette, like the
+     * Glowing effect.
+     *
+     * @param entityId     e.g. {@code minecraft:zombie}
+     * @param outlineColor ARGB color of the outline, or {@code 0} for none
+     * @return false when nothing could be drawn (unknown mob, or no world for a non-humanoid mob)
+     */
+    public static boolean entity(GuiGraphicsExtractor g, String entityId, int x, int y, int width, int height, int outlineColor) {
+        return entity(g, entityId, x, y, width, height, outlineColor, false);
+    }
+
+    /**
+     * Same as {@link #entity(GuiGraphicsExtractor, String, int, int, int, int, int)}; with {@code outlineOnly}, only the outline is
+     * drawn (the mob hidden behind blocks, seen through them like with Glowing).
+     */
+    public static boolean entity(GuiGraphicsExtractor g, String entityId, int x, int y, int width, int height, int outlineColor,
+                                 boolean outlineOnly) {
+        try {
+            return fr.heetstudio.confee.ui.render.MobDrawing.draw(g, entityId, x, y, width, height, outlineColor, outlineOnly);
+        } catch (RuntimeException | LinkageError e) {
+            return false;
+        }
+    }
+
     /** Text without shadow; returns the x after the text. */
     public static int text(GuiGraphicsExtractor g, Component text, int x, int y, int color) {
         return Draw.text(g, font(), text, x, y, color);

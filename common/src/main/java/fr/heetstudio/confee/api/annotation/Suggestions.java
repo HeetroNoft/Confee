@@ -22,4 +22,11 @@ public @interface Suggestions {
 
     /** Class with a public no-argument constructor giving the suggestions; {@code SuggestionProvider.class} = none. */
     Class<? extends fr.heetstudio.confee.api.SuggestionProvider> provider() default fr.heetstudio.confee.api.SuggestionProvider.class;
+
+    /**
+     * Values read by Confee from the loaded world: scoreboard tags, teams, objectives. Without a world, an empty field
+     * shows "Open a world for more suggestions".
+     * <p>Example: {@code @Suggestions(sources = SuggestionSource.SCOREBOARD_TAGS)}</p>
+     */
+    fr.heetstudio.confee.api.SuggestionSource[] sources() default {};
 }
