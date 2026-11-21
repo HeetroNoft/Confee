@@ -130,8 +130,11 @@ class OptionRow extends Row {
             ValueText.Parsed parsed = ValueText.parse(option, field.text());
             if (!parsed.ok() || !Objects.equals(parsed.value(), shown)) {
                 // value changed elsewhere (reset): show it
-                field.setTextSilently(ValueText.toFieldText(option, shown));
-                field.setError(null);
+                String text = ValueText.toFieldText(option, shown);
+                field.setTextSilently(text);
+                // a value kept as written in the file (OnFileError.KEEP) keeps showing why it is refused
+                ValueText.Parsed check = ValueText.parse(option, text);
+                field.setError(check.reason() != null ? ValueText.reason(check.reason()) : null);
             }
         }
     }
