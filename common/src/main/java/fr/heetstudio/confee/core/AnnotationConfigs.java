@@ -237,6 +237,14 @@ public final class AnnotationConfigs {
             if (icon != null) {
                 section.setIcon(icon.value());
             }
+            // @Preview on the field holding the section, or on its class: shown for its options without one
+            fr.heetstudio.confee.api.annotation.Preview sectionPreview = field.getAnnotation(fr.heetstudio.confee.api.annotation.Preview.class);
+            if (sectionPreview == null) {
+                sectionPreview = field.getType().getAnnotation(fr.heetstudio.confee.api.annotation.Preview.class);
+            }
+            if (sectionPreview != null) {
+                section.setPreview(preview(sectionPreview));
+            }
             walk(field.getType(), nested, section, false);
         }
 
@@ -389,6 +397,25 @@ public final class AnnotationConfigs {
         fr.heetstudio.confee.api.annotation.Validator modValidator = field.getAnnotation(fr.heetstudio.confee.api.annotation.Validator.class);
         if (modValidator != null) {
             builder.modValidator(instantiate(modValidator.value()));
+            if (modValidator.onFileError() == fr.heetstudio.confee.api.OnFileError.KEEP) {
+                builder.keepRefused(true);
+            }
+        }
+        fr.heetstudio.confee.api.annotation.ItemStack stack = field.getAnnotation(fr.heetstudio.confee.api.annotation.ItemStack.class);
+        if (stack != null) {
+            boolean stringList = field.getType() == List.class
+                    && field.getGenericType() instanceof java.lang.reflect.ParameterizedType pt
+                    && pt.getActualTypeArguments()[0] == String.class;
+            if (field.getType() != String.class && !stringList) {
+                throw new IllegalArgumentException("@ItemStack needs a String or a List<String> field");
+            }
+            if (stack.maxCount() < -1) {
+                throw new IllegalArgumentException("@ItemStack(maxCount) must be -1 (no limit), 0 (stack size) or positive");
+            }
+            builder.itemStack(new Option.StackSpec(stack.count(), stack.components(), stack.maxCount()));
+            if (stack.onFileError() == fr.heetstudio.confee.api.OnFileError.KEEP) {
+                builder.keepRefused(true);
+            }
         }
         MaxLength maxLength = field.getAnnotation(MaxLength.class);
         if (maxLength != null) {
@@ -477,6 +504,7 @@ public final class AnnotationConfigs {
         fr.heetstudio.confee.api.annotation.Suggestions suggestions = field.getAnnotation(fr.heetstudio.confee.api.annotation.Suggestions.class);
         if (suggestions != null) {
             builder.suggestions(suggestions(suggestions));
+            builder.suggestionSources(List.of(suggestions.sources()));
         }
         fr.heetstudio.confee.api.annotation.Stepper stepper = field.getAnnotation(fr.heetstudio.confee.api.annotation.Stepper.class);
         if (stepper != null) {

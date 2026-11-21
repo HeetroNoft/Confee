@@ -39,6 +39,27 @@ public final class ConfeeIcons {
         }
     }
 
+    /**
+     * Draws an item stack in a 16 × 16 box, with the vanilla count in the corner and the enchantment glint.
+     *
+     * @param snbtOrId the stack as written by {@code @ItemStack} ({@code {id:"minecraft:diamond",Count:3b}}) or an
+     *                 item ID
+     * @param count    count to show, or {@code 0} for the count of the stack
+     * @return false when the stack cannot be read or the item does not exist: nothing is drawn
+     */
+    public static boolean drawStack(GuiGraphics g, String snbtOrId, int count, int x, int y) {
+        try {
+            net.minecraft.world.item.ItemStack stack = fr.heetstudio.confee.ui.render.Tiles.stack(snbtOrId, count);
+            if (stack.isEmpty()) {
+                return false;
+            }
+            fr.heetstudio.confee.ui.render.Tiles.drawStack(g, stack, x, y);
+            return true;
+        } catch (RuntimeException e) {
+            return false;
+        }
+    }
+
     /** Translated name of an entry ("Diamond Sword", "Zombie"...), or null when the game knows none. */
     @Nullable
     public static Component name(String registry, String id) {
