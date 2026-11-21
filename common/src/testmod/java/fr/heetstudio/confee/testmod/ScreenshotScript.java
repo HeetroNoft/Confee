@@ -237,6 +237,38 @@ public final class ScreenshotScript {
         });
         shot("36-object-list");
 
+        // 0.3.0: preview context, @Validator, custom widget hooks (extras config)
+        step(15, mc -> {
+            mc.gui.setScreen(ConfeeTestmod.extras.createScreen(fileSelect));
+            config(mc).focusOption("excludedTags");
+            key(mc, InputConstants.KEY_RETURN, 0); // "+ Add": an empty field, no world loaded
+        });
+        shot("37a-needs-world-hint");
+        step(10, mc -> {
+            key(mc, InputConstants.KEY_TAB, InputConstants.MOD_CONTROL); // "Outline" category
+            config(mc).focusOption("outline.ultra");
+            key(mc, InputConstants.KEY_RETURN, 0); // ultra off, not saved
+            config(mc).focusOption("outline.infernal");
+        });
+        shot("37-preview-context");
+        step(10, mc -> {
+            key(mc, InputConstants.KEY_TAB, InputConstants.MOD_CONTROL | InputConstants.MOD_SHIFT); // back to "General"
+            config(mc).focusOption("singleSnbt");
+            for (int i = 0; i < 20; i++) {
+                key(mc, InputConstants.KEY_BACKSPACE, 0);
+            }
+            type(mc, "abc");
+        });
+        shot("38-validator-error");
+        step(10, mc -> {
+            config(mc).focusOption("lootItems");
+            key(mc, InputConstants.KEY_RETURN, 0); // opens the list drawn over the next options
+            type(mc, "dia");
+        });
+        shot("39-custom-overlay");
+        step(10, mc -> key(mc, InputConstants.KEY_RETURN, 0)); // "minecraft:dia" is not an item
+        shot("39b-custom-error");
+
         // customization: banner, header, info, description, icons (annotation config)
         step(15, mc -> mc.gui.setScreen(ConfeeTestmod.annotated.createScreen(fileSelect)));
         shot("40-general-top");
