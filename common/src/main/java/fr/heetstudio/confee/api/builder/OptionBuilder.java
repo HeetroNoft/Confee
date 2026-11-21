@@ -106,6 +106,35 @@ public final class OptionBuilder<T> {
     }
 
     /**
+     * What to do with a value of the file refused by {@link #validator} or {@link #itemStack}: use the default
+     * (default) or keep it as written ({@code KEEP}).
+     * <p>Example: {@code b.list("loot", String.class, List.of()).itemStack().onFileError(OnFileError.KEEP).build()}</p>
+     */
+    public OptionBuilder<T> onFileError(fr.heetstudio.confee.api.OnFileError policy) {
+        delegate.keepRefused(policy == fr.heetstudio.confee.api.OnFileError.KEEP);
+        return this;
+    }
+
+    /**
+     * The value (each value of a {@code List<String>}) is an item stack written as SNBT: item, count and extra data
+     * fields on the screen. See {@code @ItemStack}.
+     * <p>Example: {@code b.string("reward", "minecraft:diamond").itemStack().build()}</p>
+     */
+    public OptionBuilder<T> itemStack() {
+        return itemStack(true, true, 0);
+    }
+
+    /**
+     * @param count      show the count field
+     * @param components show the extra data field
+     * @param maxCount   {@code 0} = max stack size of the item, {@code -1} = no limit
+     */
+    public OptionBuilder<T> itemStack(boolean count, boolean components, int maxCount) {
+        delegate.itemStack(new fr.heetstudio.confee.core.Option.StackSpec(count, components, maxCount));
+        return this;
+    }
+
+    /**
      * <p>Example: {@code b.string("nickname", "Steve").maxLength(16).build()  // on a List<String>: each value}</p>
      */
     public OptionBuilder<T> maxLength(int maxLength) {
@@ -423,6 +452,15 @@ public final class OptionBuilder<T> {
     public OptionBuilder<T> suggestions(String... values) {
         java.util.List<String> fixed = java.util.List.of(values);
         delegate.suggestions(() -> fixed);
+        return this;
+    }
+
+    /**
+     * Values read by Confee from the loaded world (scoreboard tags, teams, objectives).
+     * <p>Example: {@code b.list("excludedTags", String.class, List.of()).suggestions(SuggestionSource.SCOREBOARD_TAGS).build()}</p>
+     */
+    public OptionBuilder<T> suggestions(fr.heetstudio.confee.api.SuggestionSource... sources) {
+        delegate.suggestionSources(java.util.List.of(sources));
         return this;
     }
 

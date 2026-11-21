@@ -81,11 +81,7 @@ public final class Draw {
 
     /** Linear blend of two ARGB colors, {@code t} in [0, 1]. */
     public static int mix(int a, int b, float t) {
-        t = Math.max(0, Math.min(1, t));
-        int aa = a >>> 24, ar = (a >> 16) & 0xFF, ag = (a >> 8) & 0xFF, ab = a & 0xFF;
-        int ba = b >>> 24, br = (b >> 16) & 0xFF, bg = (b >> 8) & 0xFF, bb = b & 0xFF;
-        return (Math.round(aa + (ba - aa) * t) << 24) | (Math.round(ar + (br - ar) * t) << 16)
-                | (Math.round(ag + (bg - ag) * t) << 8) | Math.round(ab + (bb - ab) * t);
+        return fr.heetstudio.confee.api.Theme.mix(a, b, t);
     }
 
     public static int withAlpha(int argb, float alpha) {
