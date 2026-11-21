@@ -84,15 +84,21 @@ public final class ValueText {
     }
 
     /** Error kinds shown under a field (translated by the UI). */
-    public enum Problem { NOT_A_NUMBER, NOT_AN_INTEGER, OUT_OF_RANGE, PATTERN, MAX_LENGTH, IDENTIFIER, COLOR, INVALID }
+    public enum Problem { NOT_A_NUMBER, NOT_AN_INTEGER, OUT_OF_RANGE, PATTERN, MAX_LENGTH, IDENTIFIER, COLOR, INVALID, REFUSED }
 
     /**
      * Result of parsing field text.
      *
      * @param value   the parsed value when valid
      * @param problem why the text is refused, or null
+     * @param reason  message of the mod's validator when {@code problem} is {@link Problem#REFUSED}
      */
-    public record Parsed(@Nullable Object value, @Nullable Problem problem) {
+    public record Parsed(@Nullable Object value, @Nullable Problem problem, @Nullable String reason) {
+
+        public Parsed(@Nullable Object value, @Nullable Problem problem) {
+            this(value, problem, null);
+        }
+
         public boolean ok() {
             return problem == null;
         }
@@ -158,7 +164,8 @@ public final class ValueText {
         return switch (validated.status()) {
             case OK -> new Parsed(validated.value(), null);
             case CORRECTED -> new Parsed(null, Problem.OUT_OF_RANGE);
-            case REPLACED_BY_DEFAULT -> new Parsed(null, problemFor(option, raw));
+            case REPLACED_BY_DEFAULT -> validated.reason() != null ? new Parsed(null, Problem.REFUSED, validated.reason())
+                    : new Parsed(null, problemFor(option, raw));
         };
     }
 
@@ -199,5 +206,11 @@ public final class ValueText {
         snapped = Math.max(min, Math.min(max, snapped));
         // remove floating point noise (0.1 + 0.2)
         return BigDecimal.valueOf(snapped).setScale(10, java.math.RoundingMode.HALF_UP).doubleValue();
+    }
+
+    /** Message of a mod's validator: a translation key of its language files, or plain text. */
+    public static net.minecraft.network.chat.Component reason(String reason) {
+        return net.minecraft.client.resources.language.I18n.exists(reason)
+                ? net.minecraft.network.chat.Component.translatable(reason) : net.minecraft.network.chat.Component.literal(reason);
     }
 }

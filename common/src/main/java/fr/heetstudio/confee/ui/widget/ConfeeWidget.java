@@ -108,6 +108,22 @@ public abstract class ConfeeWidget {
         return mx >= x && my >= y && mx < x + width && my < y + height;
     }
 
+    /** Height of the visible area (the scrolling panel), or of the screen when the widget is not clipped. */
+    public int visibleHeight() {
+        return clip != null ? clip[3] - clip[1] : ui.screenHeight();
+    }
+
+    /** Part to scroll into view when the widget gets the focus: {@code {x, y, width, height}} (default: all of it). */
+    public int[] revealBounds() {
+        return new int[]{x, y, width, height};
+    }
+
+    /** Error drawn under the widget by its row (a mod's own widget), or null; it blocks "Save". */
+    @Nullable
+    public Component widgetError() {
+        return null;
+    }
+
     /** Fully inside its visible area (used to scroll a focused widget into view). */
     public boolean isFullyVisible() {
         return clip == null || (y >= clip[1] && y + height <= clip[3]);

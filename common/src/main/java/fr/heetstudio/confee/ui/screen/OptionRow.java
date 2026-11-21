@@ -184,7 +184,7 @@ class OptionRow extends Row {
             control.setBounds(contentX, y + h, contentW, controlH);
             h += controlH;
         }
-        if (field != null && field.error() != null) {
+        if (error() != null) {
             h += 11;
         }
         return height = h;
@@ -214,8 +214,10 @@ class OptionRow extends Row {
         if (control != null) {
             control.render(g, mouseX, mouseY, delta);
         }
-        if (field != null && field.error() != null) {
-            Draw.textFit(g, ui.font(), field.error(), x + DOT_GUTTER, field.y + field.height + 2, width - DOT_GUTTER, t.error());
+        Component error = error();
+        if (error != null) {
+            ConfeeWidget under = field != null ? field : control;
+            Draw.textFit(g, ui.font(), error, x + DOT_GUTTER, under.y + under.height + 2, width - DOT_GUTTER, t.error());
         }
     }
 
@@ -284,8 +286,17 @@ class OptionRow extends Row {
         return condition == null ? description : description.copy().append("\n").append(condition);
     }
 
+    /** Error of the field, or of a mod's own widget ({@code OptionWidget#error}), or null. */
+    @Nullable
+    private Component error() {
+        if (field != null) {
+            return field.error();
+        }
+        return control != null ? control.widgetError() : null;
+    }
+
     @Override
     boolean hasError() {
-        return !hiddenByCondition && field != null && field.error() != null;
+        return !hiddenByCondition && error() != null;
     }
 }

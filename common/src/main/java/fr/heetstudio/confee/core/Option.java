@@ -50,6 +50,9 @@ public final class Option<T> implements Node, ConfigValue<T> {
     private final boolean readOnly;
     @Nullable
     private final java.util.function.Predicate<Object> validator;
+    /** The mod's own check ({@code @Validator}); on a list of simple values, each value. */
+    @Nullable
+    private final fr.heetstudio.confee.api.ValueValidator<Object> modValidator;
     @Nullable
     private final fr.heetstudio.confee.api.Preview preview;
     @Nullable
@@ -110,6 +113,7 @@ public final class Option<T> implements Node, ConfigValue<T> {
         this.hidden = b.hidden;
         this.readOnly = b.readOnly;
         this.validator = b.validator;
+        this.modValidator = b.modValidator;
         this.preview = b.preview;
         this.enabledIf = b.enabledIf;
         this.visibleIf = b.visibleIf;
@@ -277,6 +281,12 @@ public final class Option<T> implements Node, ConfigValue<T> {
         }
         if (validator != null && !validator.test(value)) {
             return Validated.replaced(defaultValue, "'" + value + "' is refused by the mod");
+        }
+        if (type != OptionType.LIST) {
+            String reason = modCheck(value);
+            if (reason != null) {
+                return Validated.refused(defaultValue, "'" + value + "' is refused by the mod: " + reason, reason);
+            }
         }
         return fixes.isEmpty() ? Validated.ok(value) : Validated.corrected(value, String.join(", ", fixes));
     }
@@ -589,7 +599,32 @@ public final class Option<T> implements Node, ConfigValue<T> {
         if (elementPattern != null && element instanceof String s && !elementPattern.matcher(s).matches()) {
             return Validated.replaced(null, "'" + s + "' does not match " + elementPattern.pattern());
         }
+        String reason = modCheck(element);
+        if (reason != null) {
+            return Validated.refused(null, "'" + element + "' is refused by the mod: " + reason, reason);
+        }
         return Validated.ok(element);
+    }
+
+    /** Message of the mod's own validator, or null when the value is accepted (or the validator failed). */
+    @Nullable
+    private String modCheck(Object value) {
+        if (modValidator == null || value == null) {
+            return null;
+        }
+        try {
+            String reason = modValidator.validate(value);
+            return reason == null || reason.isBlank() ? null : reason;
+        } catch (RuntimeException | LinkageError e) {
+            // a broken validator of a mod must not make the value unusable (spec 14)
+            fr.heetstudio.confee.ConfeeLog.warn("Validator of option '{}' failed on '{}': {}", path(), value, e.toString());
+            return null;
+        }
+    }
+
+    /** Whether the mod gave its own check ({@code @Validator}). */
+    public boolean hasModValidator() {
+        return modValidator != null;
     }
 
     /** Text shown under the name ({@code @Description}), or null. */
@@ -642,6 +677,7 @@ public final class Option<T> implements Node, ConfigValue<T> {
         private boolean hidden;
         private boolean readOnly;
         private java.util.function.Predicate<Object> validator;
+        private fr.heetstudio.confee.api.ValueValidator<Object> modValidator;
         private fr.heetstudio.confee.api.Preview preview;
         private String enabledIf;
         private String visibleIf;
@@ -786,6 +822,13 @@ public final class Option<T> implements Node, ConfigValue<T> {
         /** Extra check from the source (a Forge spec validator), run after type and bounds. */
         public Builder<T> validator(@Nullable java.util.function.Predicate<Object> validator) {
             this.validator = validator;
+            return this;
+        }
+
+        /** The mod's own check ({@code @Validator}); on a list of simple values it checks each value. */
+        @SuppressWarnings("unchecked")
+        public Builder<T> modValidator(@Nullable fr.heetstudio.confee.api.ValueValidator<?> validator) {
+            this.modValidator = (fr.heetstudio.confee.api.ValueValidator<Object>) validator;
             return this;
         }
 
