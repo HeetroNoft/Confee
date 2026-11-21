@@ -1,6 +1,9 @@
 package fr.heetstudio.confee.testmod;
 
+import fr.heetstudio.confee.api.OnFileError;
 import fr.heetstudio.confee.api.SuggestionProvider;
+import fr.heetstudio.confee.api.SuggestionSource;
+import fr.heetstudio.confee.api.annotation.ItemStack;
 import fr.heetstudio.confee.api.ValueValidator;
 import fr.heetstudio.confee.api.annotation.Comment;
 import fr.heetstudio.confee.api.annotation.Config;
@@ -30,12 +33,13 @@ public class ExtrasTestConfig {
 
     @Section
     @Comment("Outline of the mobs of each rarity")
+    @Preview(renderer = OutlinePreview.class, text = "One preview for the whole section; it knows which option is hovered.")
     public static class Outline {
         @Description("Turn a rarity off: the previews below follow it before you save.")
         public boolean enabled = true;
         public boolean rare = true;
         public boolean ultra = true;
-        @Preview(renderer = OutlinePreview.class, text = "Reads outline.enabled, outline.rare and outline.ultra pending values.")
+        @Description("Infernal mobs are seen through walls (outline only behind the wall).")
         public boolean infernal = true;
     }
 
@@ -54,9 +58,23 @@ public class ExtrasTestConfig {
     @Description("Custom widget: error, overlay, text capture, focused line, Confee buttons and item icons.")
     public List<String> lootItems = new ArrayList<>(List.of("minecraft:diamond", "minecraft:golden_apple", "minecraft:totem_of_undying"));
 
-    @Suggestions(value = {"boss", "elite"}, provider = WorldTags.class)
-    @Description("Suggestions that need a world: greyed hint in an empty field from the title screen.")
+    @Suggestions(value = {"boss", "elite"}, sources = SuggestionSource.SCOREBOARD_TAGS)
+    @Description("Scoreboard tags of the world: greyed hint in an empty field from the title screen.")
     public List<String> excludedTags = new ArrayList<>();
+
+    @ItemStack(onFileError = OnFileError.KEEP)
+    @Preview(renderer = LootPreview.class)
+    @Description("@ItemStack list: item (search by name), count, extra data. A broken stack of the file is kept and shown.")
+    public List<String> lootStacks = new ArrayList<>(List.of("{id:\"minecraft:diamond\",Count:3b}",
+            "{id:\"minecraft:iron_sword\",Count:1b,tag:{Enchantments:[{id:\"minecraft:sharpness\",lvl:2s}]}}"));
+
+    @ItemStack(components = false, maxCount = 16)
+    @Description("@ItemStack(components = false, maxCount = 16) on a String.")
+    public String reward = "{id:\"minecraft:ender_pearl\",Count:4b}";
+
+    @Validator(value = BracesCheck.class, onFileError = OnFileError.KEEP)
+    @Description("@Validator(onFileError = KEEP): the wrong value of the file is kept, with its error.")
+    public String keptNote = "{}";
 
     /** Text between braces (stands for an SNBT check). Runs on the server too. */
     public static class BracesCheck implements ValueValidator<String> {
