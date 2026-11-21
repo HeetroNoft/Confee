@@ -23,6 +23,21 @@ b.intValue("particleCount", 20)
 - `renderer`: a `PreviewRenderer` drawing the value live. It is client-only code, created only when the screen shows
   it; with the annotation, the class needs a public no-argument constructor. Errors are caught and shown as a message.
 
+A renderer can also read the **pending values of the other options** of the config (edited, not saved yet) and the
+theme of the screen, through the `PreviewContext`:
+
+```java
+public class OutlinePreview implements PreviewRenderer {
+    public void render(GuiGraphics g, int x, int y, int width, int height, Object value,
+                       PreviewContext context, float delta) {
+        boolean rare = context.value("outline.rare", Boolean.class, true); // follows the screen, before "Save"
+        g.fill(x, y, x + width, y + height, context.theme().panelBgDeep());
+    }
+}
+```
+
+Renderers written for Confee 0.2 (`render(g, x, y, width, height, value, delta)`) keep working.
+
 ## Layout and decorations
 
 ```java
@@ -85,6 +100,21 @@ Use it with `@Widget(TemperatureWidget.class)` on the field, or from your client
 `ConfeeWidgets.forOption("examplemod", "temperature", TemperatureWidget::new)` (one option) or
 `ConfeeWidgets.forType("examplemod", MyEnum.class, MyEnumWidget::new)` (every option of that type in your configs).
 If your widget throws, it is replaced by a message and the game keeps running.
+
+Optional methods to override:
+
+| Method | What it does |
+| --- | --- |
+| `error()` | A message (or null): drawn in red under the widget, and "Save" is disabled while it is not null. |
+| `capturesText()` | True while your widget is typing text: plain keys (`[`, `]`, Page Up/Down) are left to it. Let `keyPressed` return false for Ctrl shortcuts. |
+| `focusBounds()` | The focused part of a tall widget (`{x, y, width, height}`): only that part is scrolled into view. Call `revealFocus()` after moving it with the keyboard. |
+| `renderOverlay`, `overlayBounds`, `overlayClicked`, `overlayScrolled` | Content drawn over the next options while the widget has the focus (a suggestion list, a popup). |
+
+`viewportHeight()` gives the height of the visible part of the panel, to keep a tall widget on the screen.
+
+To match Confee's look, draw with `ConfeeDraw` (`button`, `accentButton`, `text`, `textFit`, `focusRing`: theme
+colors, no text shadow) and `ConfeeIcons` (`drawItem(g, "minecraft:diamond", x, y, 16)`, `draw(g, registry, id, ...)`,
+`name(registry, id)`). Both also work in preview renderers, and from the title screen.
 
 ### Widgets for other mods' settings
 
