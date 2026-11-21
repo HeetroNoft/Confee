@@ -265,8 +265,28 @@ public final class ScreenshotScript {
             type(mc, "dia");
         });
         shot("39-custom-overlay");
-        step(10, mc -> key(mc, GLFW.GLFW_KEY_ENTER, 0)); // "minecraft:dia" is not an item
+        step(10, mc -> {
+            key(mc, GLFW.GLFW_KEY_ESCAPE, 0); // closes the suggestions
+            key(mc, GLFW.GLFW_KEY_ENTER, 0); // "minecraft:dia" is not an item
+        });
         shot("39b-custom-error");
+        // @ItemStack list (a broken stack of the file kept, with its error) and its drawStack preview
+        step(10, mc -> config(mc).focusOption("lootStacks"));
+        shot("39c-item-stacks");
+        // @ItemStack on a String: item found by its French name
+        step(10, mc -> {
+            config(mc).focusOption("reward");
+            for (int i = 0; i < 30; i++) {
+                key(mc, GLFW.GLFW_KEY_BACKSPACE, 0);
+            }
+            type(mc, "perle");
+        });
+        shot("39d-stack-name-search");
+        step(10, mc -> {
+            key(mc, GLFW.GLFW_KEY_ESCAPE, 0);
+            config(mc).focusOption("keptNote");
+        });
+        shot("39e-kept-value");
 
         // customization: banner, header, info, description, icons (annotation config)
         step(15, mc -> mc.setScreen(ConfeeTestmod.annotated.createScreen(fileSelect)));
@@ -743,6 +763,13 @@ public final class ScreenshotScript {
             config(mc).focusOption("favoriteMob");
         });
         shot("54-world-preview");
+        // in a world: the mobs without outline are drawn with their 3D model
+        step(15, mc -> {
+            mc.setScreen(ConfeeTestmod.extras.createScreen(null));
+            key(mc, GLFW.GLFW_KEY_TAB, GLFW.GLFW_MOD_CONTROL); // "Outline" category
+            config(mc).focusOption("outline.rare"); // rare is off in the file: no outline, 3D model
+        });
+        shot("55-world-mob-models");
         step(20, mc -> {
             // leave without saving the edits, then back to the title screen
             mc.setScreen(null);
