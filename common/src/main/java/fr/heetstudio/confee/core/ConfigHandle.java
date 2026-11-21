@@ -71,6 +71,9 @@ public final class ConfigHandle<T> implements ConfeeConfig<T>, EditableConfig {
             return;
         }
         Path file = schema.filePath();
+        if (migrateLegacyFile(file)) {
+            return;
+        }
         if (!Files.exists(file)) {
             ConfeeLog.info("Creating {} with default values", fileName());
             save();
@@ -95,6 +98,91 @@ public final class ConfigHandle<T> implements ConfeeConfig<T>, EditableConfig {
         }
     }
 
+    /**
+     * {@code @Config(legacyFiles)}: when the Confee file does not exist yet, moves the first legacy file found to it.
+     * Its values are read, then the file is written again by Confee (Confee's comments only, unknown keys kept) and the
+     * old file is removed. Never throws: on any problem the legacy file is left as it is.
+     *
+     * @return true when a legacy file was moved (the values are loaded)
+     */
+    private boolean migrateLegacyFile(Path file) {
+        for (String legacy : schema.legacyFiles()) {
+            Path old;
+            try {
+                old = file.resolveSibling(legacy).normalize();
+            } catch (java.nio.file.InvalidPathException e) {
+                ConfeeLog.warn("{}: legacy file name '{}' is not valid: {}", schema.id(), legacy, e.getMessage());
+                continue;
+            }
+            if (!Files.isRegularFile(old)) {
+                continue;
+            }
+            boolean sameFile = sameFile(old, file);
+            if (sameFile && exactName(file)) {
+                return false; // already the Confee file
+            }
+            if (!sameFile && Files.exists(file)) {
+                ConfeeLog.info("{}: {} is not used, {} already exists", schema.id(), legacy, fileName());
+                return false;
+            }
+            // move it aside first: on a case-insensitive file system the old and new names are the same file
+            Path moving = old.resolveSibling(old.getFileName() + ".confee-migrating");
+            try {
+                Files.move(old, moving, java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+            } catch (IOException e) {
+                ConfeeLog.error("Cannot move legacy file " + legacy + " to " + fileName(), e);
+                return false;
+            }
+            try {
+                SourceText source = SourceText.decode(Files.readAllBytes(moving));
+                ParsedDocument document = adapter.parseForSchema(source);
+                SchemaBinder.Report report = SchemaBinder.load(schema.root(), document, legacy);
+                if (!report.missing().isEmpty()) {
+                    ConfeeLog.info("{}: missing keys {} get their default value", legacy, report.missing());
+                }
+                Files.createDirectories(file.getParent());
+                writeFile(source, document, false);
+                if (!Files.exists(file)) {
+                    throw new IOException(fileName() + " was not written");
+                }
+                Files.delete(moving);
+                ConfeeLog.info("Moved legacy config file {} to {}", legacy, fileName());
+                return true;
+            } catch (IOException | FormatException | RuntimeException e) {
+                ConfeeLog.warn("Cannot move legacy file {} to {} ({}); it is left as it was", legacy, fileName(), e.getMessage());
+                boolean unreadable = e instanceof FormatException || e instanceof CharacterCodingException;
+                try {
+                    if (!Files.exists(old)) {
+                        Files.move(moving, old);
+                    }
+                } catch (IOException restore) {
+                    ConfeeLog.error("Cannot restore legacy file " + legacy + " (it is in " + moving.getFileName() + ")", restore);
+                }
+                resetValues();
+                // unreadable content: Confee's file is created with defaults; else (disk error) try again next time
+                return !unreadable;
+            }
+        }
+        return false;
+    }
+
+    private static boolean sameFile(Path a, Path b) {
+        try {
+            return Files.exists(b) && Files.isSameFile(a, b);
+        } catch (IOException e) {
+            return false;
+        }
+    }
+
+    /** Whether the file on disk has exactly the expected name (and not only the same name with another case). */
+    private static boolean exactName(Path file) {
+        try {
+            return file.toRealPath().getFileName().toString().equals(file.getFileName().toString());
+        } catch (IOException e) {
+            return true;
+        }
+    }
+
     /** Spec 5.3: back up the unreadable file, then write a new one with the default values. */
     private void recoverBrokenFile(Path file, String reason) {
         Path backup = file.resolveSibling(file.getFileName() + ".broken-" + LocalDateTime.now().format(BACKUP_DATE));
@@ -108,7 +196,7 @@ public final class ConfigHandle<T> implements ConfeeConfig<T>, EditableConfig {
             return;
         }
         resetValues();
-        writeFile(null, null);
+        writeFile(null, null, true);
     }
 
     @Override
@@ -128,14 +216,18 @@ public final class ConfigHandle<T> implements ConfeeConfig<T>, EditableConfig {
                 previous = null;
             }
         }
-        writeFile(previousSource, previous);
+        writeFile(previousSource, previous, true);
     }
 
-    private void writeFile(@Nullable SourceText previousSource, @Nullable ParsedDocument previous) {
+    /**
+     * @param merge keep the hand-written comments of {@code previous} (false when moving a legacy file: only Confee's
+     *              comments are written)
+     */
+    private void writeFile(@Nullable SourceText previousSource, @Nullable ParsedDocument previous, boolean merge) {
         String lineSeparator = previousSource != null ? previousSource.lineSeparator() : "\n";
         String text = java.util.Objects.requireNonNull(adapter.configWriter(), "no config writer")
                 .write(schema, lineSeparator, previous);
-        if (previous != null) {
+        if (previous != null && merge) {
             // hand-written comments, blank lines and key order of the file are kept (spec 5.3)
             text = fr.heetstudio.confee.format.ConfeeFileMerger.merge(adapter, schema, previous, text);
             if (text.equals(previous.source().text())) {

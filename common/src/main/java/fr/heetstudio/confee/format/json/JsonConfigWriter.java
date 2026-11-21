@@ -22,15 +22,17 @@ public final class JsonConfigWriter {
     private final StringBuilder out = new StringBuilder();
     private final String nl;
     private final boolean json5;
+    private final boolean writeDefaults;
 
-    private JsonConfigWriter(String lineSeparator, boolean json5) {
+    private JsonConfigWriter(String lineSeparator, boolean json5, boolean writeDefaults) {
         this.nl = lineSeparator;
         this.json5 = json5;
+        this.writeDefaults = writeDefaults;
     }
 
     public static String write(ConfigSchema schema, String lineSeparator, @Nullable ParsedDocument previous, boolean json5) {
         ConfigTree.Group tree = ConfigTree.build(schema.root(), previous, true);
-        JsonConfigWriter writer = new JsonConfigWriter(lineSeparator, json5);
+        JsonConfigWriter writer = new JsonConfigWriter(lineSeparator, json5, schema.writeDefaults());
         if (json5) {
             writer.comment(tree.comment, "");
         }
@@ -49,7 +51,7 @@ public final class JsonConfigWriter {
         for (int i = 0; i < group.items.size(); i++) {
             ConfigTree.Item item = group.items.get(i);
             if (item instanceof ConfigTree.Leaf leaf) {
-                comment(ConfigTree.commentOf(leaf.option()), inner);
+                comment(ConfigTree.commentOf(leaf.option(), writeDefaults), inner);
                 out.append(inner).append(JsonValues.string(leaf.option().key(), '"')).append(": ")
                         .append(value(leaf.option()));
             } else if (item instanceof ConfigTree.Raw raw) {
