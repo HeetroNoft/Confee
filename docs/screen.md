@@ -38,6 +38,10 @@ public class OutlinePreview implements PreviewRenderer {
 
 Renderers written for Confee 0.2 (`render(g, x, y, width, height, value, delta)`) keep working.
 
+`context.path()` is the path of the option being previewed, so one renderer class can serve several options. Put
+`@Preview` on a `@Section` class (builder: `.category("outline").preview(...)`) to show one preview for all the options
+of the section that have none of their own.
+
 ## Layout and decorations
 
 ```java
@@ -112,9 +116,22 @@ Optional methods to override:
 
 `viewportHeight()` gives the height of the visible part of the panel, to keep a tall widget on the screen.
 
-To match Confee's look, draw with `ConfeeDraw` (`button`, `accentButton`, `text`, `textFit`, `focusRing`: theme
-colors, no text shadow) and `ConfeeIcons` (`drawItem(g, "minecraft:diamond", x, y, 16)`, `draw(g, registry, id, ...)`,
-`name(registry, id)`). Both also work in preview renderers, and from the title screen.
+To match Confee's look, draw with `ConfeeDraw` and `ConfeeIcons`. They also work in preview renderers, and from the
+title screen:
+
+| Helper | What it draws |
+| --- | --- |
+| `ConfeeDraw.button`, `accentButton`, `text`, `textFit`, `focusRing` | Confee's buttons and text (theme colors, no shadow). |
+| `ConfeeDraw.tiled(g, "minecraft:block/stone_bricks", x, y, w, h)` | A block texture (or a `.png`) repeated over an area. |
+| `ConfeeDraw.entity(g, "minecraft:zombie", x, y, w, h, outlineColor[, outlineOnly])` | A mob: its model when a world is loaded, else a front view from its skin (humanoid mobs). With an outline color, a 1 px line around the silhouette like Glowing; `outlineOnly` draws just that line. |
+| `ConfeeIcons.drawItem`, `draw(g, registry, id, ...)`, `name(registry, id)` | Icons and names of items, blocks, mobs, effects... |
+| `ConfeeIcons.drawStack(g, snbtOrId, count, x, y)` | An item stack with its count and enchantment glint. |
+
+`Theme.mix(a, b, amount)` and `theme.dimmed(color)` blend colors, to dim a text without drawing a layer over it.
+
+`ConfeeTextField` is Confee's text field for your widgets (theme colors, error, suggestions with icons, items found by
+their name with `setRegistry("minecraft:item")`). It takes the same `int` events as `OptionWidget` on every Minecraft
+version; draw its suggestions from `renderOverlay`.
 
 ### Widgets for other mods' settings
 

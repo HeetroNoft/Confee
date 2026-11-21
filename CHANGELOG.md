@@ -9,6 +9,13 @@
 - `@Config(writeDefaults = true)`: a `Default: <value>` comment under each option of the file.
 - `@Config(legacyFiles = {...})`: moves a config file your mod wrote before using Confee (or under another name, case included) to the Confee file, keeping its values and dropping its old comments.
 - `SuggestionProvider#needsWorld()`: from the title screen, an empty field shows "Open a world for more suggestions".
+- `@ItemStack` (String or List of String): a whole item stack written as SNBT in the format of the Minecraft version, with an item field (search by name, picker), a count field and an extra data field.
+- `@Validator(onFileError = KEEP)` / `@ItemStack(onFileError = KEEP)`: a refused value of the file is kept as written, the screen shows its error until it is fixed.
+- Suggestions find registry entries by their name in the player's language too ("épée" finds the diamond sword).
+- `@Suggestions(sources = ...)`: scoreboard tags, teams and objectives of the loaded world.
+- Previews: `PreviewContext#path()`, and `@Preview` on a `@Section` class for one preview of the whole section.
+- `ConfeeDraw.entity` (a mob: model in a world, front view from its skin otherwise, optional Glowing-like outline), `ConfeeDraw.tiled`, `ConfeeIcons.drawStack`, `Theme.mix` / `theme.dimmed`.
+- `ConfeeTextField`: Confee's text field for your own widgets, with the same events on every Minecraft version.
 
 ## 0.2.0 (Minecraft 1.21.4)
 
