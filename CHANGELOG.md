@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.3.0 (Minecraft 1.21.2 – 1.21.3)
+
+- Previews: a `PreviewRenderer` can read the pending values of the other options of the config (edited, not saved yet) and the theme of the screen, with the new `render(..., PreviewContext context, delta)`. Old renderers keep working.
+- Your own widgets (`OptionWidget`): `error()` shows a message under the widget and disables "Save"; `capturesText()` leaves plain keys to a widget that types text; `focusBounds()` / `revealFocus()` scroll only the focused part of a tall widget into view; `renderOverlay` and its friends draw a list or popup over the next options; `viewportHeight()` gives the visible height of the panel. Widgets can now be up to 4000 pixels tall.
+- `ConfeeDraw` (Confee buttons, text without shadow, focus ring) and `ConfeeIcons` (item, mob, effect... icons and names, also from the title screen) for your widgets and previews.
+- `@Validator` / `OptionBuilder.validator(...)`: your own check of a value (or of each value of a list), with your message under the field.
+- `@Config(writeDefaults = true)`: a `Default: <value>` comment under each option of the file.
+- `@Config(legacyFiles = {...})`: moves a config file your mod wrote before using Confee (or under another name, case included) to the Confee file, keeping its values and dropping its old comments.
+- `SuggestionProvider#needsWorld()`: from the title screen, an empty field shows "Open a world for more suggestions".
+
 ## 0.2.0 (Minecraft 1.21.2 – 1.21.3)
 
 - First version for Minecraft 1.21.2 – 1.21.3, with its own jars for Fabric/Quilt, NeoForge and Forge.
