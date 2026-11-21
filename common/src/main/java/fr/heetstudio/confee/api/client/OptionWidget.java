@@ -81,6 +81,62 @@ public abstract class OptionWidget<T> {
         return Component.literal(String.valueOf(value()));
     }
 
+    /**
+     * Error to show under the widget, or null when the widget is valid (default). While it is not null, the error is
+     * drawn in red under the widget like for Confee's fields, and "Save" is disabled.
+     * <p>Example: {@code return parsed ? null : Component.translatable("examplemod.error.bad_entry");}</p>
+     */
+    @org.jetbrains.annotations.Nullable
+    public Component error() {
+        return null;
+    }
+
+    /**
+     * True while the widget is typing text (a text field of yours has the focus): the screen then leaves plain keys
+     * ({@code [}, {@code ]}, Page Up/Down...) to the widget. Shortcuts with Ctrl (Ctrl+Tab, Ctrl+F) still work: let
+     * {@link #keyPressed} return false for them. Default false.
+     */
+    public boolean capturesText() {
+        return false;
+    }
+
+    /**
+     * Part of the widget to scroll into view when it gets the keyboard focus, as {@code {x, y, width, height}} in
+     * screen coordinates, or null for the whole widget (default). Useful for a widget taller than the panel: return
+     * the focused line, so the panel does not scroll to the bottom of the widget. See also {@link #revealFocus()}.
+     */
+    @org.jetbrains.annotations.Nullable
+    public int[] focusBounds() {
+        return null;
+    }
+
+    /**
+     * Draws content above the rest of the screen (a suggestion list, a popup) while the widget has the focus. It is
+     * not clipped to the panel and covers the options below. Declare its area with {@link #overlayBounds()}.
+     */
+    public void renderOverlay(GuiGraphics g, int mouseX, int mouseY, float delta) {
+    }
+
+    /**
+     * Area of the content drawn by {@link #renderOverlay}, as {@code {x, y, width, height}} in screen coordinates,
+     * or null when nothing is shown (default). Clicks and the mouse wheel on it go to {@link #overlayClicked} and
+     * {@link #overlayScrolled}, and the options under it are not hovered.
+     */
+    @org.jetbrains.annotations.Nullable
+    public int[] overlayBounds() {
+        return null;
+    }
+
+    /** Click on the overlay area; return true when handled. */
+    public boolean overlayClicked(double mouseX, double mouseY, int button) {
+        return false;
+    }
+
+    /** Mouse wheel on the overlay area; return true when handled. */
+    public boolean overlayScrolled(double mouseX, double mouseY, double delta) {
+        return false;
+    }
+
     // ------------------------------------------------------------------ helpers for subclasses
 
     /** Pending value of the option. */
@@ -135,6 +191,19 @@ public abstract class OptionWidget<T> {
     /** Vanilla click sound. */
     protected final void playClick() {
         context.click();
+    }
+
+    /**
+     * Height of the visible part of the options panel, in GUI pixels. Keep a tall widget below it (and scroll its
+     * content yourself) so it always fits on the screen.
+     */
+    protected final int viewportHeight() {
+        return context.viewportHeight();
+    }
+
+    /** Scrolls the panel so that {@link #focusBounds()} (or the whole widget) is visible, e.g. after a key moved the focused line. */
+    protected final void revealFocus() {
+        context.reveal();
     }
 
     protected final int x() {
@@ -193,5 +262,14 @@ public abstract class OptionWidget<T> {
         boolean enabled();
 
         void click();
+
+        /** Height of the visible part of the options panel. */
+        default int viewportHeight() {
+            return 200;
+        }
+
+        /** Scrolls the panel to the focused part of the widget. */
+        default void reveal() {
+        }
     }
 }
