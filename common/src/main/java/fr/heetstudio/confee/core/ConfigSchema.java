@@ -25,6 +25,10 @@ public final class ConfigSchema {
     private final ConfigSource source;
     private final Section root;
     private final fr.heetstudio.confee.api.Layout layout;
+    /** {@code Default: x} comment under each option ({@code @Config(writeDefaults = true)}). */
+    private boolean writeDefaults;
+    /** Old file names to move to this file ({@code @Config(legacyFiles)}), relative to {@code config/}. */
+    private java.util.List<String> legacyFiles = java.util.List.of();
 
     public ConfigSchema(String modId, @Nullable String name, ConfigScope scope, ConfigFormat format,
                         Path filePath, Theme theme, ConfigSource source, Section root) {
@@ -94,5 +98,20 @@ public final class ConfigSchema {
 
     public Section root() {
         return root;
+    }
+
+    public boolean writeDefaults() {
+        return writeDefaults;
+    }
+
+    public java.util.List<String> legacyFiles() {
+        return legacyFiles;
+    }
+
+    /** File options of a Confee config; set once, before the config is loaded. */
+    public ConfigSchema withFileOptions(boolean writeDefaults, java.util.List<String> legacyFiles) {
+        this.writeDefaults = writeDefaults;
+        this.legacyFiles = java.util.List.copyOf(legacyFiles);
+        return this;
     }
 }
