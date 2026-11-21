@@ -61,6 +61,9 @@ final class ListRow extends OptionRow {
     private java.util.Map<Object, Integer> usedCache;
 
     private final class Entry {
+        /** Item, count and extra data fields of an {@code @ItemStack} list, or null. */
+        @Nullable
+        final StackEditor stack;
         @Nullable
         final TextFieldWidget field;
         @Nullable
@@ -73,7 +76,14 @@ final class ListRow extends OptionRow {
         @SuppressWarnings({"unchecked", "rawtypes"})
         Entry(Object value) {
             Theme t = ui.theme();
-            if (isEnumList()) {
+            if (option.stackSpec() != null) {
+                stack = new StackEditor(ui, option, name, String.valueOf(value), (current, apply) -> overlays.accept(
+                        new ItemPickerPopup(ui, name, "minecraft:item", current, java.util.Set.of(),
+                                ItemPickerPopup.Styles.of(option, "minecraft:item"), apply, closeOverlay)), ListRow.this::edited);
+                field = null;
+                dropdown = null;
+            } else if (isEnumList()) {
+                stack = null;
                 enumValue = value;
                 List<Object> constants = Arrays.asList((Object[]) option.enumClass().getEnumConstants());
                 dropdown = new DropdownWidget<>(ui, name, constants, Labels::enumValue, () -> enumValue, v -> {
@@ -82,6 +92,7 @@ final class ListRow extends OptionRow {
                 }, opener);
                 field = null;
             } else {
+                stack = null;
                 field = new TextFieldWidget(ui, name, value instanceof Double || value instanceof Float
                         ? ValueText.number(value) : String.valueOf(value), 32767, numericFilter(), s -> edited());
                 dropdown = null;
@@ -113,12 +124,16 @@ final class ListRow extends OptionRow {
         }
 
         ConfeeWidget input() {
-            return field != null ? field : dropdown;
+            return stack != null ? stack.item : field != null ? field : dropdown;
+        }
+
+        List<ConfeeWidget> inputs() {
+            return stack != null ? stack.widgets() : List.of(input());
         }
 
         @Nullable
         Component error() {
-            return field == null ? null : field.error();
+            return stack != null ? stack.error() : field == null ? null : field.error();
         }
     }
 
@@ -136,7 +151,7 @@ final class ListRow extends OptionRow {
         this.registry = detected == null ? null : detected.registry();
         this.accepted = fr.heetstudio.confee.ui.RegistryFilters.of(option);
         this.suggester = fr.heetstudio.confee.ui.Suggestions.forSources(registry, detected != null && detected.tags(),
-                option.suggestions(), option.path(), accepted);
+                fr.heetstudio.confee.ui.Suggestions.providerOf(option), option.path(), accepted);
         this.add = new ButtonWidget(ui, Component.translatable("confee.button.add"), ButtonWidget.Style.NORMAL, this::addEntry);
         rebuild();
     }
@@ -174,14 +189,30 @@ final class ListRow extends OptionRow {
         shownList = current();
         usedCache = null;
         updateButtons();
+        // values kept as written in the file (OnFileError.KEEP) show their error at once
+        check(false);
     }
 
     /** Re-reads every entry; applies the list only when all are valid. */
-    @SuppressWarnings({"unchecked", "rawtypes"})
     private void edited() {
+        check(true);
+    }
+
+    /** @param apply give the list to the edit session when every entry is valid */
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    private void check(boolean apply) {
         List<Object> values = new ArrayList<>(entries.size());
         boolean ok = true;
         for (Entry entry : entries) {
+            if (entry.stack != null) {
+                String snbt = entry.stack.check();
+                if (snbt == null) {
+                    ok = false;
+                } else {
+                    values.add(snbt);
+                }
+                continue;
+            }
             if (entry.field == null) {
                 values.add(entry.enumValue);
                 continue;
@@ -204,7 +235,7 @@ final class ListRow extends OptionRow {
         }
         usedCache = null;
         updateButtons();
-        if (ok) {
+        if (ok && apply) {
             List<Object> list = List.copyOf(values);
             ((EditSession) session).set((Option) option, list);
             shownList = list;
@@ -226,7 +257,7 @@ final class ListRow extends OptionRow {
 
     /** Duplicate key of an entry: its trimmed text (lower case with @IgnoreCase), or its enum value. */
     private Object keyOf(Entry entry) {
-        return entry.field != null ? textKey(entry.field.text()) : entry.enumValue;
+        return entry.stack != null ? entry : entry.field != null ? textKey(entry.field.text()) : entry.enumValue;
     }
 
     private Object textKey(String text) {
@@ -283,6 +314,9 @@ final class ListRow extends OptionRow {
         if (type == OptionType.BOOLEAN) {
             return used.test("false") && !used.test("true") ? "true" : "false";
         }
+        if (option.stackSpec() != null) {
+            return "minecraft:stone";
+        }
         if (type != null && type.isNumeric()) {
             // start at the lower @Range bound of the values when there is one
             long n = option.elementMin() != null ? (long) Math.ceil(option.elementMin().doubleValue()) : 0;
@@ -328,7 +362,7 @@ final class ListRow extends OptionRow {
     @Override
     void syncValue() {
         // list replaced elsewhere (reset): rebuild the entries
-        boolean editing = entries.stream().anyMatch(e -> e.input().isFocused());
+        boolean editing = entries.stream().anyMatch(e -> e.inputs().stream().anyMatch(ConfeeWidget::isFocused));
         if (!editing && !Objects.equals(shownList, current()) && entries.stream().noneMatch(e -> e.error() != null)) {
             rebuild();
         }
@@ -351,12 +385,17 @@ final class ListRow extends OptionRow {
         int arrows = showArrows() ? 2 : 0;
         int buttons = (arrows + 1) * 14 + arrows * GAP;
         for (Entry entry : entries) {
-            entry.input().setBounds(cx, cy, cw - buttons - GAP, TextFieldWidget.HEIGHT);
             int bx = cx + cw - buttons;
             int by = cy + (TextFieldWidget.HEIGHT - 14) / 2;
             entry.up.setBounds(bx, by, 14, 14);
             entry.down.setBounds(bx + 14 + GAP, by, 14, 14);
             entry.remove.setBounds(bx + arrows * (14 + GAP), by, 14, 14);
+            if (entry.stack != null) {
+                // a stack takes two lines; a little more room between stacks
+                cy += entry.stack.layout(cx, cy, cw - buttons - GAP) + GAP + 2;
+                continue;
+            }
+            entry.input().setBounds(cx, cy, cw - buttons - GAP, TextFieldWidget.HEIGHT);
             cy += TextFieldWidget.HEIGHT;
             if (entry.error() != null) {
                 cy += 11;
@@ -379,15 +418,19 @@ final class ListRow extends OptionRow {
         renderRestartIcon(g);
         reset.render(g, mouseX, mouseY, delta);
         for (Entry entry : entries) {
-            entry.input().render(g, mouseX, mouseY, delta);
+            for (ConfeeWidget input : entry.inputs()) {
+                input.render(g, mouseX, mouseY, delta);
+            }
             if (showArrows()) {
                 entry.up.render(g, mouseX, mouseY, delta);
                 entry.down.render(g, mouseX, mouseY, delta);
             }
             entry.remove.render(g, mouseX, mouseY, delta);
             if (entry.error() != null) {
-                ConfeeWidget input = entry.input();
-                Draw.textFit(g, ui.font(), entry.error(), input.x, input.y + input.height + 2, input.width, t.error());
+                List<ConfeeWidget> inputs = entry.inputs();
+                ConfeeWidget last = inputs.get(inputs.size() - 1);
+                ConfeeWidget first = inputs.get(0);
+                Draw.textFit(g, ui.font(), entry.error(), first.x, last.y + last.height + 2, cwOf(entry), t.error());
             }
         }
         add.render(g, mouseX, mouseY, delta);
@@ -398,7 +441,7 @@ final class ListRow extends OptionRow {
         List<ConfeeWidget> list = new ArrayList<>();
         list.add(reset);
         for (Entry entry : entries) {
-            list.add(entry.input());
+            list.addAll(entry.inputs());
             if (showArrows()) {
                 list.add(entry.up);
                 list.add(entry.down);
@@ -407,6 +450,17 @@ final class ListRow extends OptionRow {
         }
         list.add(add);
         return list;
+    }
+
+    /** Width of the fields of an entry (its error line). */
+    private int cwOf(Entry entry) {
+        List<ConfeeWidget> inputs = entry.inputs();
+        int left = inputs.get(0).x;
+        int right = left;
+        for (ConfeeWidget input : inputs) {
+            right = Math.max(right, input.x + input.width);
+        }
+        return right - left;
     }
 
     @Override

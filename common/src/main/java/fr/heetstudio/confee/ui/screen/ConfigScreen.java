@@ -454,9 +454,16 @@ public final class ConfigScreen extends ConfeeScreen {
             case OBJECT_LIST -> {
                 return new ObjectListRow(ui, session, option, name, description, this::problemText, this::focusLater, this::openDropdown);
             }
-            case STRING -> control = option.widgetHint() == WidgetHint.MULTILINE ? multiline(option, name)
+            case STRING -> {
+                if (option.stackSpec() != null) {
+                    return new StackRow(ui, session, option, name, description, (current, apply) -> openOverlay(
+                            new ItemPickerPopup(ui, name, "minecraft:item", current, java.util.Set.of(),
+                                    ItemPickerPopup.Styles.of(option, "minecraft:item"), apply, this::closeOverlay)));
+                }
+                control = option.widgetHint() == WidgetHint.MULTILINE ? multiline(option, name)
                     : option.widgetHint() == WidgetHint.KEYBIND ? new KeybindWidget(ui, name, () -> (String) session.get(raw),
                     v -> session.set(raw, v)) : field(option, name);
+            }
             default -> {
                 boolean sliderOk = option.widgetHint() == WidgetHint.SLIDER && option.min() != null && option.max() != null
                         && option.type().isNumeric();
@@ -695,7 +702,7 @@ public final class ConfigScreen extends ConfeeScreen {
                 ? fr.heetstudio.confee.ui.RegistryDetector.of(schema, option, session.get(raw)) : null;
         if (type == OptionType.IDENTIFIER || type == OptionType.STRING) {
             field.setSuggester(Suggestions.forSources(detected == null ? null : detected.registry(),
-                    detected != null && detected.tags(), option.suggestions(), option.path(), accepted));
+                    detected != null && detected.tags(), fr.heetstudio.confee.ui.Suggestions.providerOf(option), option.path(), accepted));
             Component worldHint = Suggestions.worldHint(option);
             if (worldHint != null) {
                 field.setHint(worldHint);

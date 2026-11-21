@@ -35,4 +35,12 @@ public interface PreviewContext {
 
     /** Theme of the screen, to draw with the same colors as Confee. */
     Theme theme();
+
+    /**
+     * Dotted path of the option being previewed, e.g. {@code rarity.elite}: one renderer class can serve several
+     * options, or a whole section ({@code @Preview} on a {@code @Section} class).
+     */
+    default String path() {
+        return "";
+    }
 }

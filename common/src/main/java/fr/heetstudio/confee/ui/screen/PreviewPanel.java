@@ -49,6 +49,8 @@ final class PreviewPanel {
     private final int width;
     /** Pending values of the config and theme, for the renderers (spec 10.6). */
     private final fr.heetstudio.confee.api.PreviewContext context;
+    /** Option being drawn, for {@code PreviewContext#path}. */
+    private String drawnPath = "";
 
     PreviewPanel(Ui ui, ConfigSchema schema, EditSession session, int width) {
         this.ui = ui;
@@ -66,6 +68,11 @@ final class PreviewPanel {
             public Theme theme() {
                 return ui.theme();
             }
+
+            @Override
+            public String path() {
+                return drawnPath;
+            }
         };
     }
 
@@ -76,7 +83,7 @@ final class PreviewPanel {
     /** Registry of an automatic preview (declared or guessed ID option without preview), or null. */
     @Nullable
     static String autoPreviewRegistry(ConfigSchema schema, Option<?> option, Object value) {
-        if (option.preview() != null || (option.type() != fr.heetstudio.confee.core.OptionType.IDENTIFIER
+        if (schema.root().previewOf(option) != null || (option.type() != fr.heetstudio.confee.core.OptionType.IDENTIFIER
                 && option.type() != fr.heetstudio.confee.core.OptionType.STRING)) {
             return null;
         }
@@ -86,7 +93,7 @@ final class PreviewPanel {
 
     static boolean anyPreview(ConfigSchema schema) {
         boolean[] any = {false};
-        schema.root().forEachOption(o -> any[0] |= (o.preview() != null || autoPreviewRegistry(schema, o, o.get()) != null) && !o.hidden());
+        schema.root().forEachOption(o -> any[0] |= (schema.root().previewOf(o) != null || autoPreviewRegistry(schema, o, o.get()) != null) && !o.hidden());
         return any[0];
     }
 
@@ -116,7 +123,7 @@ final class PreviewPanel {
             y += 10;
         }
         y += 4;
-        Preview preview = option.preview();
+        Preview preview = schema.root().previewOf(option);
         Object value = shown != null ? shown : session.get(option);
         String registry = autoPreviewRegistry(schema, option, value);
         if (registry != null) {
@@ -214,6 +221,7 @@ final class PreviewPanel {
             int h = Math.min(MAX_MEDIA_H, Math.max(8, renderer.height(w)));
             Draw.rect(g, x, y, w, h, ui.theme().panelBgDeep());
             g.enableScissor(x, y, x + w, y + h);
+            drawnPath = option.path();
             renderer.render(g, x, y, w, h, value, context, delta);
             g.disableScissor();
             return y + h;
