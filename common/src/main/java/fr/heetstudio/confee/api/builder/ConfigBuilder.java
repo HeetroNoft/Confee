@@ -34,6 +34,8 @@ public final class ConfigBuilder extends SectionBuilder {
     private Theme theme = Theme.DEFAULT;
     private fr.heetstudio.confee.api.Layout layout = fr.heetstudio.confee.api.Layout.DEFAULT;
     private boolean built;
+    private boolean writeDefaults;
+    private java.util.List<String> legacyFiles = java.util.List.of();
 
     private ConfigBuilder(String modId, ConfeeEnvironment environment) {
         super(null, Section.root(null));
@@ -113,6 +115,28 @@ public final class ConfigBuilder extends SectionBuilder {
     }
 
     /**
+     * Writes a {@code Default: <value>} comment under each option of the file.
+     * <p>Example: {@code Confee.builder("examplemod").writeDefaults()}</p>
+     */
+    public ConfigBuilder writeDefaults() {
+        checkNotBuilt();
+        this.writeDefaults = true;
+        return this;
+    }
+
+    /**
+     * Files your mod wrote before using Confee, relative to {@code config/}, in the config's format: when the Confee
+     * file does not exist yet, the first one found is moved to it, with its values and Confee's comments (see
+     * {@code @Config#legacyFiles}).
+     * <p>Example: {@code Confee.builder("examplemod").legacyFiles("ExampleMod.toml")}</p>
+     */
+    public ConfigBuilder legacyFiles(String... paths) {
+        checkNotBuilt();
+        this.legacyFiles = java.util.List.of(paths);
+        return this;
+    }
+
+    /**
      * Header comment written at the top of the file.
      * <p>Example: {@code Confee.builder("examplemod").comment("Example mod settings")}</p>
      */
@@ -134,7 +158,7 @@ public final class ConfigBuilder extends SectionBuilder {
         fr.heetstudio.confee.core.AnnotationConfigs.validateConditions(section, environment.development(), "config " + modId);
         ConfigSchema schema = new ConfigSchema(modId, name, scope, format,
                 environment.configDir().resolve(ConfigSchema.fileName(modId, name, format)),
-                theme, ConfigSource.CONFEE, section, layout);
+                theme, ConfigSource.CONFEE, section, layout).withFileOptions(writeDefaults, legacyFiles);
         ConfigHandle<Void> handle = new ConfigHandle<>(schema, null, scope != ConfigScope.CLIENT || environment.client());
         ConfeeRegistry.register(handle);
         handle.load();
