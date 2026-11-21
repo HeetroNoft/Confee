@@ -153,11 +153,70 @@ public final class ConfigTree {
     /** Comment + hint of an option, or null. */
     @Nullable
     public static String commentOf(Option<?> option) {
-        String hint = hint(option);
-        if (option.comment() == null) {
-            return hint;
+        return commentOf(option, false);
+    }
+
+    /** Comment + hint (+ default value when {@code withDefault}) of an option, or null. */
+    @Nullable
+    public static String commentOf(Option<?> option, boolean withDefault) {
+        StringJoiner lines = new StringJoiner("\n");
+        if (option.comment() != null) {
+            lines.add(option.comment());
         }
-        return hint == null ? option.comment() : option.comment() + "\n" + hint;
+        String hint = hint(option);
+        if (hint != null) {
+            lines.add(hint);
+        }
+        String defaultLine = withDefault ? defaultHint(option) : null;
+        if (defaultLine != null) {
+            lines.add(defaultLine);
+        }
+        return lines.length() == 0 ? null : lines.toString();
+    }
+
+    /**
+     * {@code Default: <value>} line ({@code @Config(writeDefaults = true)}), or null for values that do not fit on one
+     * line (maps, lists of objects, multi-line text).
+     */
+    @Nullable
+    public static String defaultHint(Option<?> option) {
+        Object value = option.getDefault();
+        if (value == null || option.type() == OptionType.MAP || option.type() == OptionType.OBJECT_LIST) {
+            return null;
+        }
+        String text = defaultText(option, portable(option, value));
+        return text == null || text.contains("\n") || text.contains("\r") ? null : "Default: " + text;
+    }
+
+    @Nullable
+    private static String defaultText(Option<?> option, Object value) {
+        if (value instanceof List<?> list) {
+            StringJoiner joiner = new StringJoiner(", ", "[", "]");
+            for (Object element : list) {
+                String text = defaultText(option, element);
+                if (text == null) {
+                    return null;
+                }
+                joiner.add(text);
+            }
+            return joiner.toString();
+        }
+        boolean enumName = option.type() == OptionType.ENUM
+                || (option.type() == OptionType.LIST && option.elementType() == OptionType.ENUM);
+        if (value instanceof String s && enumName) {
+            return s;
+        }
+        if (value instanceof String s) {
+            return "\"" + s.replace("\\", "\\\\").replace("\"", "\\\"") + "\"";
+        }
+        if (value instanceof Enum<?> e) {
+            return e.name();
+        }
+        if (value instanceof Number n) {
+            OptionType type = option.type() == OptionType.LIST && option.elementType() != null ? option.elementType() : option.type();
+            return type.isNumeric() ? number(n, type) : String.valueOf(n);
+        }
+        return value instanceof Boolean ? String.valueOf(value) : null;
     }
 
     /**

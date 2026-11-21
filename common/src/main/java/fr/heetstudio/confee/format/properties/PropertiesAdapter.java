@@ -76,7 +76,7 @@ public final class PropertiesAdapter implements FormatAdapter {
                 out.append(nl);
             }
             first = false;
-            String text = ConfigTree.commentOf(option);
+            String text = ConfigTree.commentOf(option, schema.writeDefaults());
             if (text != null) {
                 comment(out, text, nl);
             }

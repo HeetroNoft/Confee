@@ -44,6 +44,11 @@ public final class Ui {
         return fr.heetstudio.confee.ui.render.Draw.mix(theme.textOnDark(), theme.panelBg(), 0.35f);
     }
 
+    /** Height of the window in GUI pixels. */
+    public int screenHeight() {
+        return Minecraft.getInstance().getWindow().getGuiScaledHeight();
+    }
+
     public long now() {
         return Util.getMillis();
     }

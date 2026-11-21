@@ -67,6 +67,18 @@ public class ButtonWidget extends ConfeeWidget {
         this.icon = icon;
     }
 
+    /** {face, bottom strip, text} colors of a button (spec 10.3), shared with {@code ConfeeDraw.button}. */
+    public static int[] colors(Theme t, boolean enabled, boolean accent, boolean hover) {
+        if (!enabled) {
+            return new int[]{Draw.mix(t.buttonFace(), t.panelBg(), 0.55f), Draw.mix(t.buttonShadow(), t.panelBg(), 0.55f),
+                    t.textDisabled()};
+        }
+        if (accent) {
+            return new int[]{hover ? t.accentLight() : t.accent(), t.accentDark(), t.onAccentText()};
+        }
+        return new int[]{hover ? t.buttonFaceHover() : t.buttonFace(), t.buttonShadow(), t.textOnLight()};
+    }
+
     /** Width that fits the label. */
     public int preferredWidth() {
         return ui.font().width(label) + 20 + (style == Style.NAVIGATION ? 12 : 0) + (icon != null ? 20 : 0);
@@ -81,22 +93,10 @@ public class ButtonWidget extends ConfeeWidget {
         boolean hover = hovered(mouseX, mouseY);
         boolean pressed = enabled && ((mouseDown && hover) || (keyPressedAt >= 0 && ui.now() - keyPressedAt < PRESS_FLASH_MS));
         boolean accent = style == Style.PRIMARY || selected;
-        int face;
-        int shadow;
-        int textColor;
-        if (!enabled) {
-            face = Draw.mix(t.buttonFace(), t.panelBg(), 0.55f);
-            shadow = Draw.mix(t.buttonShadow(), t.panelBg(), 0.55f);
-            textColor = t.textDisabled();
-        } else if (accent) {
-            face = hover ? t.accentLight() : t.accent();
-            shadow = t.accentDark();
-            textColor = t.onAccentText();
-        } else {
-            face = hover ? t.buttonFaceHover() : t.buttonFace();
-            shadow = t.buttonShadow();
-            textColor = t.textOnLight();
-        }
+        int[] colors = colors(t, enabled, accent, hover);
+        int face = colors[0];
+        int shadow = colors[1];
+        int textColor = colors[2];
         Draw.bevel(g, x, y, width, height, face, shadow, t.outline(), pressed);
         int offset = pressed ? 1 : 0;
         int textY = y + (height - 2 - 8) / 2 + offset;
