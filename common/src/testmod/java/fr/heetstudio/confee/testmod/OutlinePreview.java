@@ -4,13 +4,13 @@ import fr.heetstudio.confee.api.PreviewContext;
 import fr.heetstudio.confee.api.PreviewRenderer;
 import fr.heetstudio.confee.api.Theme;
 import fr.heetstudio.confee.api.client.ConfeeDraw;
-import fr.heetstudio.confee.api.client.ConfeeIcons;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.network.chat.Component;
 
 /**
- * Preview reading the pending values of other options ({@link PreviewContext}): one zombie per rarity, outlined when
- * outlines are on for it, with the theme colors. Client only.
+ * One preview for the whole {@code outline} section ({@code @Preview} on the section class): a zombie per rarity with
+ * its outline (Glowing style) when it is on, read from the pending values; the hovered rarity ({@link PreviewContext#path()})
+ * is highlighted, the others dimmed. Infernal mobs stand behind a stone brick wall: only their outline is seen.
  */
 public class OutlinePreview implements PreviewRenderer {
 
@@ -21,26 +21,31 @@ public class OutlinePreview implements PreviewRenderer {
     public void render(GuiGraphicsExtractor g, int x, int y, int width, int height, Object value, PreviewContext context, float delta) {
         Theme theme = context.theme();
         boolean all = context.value("outline.enabled", Boolean.class, true);
-        int thickness = context.value("outlineWidth", Integer.class, 1);
+        String hovered = context.path().substring(context.path().lastIndexOf('.') + 1);
         int cell = width / RARITIES.length;
-        int size = Math.min(cell - 12, height - 24);
+        int mobH = height - 16;
         for (int i = 0; i < RARITIES.length; i++) {
-            // the option of this preview gives its own value; the others come from the context
-            boolean on = all && (i == 2 ? Boolean.TRUE.equals(value) : context.value("outline." + RARITIES[i], Boolean.class, false));
-            int cx = x + i * cell + (cell - size) / 2;
-            int cy = y + 4;
-            if (on) {
-                g.fill(cx - thickness, cy - thickness, cx + size + thickness, cy + size + thickness, COLORS[i]);
+            boolean on = all && context.value("outline." + RARITIES[i], Boolean.class, false);
+            boolean focus = hovered.equals(RARITIES[i]) || hovered.equals("enabled");
+            int cx = x + i * cell;
+            if (i == 2) {
+                // behind a wall: the outline is seen through it, not the mob
+                ConfeeDraw.entity(g, "minecraft:zombie", cx, y + 2, cell, mobH, on ? COLORS[i] : 0, false);
+                ConfeeDraw.tiled(g, "minecraft:block/stone_bricks", cx + 2, y + 2 + mobH / 3, cell - 4, mobH * 2 / 3);
+                if (on) {
+                    ConfeeDraw.entity(g, "minecraft:zombie", cx, y + 2, cell, mobH, COLORS[i], true);
+                }
+            } else {
+                ConfeeDraw.entity(g, "minecraft:zombie", cx, y + 2, cell, mobH, on ? COLORS[i] : 0, false);
             }
-            g.fill(cx, cy, cx + size, cy + size, theme.panelBg());
-            ConfeeIcons.draw(g, "minecraft:entity_type", "minecraft:zombie", cx + 2, cy + 2, size - 4);
-            ConfeeDraw.textFit(g, Component.literal(RARITIES[i]), x + i * cell + 2, y + height - 12, cell - 4,
-                    on ? theme.textOnDark() : theme.textDisabled());
+            int label = on ? theme.textOnDark() : theme.textDisabled();
+            ConfeeDraw.textFit(g, Component.literal(RARITIES[i]), cx + 2, y + height - 11, cell - 4,
+                    focus ? label : theme.dimmed(label));
         }
     }
 
     @Override
     public int height(int width) {
-        return width / 2;
+        return width * 3 / 4;
     }
 }
