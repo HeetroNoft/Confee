@@ -180,6 +180,7 @@ public final class SchemaBinder {
                 replaced.add(option.path());
                 ConfeeLog.warn("{}: '{}' {}, using the default value", fileName, option.path(), result.message());
             }
+            case KEPT -> ConfeeLog.warn("{}: '{}' {}; kept as written, the mod skips it", fileName, option.path(), result.message());
             default -> {
             }
         }
