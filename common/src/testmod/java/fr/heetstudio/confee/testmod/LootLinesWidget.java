@@ -2,6 +2,7 @@ package fr.heetstudio.confee.testmod;
 
 import fr.heetstudio.confee.api.client.ConfeeDraw;
 import fr.heetstudio.confee.api.client.ConfeeIcons;
+import fr.heetstudio.confee.api.client.ConfeeTextField;
 import fr.heetstudio.confee.api.client.OptionWidget;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -16,25 +17,29 @@ import java.util.Locale;
 /**
  * Custom widget using every {@link OptionWidget} hook (client only): one line per item with its icon and a "×"
  * button ({@link ConfeeDraw}, {@link ConfeeIcons}), Up/Down to move between lines (only the focused line is scrolled
- * into view: {@link #focusBounds()}), "+ Add" opening a list drawn over the next options ({@link #renderOverlay}) where
- * typing filters the items ({@link #capturesText()}). Enter adds the typed text even when it is not an item: the line
- * then shows {@link #error()} and "Save" is disabled.
+ * into view: {@link #focusBounds()}), "+ Add" opening a {@link ConfeeTextField} (items found by ID or by name, its
+ * suggestion list drawn over the next options with {@link #renderOverlay}, {@link #capturesText()} while typing).
+ * Enter adds the typed text even when it is not an item: the line then shows {@link #error()} and "Save" is disabled.
  */
 public class LootLinesWidget extends OptionWidget<List<String>> {
 
     private static final int LINE = 18;
     private static final int ADD_H = 20;
-    private static final int SHOWN = 6;
 
     /** Focused line, or -1 for the "+ Add" button. */
     private int selected = -1;
     private boolean adding;
-    private String filter = "";
     private boolean pressedRemove;
+    private final ConfeeTextField search = new ConfeeTextField(Component.literal("Item"));
+
+    public LootLinesWidget() {
+        search.setRegistry("minecraft:item");
+        search.setHint(Component.literal("Item name or ID"));
+    }
 
     @Override
     public int height(int width) {
-        return value().size() * LINE + ADD_H + 2;
+        return value().size() * LINE + ADD_H + 2 + (adding ? ConfeeTextField.HEIGHT + 2 : 0);
     }
 
     private int addY() {
@@ -65,63 +70,40 @@ public class LootLinesWidget extends OptionWidget<List<String>> {
         }
         int ay = addY();
         boolean hoverAdd = mouseX >= x && mouseX < x + 90 && mouseY >= ay && mouseY < ay + ADD_H;
-        ConfeeDraw.button(g, theme(), x, ay, 90, ADD_H, Component.literal(adding ? "Type to filter" : "+ Add an item"),
+        ConfeeDraw.button(g, theme(), x, ay, 90, ADD_H, Component.literal(adding ? "Cancel" : "+ Add an item"),
                 hoverAdd, false, enabled());
-        if (focused() && selected < 0) {
+        if (focused() && selected < 0 && !adding) {
             ConfeeDraw.focusRing(g, theme(), x, ay, 90, ADD_H);
+        }
+        if (adding) {
+            search.setBounds(x, ay + ADD_H + 2, Math.min(width, 220));
+            search.setFocused(focused());
+            search.render(g, theme(), mouseX, mouseY, delta);
         }
     }
 
     // ------------------------------------------------------------------ overlay (suggestions over the next options)
 
-    private List<String> matches() {
-        List<String> out = new ArrayList<>();
-        String f = filter.toLowerCase(Locale.ROOT);
-        for (Identifier id : BuiltInRegistries.ITEM.keySet()) {
-            if (id.toString().contains(f) && !value().contains(id.toString())) {
-                out.add(id.toString());
-                if (out.size() == SHOWN) {
-                    break;
-                }
-            }
-        }
-        return out;
-    }
-
     @Override
     public int[] overlayBounds() {
-        return adding ? new int[]{x(), addY() + ADD_H, Math.min(width(), 200), 14 + SHOWN * LINE} : null;
+        return adding ? search.suggestionBounds() : null;
     }
 
     @Override
     public void renderOverlay(GuiGraphicsExtractor g, int mouseX, int mouseY, float delta) {
-        int[] r = overlayBounds();
-        if (r == null) {
-            return;
-        }
-        g.fill(r[0], r[1], r[0] + r[2], r[1] + r[3], theme().outline());
-        g.fill(r[0] + 1, r[1] + 1, r[0] + r[2] - 1, r[1] + r[3] - 1, theme().panelBgDeep());
-        ConfeeDraw.text(g, Component.literal("> " + filter + "_"), r[0] + 4, r[1] + 3, theme().accent());
-        List<String> found = matches();
-        for (int i = 0; i < found.size(); i++) {
-            int ly = r[1] + 13 + i * LINE;
-            if (mouseX >= r[0] && mouseX < r[0] + r[2] && mouseY >= ly && mouseY < ly + LINE) {
-                g.fill(r[0] + 1, ly, r[0] + r[2] - 1, ly + LINE, theme().panelBg());
-            }
-            ConfeeIcons.drawItem(g, found.get(i), r[0] + 3, ly + 1, 16);
-            ConfeeDraw.textFit(g, Component.literal(found.get(i)), r[0] + 22, ly + 5, r[2] - 26, theme().textOnDark());
+        if (adding) {
+            search.renderSuggestions(g, mouseX, mouseY, delta);
         }
     }
 
     @Override
     public boolean overlayClicked(double mouseX, double mouseY, int button) {
-        int[] r = overlayBounds();
-        int index = (int) ((mouseY - r[1] - 13) / LINE);
-        List<String> found = matches();
-        if (mouseY >= r[1] + 13 && index >= 0 && index < found.size()) {
-            add(found.get(index));
-        }
-        return true;
+        return search.suggestionsClicked(mouseX, mouseY, button);
+    }
+
+    @Override
+    public boolean overlayScrolled(double mouseX, double mouseY, double delta) {
+        return search.suggestionsScrolled(mouseX, mouseY, delta);
     }
 
     @Override
@@ -136,7 +118,7 @@ public class LootLinesWidget extends OptionWidget<List<String>> {
             playClick();
         }
         adding = false;
-        filter = "";
+        search.setText("");
     }
 
     // ------------------------------------------------------------------ focus, error
@@ -144,7 +126,7 @@ public class LootLinesWidget extends OptionWidget<List<String>> {
     @Override
     public int[] focusBounds() {
         return selected >= 0 ? new int[]{x(), y() + selected * LINE, width(), LINE}
-                : new int[]{x(), addY(), width(), ADD_H + (adding ? 14 + SHOWN * LINE : 0)};
+                : new int[]{x(), addY(), width(), ADD_H + (adding ? ConfeeTextField.HEIGHT + 2 : 0)};
     }
 
     @Override
@@ -181,10 +163,14 @@ public class LootLinesWidget extends OptionWidget<List<String>> {
             }
             return true;
         }
-        if (mouseY >= addY() && mouseX < x() + 90) {
+        if (adding && search.contains(mouseX, mouseY)) {
+            return search.mouseClicked(mouseX, mouseY, button);
+        }
+        if (mouseY >= addY() && mouseY < addY() + ADD_H && mouseX < x() + 90) {
             selected = -1;
             adding = !adding;
-            filter = "";
+            search.setText("");
+            search.setFocused(adding);
             playClick();
             revealFocus();
             return true;
@@ -205,19 +191,19 @@ public class LootLinesWidget extends OptionWidget<List<String>> {
             return false; // Ctrl+Tab, Ctrl+F... stay screen shortcuts
         }
         if (adding) {
-            switch (key) {
-                case InputConstants.KEY_ESCAPE -> adding = false;
-                case InputConstants.KEY_BACKSPACE -> filter = filter.isEmpty() ? "" : filter.substring(0, filter.length() - 1);
-                case InputConstants.KEY_RETURN, InputConstants.KEY_NUMPADENTER -> {
-                    if (!filter.isEmpty()) {
-                        add(filter.contains(":") ? filter : "minecraft:" + filter);
-                    }
-                }
-                default -> {
-                    return true; // letters arrive through charTyped
-                }
+            if (key == InputConstants.KEY_ESCAPE && search.suggestionBounds() == null) {
+                adding = false;
+                return true;
             }
-            return true;
+            if ((key == InputConstants.KEY_RETURN || key == InputConstants.KEY_NUMPADENTER) && search.suggestionBounds() == null) {
+                String typed = search.text().trim();
+                if (!typed.isEmpty()) {
+                    add(typed.contains(":") ? typed : "minecraft:" + typed);
+                }
+                return true;
+            }
+            search.keyPressed(key, scanCode, modifiers);
+            return true; // the field keeps every plain key while it is open
         }
         int size = value().size();
         switch (key) {
@@ -236,7 +222,8 @@ public class LootLinesWidget extends OptionWidget<List<String>> {
                     return false;
                 }
                 adding = true;
-                filter = "";
+                search.setText("");
+                search.setFocused(true);
                 playClick();
             }
             default -> {
@@ -249,11 +236,7 @@ public class LootLinesWidget extends OptionWidget<List<String>> {
 
     @Override
     public boolean charTyped(char c, int modifiers) {
-        if (adding && (Character.isLetterOrDigit(c) || c == '_' || c == ':' || c == '/' || c == '.')) {
-            filter += Character.toLowerCase(c);
-            return true;
-        }
-        return false;
+        return adding && search.charTyped(c, modifiers);
     }
 
     @Override
