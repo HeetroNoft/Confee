@@ -84,7 +84,8 @@ public final class AnnotationConfigs {
         ConfigSchema schema = new ConfigSchema(config.modId(), name, config.scope(), config.format(),
                 ConfigHandle.filePath(environment, config.modId(), name, config.format()),
                 theme(type.getAnnotation(fr.heetstudio.confee.api.annotation.Theme.class)),
-                ConfigSource.CONFEE, root, layout(type.getAnnotation(fr.heetstudio.confee.api.annotation.Layout.class)));
+                ConfigSource.CONFEE, root, layout(type.getAnnotation(fr.heetstudio.confee.api.annotation.Layout.class)))
+                .withFileOptions(config.writeDefaults(), List.of(config.legacyFiles()));
         return new ConfigHandle<>(schema, instance, ConfigHandle.isActive(environment, config.scope()));
     }
 
@@ -385,6 +386,10 @@ public final class AnnotationConfigs {
         if (pattern != null) {
             builder.pattern(pattern.value());
         }
+        fr.heetstudio.confee.api.annotation.Validator modValidator = field.getAnnotation(fr.heetstudio.confee.api.annotation.Validator.class);
+        if (modValidator != null) {
+            builder.modValidator(instantiate(modValidator.value()));
+        }
         MaxLength maxLength = field.getAnnotation(MaxLength.class);
         if (maxLength != null) {
             if (maxLength.value() <= 0) {
@@ -521,13 +526,25 @@ public final class AnnotationConfigs {
             return () -> fixed;
         }
         fr.heetstudio.confee.api.SuggestionProvider[] provider = new fr.heetstudio.confee.api.SuggestionProvider[1];
-        return () -> {
-            if (provider[0] == null) {
-                provider[0] = instantiate(providerClass);
+        return new fr.heetstudio.confee.api.SuggestionProvider() {
+            private fr.heetstudio.confee.api.SuggestionProvider provider() {
+                if (provider[0] == null) {
+                    provider[0] = instantiate(providerClass);
+                }
+                return provider[0];
             }
-            List<String> all = new ArrayList<>(fixed);
-            all.addAll(provider[0].suggestions());
-            return all;
+
+            @Override
+            public java.util.Collection<String> suggestions() {
+                List<String> all = new ArrayList<>(fixed);
+                all.addAll(provider().suggestions());
+                return all;
+            }
+
+            @Override
+            public boolean needsWorld() {
+                return provider().needsWorld();
+            }
         };
     }
 

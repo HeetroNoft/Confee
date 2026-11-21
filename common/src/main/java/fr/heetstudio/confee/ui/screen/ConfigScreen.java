@@ -494,7 +494,7 @@ public final class ConfigScreen extends ConfeeScreen {
         try {
             Object widget = factory.get();
             if (widget instanceof fr.heetstudio.confee.api.client.OptionWidget<?> optionWidget) {
-                return new CustomWidgetAdapter(ui, session, option, name, optionWidget);
+                return new CustomWidgetAdapter(ui, session, option, name, optionWidget, w -> reveal = w);
             }
             fr.heetstudio.confee.ConfeeLog.warn("Widget of option '{}' is not an OptionWidget: {}", option.path(), widget);
         } catch (RuntimeException | LinkageError e) {
@@ -548,7 +548,7 @@ public final class ConfigScreen extends ConfeeScreen {
                     field.setError(null);
                     session.set(raw, parsed.value());
                 } else {
-                    field.setError(problemText(option, parsed.problem()));
+                    field.setError(problemText(option, parsed));
                 }
             });
             field.setError(null);
@@ -590,7 +590,7 @@ public final class ConfigScreen extends ConfeeScreen {
         MultilineFieldWidget[] holder = new MultilineFieldWidget[1];
         holder[0] = new MultilineFieldWidget(ui, name, String.valueOf(session.get(raw)), maxLength, text -> {
             ValueText.Parsed parsed = ValueText.parse(option, text);
-            holder[0].setError(parsed.ok() ? null : problemText(option, parsed.problem()));
+            holder[0].setError(parsed.ok() ? null : problemText(option, parsed));
             if (parsed.ok()) {
                 session.set(raw, parsed.value());
             }
@@ -622,7 +622,7 @@ public final class ConfigScreen extends ConfeeScreen {
                     holder[0].setSwatch((Integer) parsed.value());
                 }
             } else {
-                holder[0].setError(problemText(option, parsed.problem()));
+                holder[0].setError(problemText(option, parsed));
             }
         });
         holder[0] = field;
@@ -673,7 +673,7 @@ public final class ConfigScreen extends ConfeeScreen {
                     session.set(raw, parsed.value());
                     field.setSwatch(IntColors.argb(parsed.value()));
                 } else {
-                    field.setError(problemText(option, parsed.problem()));
+                    field.setError(problemText(option, parsed));
                 }
             });
             field.setSwatchAction(() -> {
@@ -696,6 +696,11 @@ public final class ConfigScreen extends ConfeeScreen {
         if (type == OptionType.IDENTIFIER || type == OptionType.STRING) {
             field.setSuggester(Suggestions.forSources(detected == null ? null : detected.registry(),
                     detected != null && detected.tags(), option.suggestions(), option.path(), accepted));
+            Component worldHint = Suggestions.worldHint(option);
+            if (worldHint != null) {
+                field.setHint(worldHint);
+                field.setPersistentHint(worldHint);
+            }
         }
         if (detected != null && fr.heetstudio.confee.ui.RegistryIcons.hasIcons(detected.registry())) {
             String registry = detected.registry();
@@ -760,8 +765,13 @@ public final class ConfigScreen extends ConfeeScreen {
             case MAX_LENGTH -> Component.translatable("confee.error.max_length", option == null ? 0 : option.maxLength());
             case IDENTIFIER -> Component.translatable("confee.error.identifier");
             case COLOR -> Component.translatable(option != null && option.colorAlpha() ? "confee.error.color_alpha" : "confee.error.color");
-            case INVALID -> Component.translatable("confee.error.invalid");
+            case INVALID, REFUSED -> Component.translatable("confee.error.invalid");
         };
+    }
+
+    /** Problem of a field; a value refused by the mod's validator shows the mod's message. */
+    private Component problemText(@Nullable Option<?> option, ValueText.Parsed parsed) {
+        return parsed.reason() != null ? ValueText.reason(parsed.reason()) : problemText(option, parsed.problem());
     }
 
     private void focusLater(ConfeeWidget widget) {
@@ -910,10 +920,15 @@ public final class ConfigScreen extends ConfeeScreen {
         double maxScroll = Math.max(0, contentH - viewH);
         if (reveal != null) {
             if (rows.stream().anyMatch(r -> r.widgets().contains(reveal))) {
-                if (reveal.y < viewport[1] + 4) {
-                    scroll -= viewport[1] + 4 - reveal.y;
-                } else if (reveal.y + reveal.height > viewport[3] - 4) {
-                    scroll += reveal.y + reveal.height - (viewport[3] - 4);
+                // only the focused part of a tall widget (a mod's widget may return a smaller area)
+                int[] area = reveal.revealBounds();
+                int top = area[1];
+                int bottom = area[1] + area[3];
+                if (top < viewport[1] + 4) {
+                    scroll -= viewport[1] + 4 - top;
+                } else if (bottom > viewport[3] - 4) {
+                    // an area taller than the panel shows its top
+                    scroll += Math.min(bottom - (viewport[3] - 4), top - (viewport[1] + 4));
                 }
             }
             reveal = null;

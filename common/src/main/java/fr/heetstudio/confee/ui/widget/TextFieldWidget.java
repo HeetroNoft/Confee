@@ -58,6 +58,8 @@ public class TextFieldWidget extends ConfeeWidget {
     // suggestions
     @Nullable
     private Function<String, List<String>> suggester;
+    @Nullable
+    private Component persistentHint;
     private List<String> suggestions = List.of();
     private int selectedSuggestion = -1;
     private int suggestionScroll;
@@ -82,6 +84,11 @@ public class TextFieldWidget extends ConfeeWidget {
 
     public void setHint(Component hint) {
         box.setHint(hint);
+    }
+
+    /** Hint of an empty field that stays visible while typing (vanilla hints hide on focus). */
+    public void setPersistentHint(@Nullable Component hint) {
+        this.persistentHint = hint;
     }
 
     public void setLeadingIcon(@Nullable Icon icon) {
@@ -205,6 +212,12 @@ public class TextFieldWidget extends ConfeeWidget {
         box.setWidth(x + fw - 5 - textX - suffixW);
         box.setEditable(enabled);
         box.render(g, mouseX, mouseY, delta);
+        if (persistentHint != null && box.getValue().isEmpty()) {
+            // after the cursor when focused (the vanilla hint is drawn when not focused)
+            if (focused) {
+                Draw.textFit(g, ui.font(), persistentHint, textX + 6, y + (height - 8) / 2, x + fw - 11 - textX - suffixW, t.textDisabled());
+            }
+        }
 
         int sx = x + width - SIDE_BUTTON;
         if (showSwatch) {
