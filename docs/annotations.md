@@ -50,6 +50,7 @@ Translations take priority over these, see [Translations](translations.md).
 | Annotation | On | Effect |
 | --- | --- | --- |
 | `@Pattern("regex")`, `@MaxLength(n)` | String, List of String | Text validation (of each value, on a list). |
+| `@Validator(MyCheck.class)` | any | Your own check (`ValueValidator<T>`: return null, or the message shown under the field). Each value, on a list of simple values. Runs on the server too. |
 | `@Multiline` | String | Multi-line text area. |
 | `@Suggestions({"a", "b"}, provider = ...)` | String, ResourceLocation, List&lt;String&gt; | Values suggested while typing (fixed and/or from a `SuggestionProvider`). |
 | `@Keybind` | String | A key such as `key.keyboard.g`, set by pressing it. |
