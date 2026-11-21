@@ -53,6 +53,19 @@ public final class Option<T> implements Node, ConfigValue<T> {
     /** The mod's own check ({@code @Validator}); on a list of simple values, each value. */
     @Nullable
     private final fr.heetstudio.confee.api.ValueValidator<Object> modValidator;
+    /** A refused value of the file is kept as written ({@code OnFileError.KEEP}). */
+    private final boolean keepRefused;
+    /** {@code @ItemStack}: the value (each value of a list) is an SNBT item stack, or null. */
+    @Nullable
+    private final StackSpec stackSpec;
+
+    /**
+     * Parts of an {@code @ItemStack} option shown on the screen.
+     *
+     * @param maxCount {@code 0} = max stack size of the item, {@code -1} = no limit
+     */
+    public record StackSpec(boolean count, boolean components, int maxCount) {
+    }
     @Nullable
     private final fr.heetstudio.confee.api.Preview preview;
     @Nullable
@@ -70,6 +83,8 @@ public final class Option<T> implements Node, ConfigValue<T> {
     private final String description;
     @Nullable
     private final fr.heetstudio.confee.api.SuggestionProvider suggestions;
+    /** Built-in world sources of suggestions ({@code @Suggestions(sources)}). */
+    private final List<fr.heetstudio.confee.api.SuggestionSource> suggestionSources;
     /** Supplier of a client-only {@code OptionWidget}, or null. Typed loosely: this class is loaded on servers. */
     @Nullable
     private final java.util.function.Supplier<?> widgetFactory;
@@ -114,6 +129,8 @@ public final class Option<T> implements Node, ConfigValue<T> {
         this.readOnly = b.readOnly;
         this.validator = b.validator;
         this.modValidator = b.modValidator;
+        this.keepRefused = b.keepRefused;
+        this.stackSpec = b.stackSpec;
         this.preview = b.preview;
         this.enabledIf = b.enabledIf;
         this.visibleIf = b.visibleIf;
@@ -137,6 +154,7 @@ public final class Option<T> implements Node, ConfigValue<T> {
         this.description = b.description;
         this.allowTags = b.allowTags;
         this.suggestions = b.suggestions;
+        this.suggestionSources = List.copyOf(b.suggestionSources);
         this.widgetFactory = b.widgetFactory;
         this.path = b.key;
     }
@@ -155,7 +173,7 @@ public final class Option<T> implements Node, ConfigValue<T> {
     @Override
     public void set(T value) {
         Validated<T> result = validate(value);
-        if (result.status() == Validated.Status.REPLACED_BY_DEFAULT) {
+        if (result.status() == Validated.Status.REPLACED_BY_DEFAULT || result.status() == Validated.Status.KEPT) {
             ConfeeLog.warn("Rejected value {} for option '{}': {}", value, path, result.message());
             return;
         }
@@ -231,12 +249,22 @@ public final class Option<T> implements Node, ConfigValue<T> {
             value = list.stream().distinct().sorted(java.util.Comparator.comparingInt(e -> ((Enum<?>) e).ordinal())).toList();
         }
         List<String> fixes = new ArrayList<>();
+        Validated<Object> kept = null;
         if (type == OptionType.LIST && value instanceof List<?> list) {
             List<Object> elements = new ArrayList<>(list.size());
             for (Object element : list) {
                 Validated<Object> check = checkElement(element);
+                if (check.status() == Validated.Status.KEPT) {
+                    if (kept == null) {
+                        kept = check;
+                    }
+                    elements.add(element);
+                    continue;
+                }
                 if (check.status() == Validated.Status.REPLACED_BY_DEFAULT) {
-                    return Validated.replaced(defaultValue, check.message());
+                    return check.reason() != null
+                            ? Validated.refused(defaultValue, check.message(), check.reason())
+                            : Validated.replaced(defaultValue, check.message());
                 }
                 if (check.status() == Validated.Status.CORRECTED) {
                     fixes.add(check.message());
@@ -285,8 +313,12 @@ public final class Option<T> implements Node, ConfigValue<T> {
         if (type != OptionType.LIST) {
             String reason = modCheck(value);
             if (reason != null) {
-                return Validated.refused(defaultValue, "'" + value + "' is refused by the mod: " + reason, reason);
+                String message = "'" + value + "' is refused by the mod: " + reason;
+                return keepRefused ? Validated.kept(value, message, reason) : Validated.refused(defaultValue, message, reason);
             }
+        }
+        if (kept != null) {
+            return Validated.kept(value, kept.message(), kept.reason());
         }
         return fixes.isEmpty() ? Validated.ok(value) : Validated.corrected(value, String.join(", ", fixes));
     }
@@ -601,7 +633,8 @@ public final class Option<T> implements Node, ConfigValue<T> {
         }
         String reason = modCheck(element);
         if (reason != null) {
-            return Validated.refused(null, "'" + element + "' is refused by the mod: " + reason, reason);
+            String message = "'" + element + "' is refused by the mod: " + reason;
+            return keepRefused ? Validated.kept(element, message, reason) : Validated.refused(null, message, reason);
         }
         return Validated.ok(element);
     }
@@ -609,6 +642,12 @@ public final class Option<T> implements Node, ConfigValue<T> {
     /** Message of the mod's own validator, or null when the value is accepted (or the validator failed). */
     @Nullable
     private String modCheck(Object value) {
+        if (stackSpec != null && value instanceof String text) {
+            String problem = stackProblem(text);
+            if (problem != null) {
+                return problem;
+            }
+        }
         if (modValidator == null || value == null) {
             return null;
         }
@@ -620,6 +659,31 @@ public final class Option<T> implements Node, ConfigValue<T> {
             fr.heetstudio.confee.ConfeeLog.warn("Validator of option '{}' failed on '{}': {}", path(), value, e.toString());
             return null;
         }
+    }
+
+    /** Server-safe check of an {@code @ItemStack} value: translation key of the problem, or null. */
+    @Nullable
+    private String stackProblem(String text) {
+        try {
+            StackText stack = StackText.parse(text);
+            if (stackSpec.maxCount() > 0 && stack.count() > stackSpec.maxCount()) {
+                return "confee.error.stack_count";
+            }
+            return null;
+        } catch (IllegalArgumentException e) {
+            return "confee.error.stack";
+        }
+    }
+
+    /** {@code @ItemStack} parts, or null when the option is not an item stack. */
+    @Nullable
+    public StackSpec stackSpec() {
+        return stackSpec;
+    }
+
+    /** Whether a refused value of the file is kept as written ({@code OnFileError.KEEP}). */
+    public boolean keepsRefused() {
+        return keepRefused;
     }
 
     /** Whether the mod gave its own check ({@code @Validator}). */
@@ -634,6 +698,11 @@ public final class Option<T> implements Node, ConfigValue<T> {
     }
 
     /** Values suggested by the mod while typing, or null. */
+    @Nullable
+    public List<fr.heetstudio.confee.api.SuggestionSource> suggestionSources() {
+        return suggestionSources;
+    }
+
     @Nullable
     public fr.heetstudio.confee.api.SuggestionProvider suggestions() {
         return suggestions;
@@ -678,6 +747,8 @@ public final class Option<T> implements Node, ConfigValue<T> {
         private boolean readOnly;
         private java.util.function.Predicate<Object> validator;
         private fr.heetstudio.confee.api.ValueValidator<Object> modValidator;
+        private boolean keepRefused;
+        private StackSpec stackSpec;
         private fr.heetstudio.confee.api.Preview preview;
         private String enabledIf;
         private String visibleIf;
@@ -702,6 +773,7 @@ public final class Option<T> implements Node, ConfigValue<T> {
         private String description;
         private boolean allowTags;
         private fr.heetstudio.confee.api.SuggestionProvider suggestions;
+        private List<fr.heetstudio.confee.api.SuggestionSource> suggestionSources = List.of();
         private java.util.function.Supplier<?> widgetFactory;
 
         private Builder(String key, OptionType type) {
@@ -829,6 +901,23 @@ public final class Option<T> implements Node, ConfigValue<T> {
         @SuppressWarnings("unchecked")
         public Builder<T> modValidator(@Nullable fr.heetstudio.confee.api.ValueValidator<?> validator) {
             this.modValidator = (fr.heetstudio.confee.api.ValueValidator<Object>) validator;
+            return this;
+        }
+
+        public Builder<T> suggestionSources(List<fr.heetstudio.confee.api.SuggestionSource> sources) {
+            this.suggestionSources = List.copyOf(sources);
+            return this;
+        }
+
+        /** {@code OnFileError.KEEP}: a refused value of the file is kept as written. */
+        public Builder<T> keepRefused(boolean keep) {
+            this.keepRefused = keep;
+            return this;
+        }
+
+        /** {@code @ItemStack}: the value (each value of a list) is an SNBT item stack. */
+        public Builder<T> itemStack(@Nullable StackSpec spec) {
+            this.stackSpec = spec;
             return this;
         }
 

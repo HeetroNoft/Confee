@@ -20,4 +20,11 @@ import java.lang.annotation.Target;
 public @interface Validator {
 
     Class<? extends ValueValidator<?>> value();
+
+    /**
+     * What to do with a refused value read from the file: use the default (default), or keep it as written
+     * ({@code KEEP}, e.g. a long hand-written line with one typo). On a list, {@code KEEP} keeps the refused values and
+     * the screen shows their error until they are fixed or removed.
+     */
+    fr.heetstudio.confee.api.OnFileError onFileError() default fr.heetstudio.confee.api.OnFileError.USE_DEFAULT;
 }
