@@ -276,6 +276,17 @@ public abstract sealed class SectionBuilder permits ConfigBuilder, CategoryBuild
         return builder;
     }
 
+    /**
+     * Preview of the whole section (or config): shown for each of its options that has no preview of its own;
+     * {@code PreviewContext#path()} tells which option is previewed.
+     * <p>Example: {@code b.category("outline").preview(Preview.renderer(OutlinePreview::new))}</p>
+     */
+    public SectionBuilder preview(fr.heetstudio.confee.api.Preview preview) {
+        owner.checkNotBuilt();
+        section.setPreview(java.util.Objects.requireNonNull(preview));
+        return this;
+    }
+
     // ------------------------------------------------------------------ decorations (screen only)
 
     /**

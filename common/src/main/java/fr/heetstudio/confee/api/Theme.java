@@ -208,4 +208,22 @@ public final class Theme {
             return c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4);
         }
     }
+
+    /**
+     * Blend of two ARGB colors: {@code amount} 0 gives {@code a}, 1 gives {@code b}. To dim a text or an icon without
+     * drawing a translucent layer over it.
+     * <p>Example: {@code int half = Theme.mix(0xFFFFFFFF, theme.panelBg(), 0.5f);}</p>
+     */
+    public static int mix(int a, int b, float amount) {
+        float t = Math.max(0, Math.min(1, amount));
+        int aa = a >>> 24, ar = (a >> 16) & 0xFF, ag = (a >> 8) & 0xFF, ab = a & 0xFF;
+        int ba = b >>> 24, br = (b >> 16) & 0xFF, bg = (b >> 8) & 0xFF, bb = b & 0xFF;
+        return (Math.round(aa + (ba - aa) * t) << 24) | (Math.round(ar + (br - ar) * t) << 16)
+                | (Math.round(ag + (bg - ag) * t) << 8) | Math.round(ab + (bb - ab) * t);
+    }
+
+    /** A color dimmed toward the panel background, like Confee's disabled controls (55 %). */
+    public int dimmed(int color) {
+        return mix(color, panelBg, 0.55f);
+    }
 }

@@ -249,6 +249,13 @@ public class TextFieldWidget extends ConfeeWidget {
 
     // ------------------------------------------------------------------ suggestions
 
+    /** Recomputes the suggestion list from the current text (after the field was created again). */
+    public void refreshSuggestions() {
+        if (!box.getValue().isEmpty()) {
+            updateSuggestions(false);
+        }
+    }
+
     private void updateSuggestions(boolean open) {
         if (suggester == null || !focused) {
             suggestions = List.of();

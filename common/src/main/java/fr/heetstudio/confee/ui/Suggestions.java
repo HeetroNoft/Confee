@@ -29,6 +29,7 @@ public final class Suggestions {
     /** Maximum results kept (the list scrolls). */
     public static final int MAX = 50;
     private static final Map<String, List<String>> CACHE = new HashMap<>();
+    private static final Map<String, Map<String, String>> NAMES = new java.util.concurrent.ConcurrentHashMap<>();
 
     private Suggestions() {
     }
@@ -43,7 +44,7 @@ public final class Suggestions {
      */
     @Nullable
     public static net.minecraft.network.chat.Component worldHint(Option<?> option) {
-        SuggestionProvider provider = option.suggestions();
+        SuggestionProvider provider = providerOf(option);
         if (provider == null || net.minecraft.client.Minecraft.getInstance().level != null) {
             return null;
         }
@@ -56,7 +57,33 @@ public final class Suggestions {
 
     @Nullable
     public static Function<String, List<String>> forOption(Option<?> option) {
-        return forSources(option.registry(), option.allowTags(), option.suggestions(), option.path());
+        return forSources(option.registry(), option.allowTags(), providerOf(option), option.path());
+    }
+
+    /** The mod's suggestions ({@code @Suggestions}) plus the built-in world sources, or null when it has none. */
+    @Nullable
+    public static SuggestionProvider providerOf(Option<?> option) {
+        SuggestionProvider own = option.suggestions();
+        List<fr.heetstudio.confee.api.SuggestionSource> sources = option.suggestionSources();
+        if (sources.isEmpty()) {
+            return own;
+        }
+        return new SuggestionProvider() {
+            @Override
+            public Collection<String> suggestions() {
+                Set<String> all = new LinkedHashSet<>();
+                if (own != null) {
+                    all.addAll(own.suggestions());
+                }
+                all.addAll(WorldSuggestions.values(sources));
+                return all;
+            }
+
+            @Override
+            public boolean needsWorld() {
+                return true;
+            }
+        };
     }
 
     @Nullable
@@ -94,11 +121,43 @@ public final class Suggestions {
             }
         }
         List<String> candidates = List.copyOf(all);
-        return text -> filter(candidates, text, MAX);
+        Map<String, String> names = registry == null ? Map.of() : names(registry);
+        return text -> filter(candidates, text, MAX, names::get);
+    }
+
+    /**
+     * Lower-case names of the entries of a registry in the player's language ("épée en diamant"), so a search finds
+     * them by name too. Cached per registry and language; empty for registries without names.
+     */
+    public static Map<String, String> names(String registry) {
+        net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();
+        if (mc == null) {
+            return Map.of(); // unit tests
+        }
+        String language = mc.getLanguageManager().getSelected();
+        return NAMES.computeIfAbsent(registry + "|" + language, k -> {
+            Map<String, String> out = new HashMap<>();
+            for (String id : RegistryEntries.ids(registry)) {
+                try {
+                    net.minecraft.network.chat.Component name = RegistryIcons.name(registry, id);
+                    if (name != null) {
+                        out.put(id, name.getString().toLowerCase(Locale.ROOT));
+                    }
+                } catch (RuntimeException | LinkageError e) {
+                    // an entry whose name cannot be built is found by its ID only
+                }
+            }
+            return out;
+        });
     }
 
     /** Best matches of {@code text}: starts with it, then word starts, then contains, then letters in order. */
     public static List<String> filter(List<String> candidates, String text, int max) {
+        return filter(candidates, text, max, id -> null);
+    }
+
+    /** Same, a candidate also matching by its name ({@code nameOf} gives the lower-case name, or null). */
+    public static List<String> filter(List<String> candidates, String text, int max, Function<String, String> nameOf) {
         String q = text.trim().toLowerCase(Locale.ROOT);
         if (q.isEmpty()) {
             return candidates.size() > max ? List.copyOf(candidates.subList(0, max)) : candidates;
@@ -108,6 +167,13 @@ public final class Suggestions {
         List<Match> matches = new ArrayList<>();
         for (String candidate : candidates) {
             int score = score(candidate.toLowerCase(Locale.ROOT), q);
+            String name = nameOf.apply(candidate);
+            if (name != null) {
+                int byName = score(name, q);
+                if (byName >= 0 && (score < 0 || byName < score)) {
+                    score = byName;
+                }
+            }
             if (score >= 0) {
                 matches.add(new Match(candidate, score));
             }
