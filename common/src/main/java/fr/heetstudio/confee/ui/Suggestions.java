@@ -37,6 +37,23 @@ public final class Suggestions {
      * Suggester of an option (registry and/or mod values), or null when it has none. The candidates are read once,
      * when the screen opens.
      */
+    /**
+     * Greyed hint of an empty field whose suggestions come from a world ({@code SuggestionProvider#needsWorld}) while
+     * no world is loaded, else null.
+     */
+    @Nullable
+    public static net.minecraft.network.chat.Component worldHint(Option<?> option) {
+        SuggestionProvider provider = option.suggestions();
+        if (provider == null || net.minecraft.client.Minecraft.getInstance().level != null) {
+            return null;
+        }
+        try {
+            return provider.needsWorld() ? net.minecraft.network.chat.Component.translatable("confee.suggestions.needs_world") : null;
+        } catch (RuntimeException | LinkageError e) {
+            return null;
+        }
+    }
+
     @Nullable
     public static Function<String, List<String>> forOption(Option<?> option) {
         return forSources(option.registry(), option.allowTags(), option.suggestions(), option.path());

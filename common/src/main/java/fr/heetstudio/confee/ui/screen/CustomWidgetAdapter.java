@@ -12,6 +12,7 @@ import fr.heetstudio.confee.ui.widget.ConfeeWidget;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.network.chat.Component;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Puts a mod's {@link OptionWidget} in the screen. Its value goes through the edit session (validated, saved with
@@ -20,12 +21,19 @@ import net.minecraft.network.chat.Component;
  */
 final class CustomWidgetAdapter extends ConfeeWidget {
 
+    /** Upper bound of a widget's height (a widget taller than the panel scrolls its focused part into view). */
+    private static final int MAX_HEIGHT = 4000;
+
     private final OptionWidget<Object> widget;
     private final Option<Object> option;
     private boolean broken;
 
+    /**
+     * @param reveal scrolls the panel to the focused part of a widget
+     */
     @SuppressWarnings("unchecked")
-    CustomWidgetAdapter(Ui ui, EditSession session, Option<?> option, Component label, OptionWidget<?> widget) {
+    CustomWidgetAdapter(Ui ui, EditSession session, Option<?> option, Component label, OptionWidget<?> widget,
+                        java.util.function.Consumer<ConfeeWidget> reveal) {
         super(ui, 100, 20);
         this.widget = (OptionWidget<Object>) widget;
         this.option = (Option<Object>) option;
@@ -90,6 +98,16 @@ final class CustomWidgetAdapter extends ConfeeWidget {
             public void click() {
                 ui.click();
             }
+
+            @Override
+            public int viewportHeight() {
+                return self.visibleHeight();
+            }
+
+            @Override
+            public void reveal() {
+                reveal.accept(self);
+            }
         });
     }
 
@@ -107,7 +125,7 @@ final class CustomWidgetAdapter extends ConfeeWidget {
             return 12;
         }
         try {
-            return Math.max(8, Math.min(400, widget.height(width)));
+            return Math.max(8, Math.min(MAX_HEIGHT, widget.height(width)));
         } catch (RuntimeException | LinkageError e) {
             fail(e);
             return 12;
@@ -145,6 +163,77 @@ final class CustomWidgetAdapter extends ConfeeWidget {
         if (focused) {
             Draw.focusRing(g, x, y, width, height, ui.theme().accent());
         }
+    }
+
+    @Override
+    public boolean capturesText() {
+        return !broken && enabled && safely(widget::capturesText);
+    }
+
+    @Override
+    @Nullable
+    public Component widgetError() {
+        if (broken || !visible) {
+            return null;
+        }
+        try {
+            return widget.error();
+        } catch (RuntimeException | LinkageError e) {
+            fail(e);
+            return null;
+        }
+    }
+
+    @Override
+    public int[] revealBounds() {
+        if (!broken) {
+            try {
+                int[] r = widget.focusBounds();
+                if (r != null && r.length == 4) {
+                    return r;
+                }
+            } catch (RuntimeException | LinkageError e) {
+                fail(e);
+            }
+        }
+        return super.revealBounds();
+    }
+
+    @Override
+    public void renderFloating(GuiGraphics g, int mouseX, int mouseY, float delta) {
+        if (broken || !visible) {
+            return;
+        }
+        try {
+            widget.renderOverlay(g, mouseX, mouseY, delta);
+        } catch (RuntimeException | LinkageError e) {
+            fail(e);
+        }
+    }
+
+    @Override
+    @Nullable
+    public int[] floatingBounds() {
+        if (broken || !visible || !focused) {
+            return null;
+        }
+        try {
+            int[] r = widget.overlayBounds();
+            return r != null && r.length == 4 ? r : null;
+        } catch (RuntimeException | LinkageError e) {
+            fail(e);
+            return null;
+        }
+    }
+
+    @Override
+    public boolean floatingClicked(double mx, double my, int button) {
+        return floatingContains(mx, my) && safely(() -> widget.overlayClicked(mx, my, button));
+    }
+
+    @Override
+    public boolean floatingScrolled(double mx, double my, double delta) {
+        return floatingContains(mx, my) && safely(() -> widget.overlayScrolled(mx, my, delta));
     }
 
     private interface Call {

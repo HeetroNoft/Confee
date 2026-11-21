@@ -95,6 +95,17 @@ public final class OptionBuilder<T> {
     }
 
     /**
+     * Your own check ({@link fr.heetstudio.confee.api.ValueValidator}), run after Confee's checks. Returns null when
+     * the value is valid, else the message shown under the field (translation key or text). On a list of simple
+     * values it checks each value. Runs on the server too: no client classes.
+     * <p>Example: {@code b.string("code", "abc").validator((String s) -> s.startsWith("x") ? null : "examplemod.error.code").build()}</p>
+     */
+    public <V> OptionBuilder<T> validator(fr.heetstudio.confee.api.ValueValidator<V> validator) {
+        delegate.modValidator(java.util.Objects.requireNonNull(validator));
+        return this;
+    }
+
+    /**
      * <p>Example: {@code b.string("nickname", "Steve").maxLength(16).build()  // on a List<String>: each value}</p>
      */
     public OptionBuilder<T> maxLength(int maxLength) {
