@@ -51,7 +51,9 @@ Each modifier matches an annotation of the same name, described in [Annotations]
 | Texts | `.comment()`, `.name()`, `.description()` |
 | Numbers | `.range()`, `.slider(step)`, `.stepper(step)`, `.unit()`, `.alpha()` (colors) |
 | Text | `.pattern()`, `.maxLength()`, `.multiline()`, `.suggestions(...)` |
-| Your own check | `.validator((String s) -> s.isBlank() ? "examplemod.error.empty" : null)` (each value, on a list) |
+| Your own check | `.validator((String s) -> s.isBlank() ? "examplemod.error.empty" : null)` (each value, on a list), `.onFileError(OnFileError.KEEP)` |
+| Item stacks | `.itemStack()`, `.itemStack(count, components, maxCount)` on a String or List of String |
+| World suggestions | `.suggestions(SuggestionSource.SCOREBOARD_TAGS, SuggestionSource.TEAMS)` |
 | IDs | `.registry()`, `.item()`, `.block()`, `.modId()`, `.picker()`, `.pickerStyles()` |
 | Lists | `.allowDuplicates()`, `.size()`, `.maxSize()`, `.sorted()`, `.reorderable()`, `.ignoreCase()` |
 | Behavior | `.enabledIf()`, `.visibleIf()`, `.requiresRestart()`, `.hidden()`, `.preview()` |
