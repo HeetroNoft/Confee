@@ -2,6 +2,10 @@
 
 [← Back to the README](../README.md)
 
+Suggestions find registry entries by their ID and by their name in the player's language ("épée" finds
+`minecraft:diamond_sword` in French). `@Suggestions(sources = SuggestionSource.SCOREBOARD_TAGS)` (also `TEAMS`,
+`OBJECTIVES`) suggests values read from the loaded world.
+
 `@Registry("namespace:registry")` (or a shortcut such as `@Item` or `@Entity`) turns a text field into an ID field:
 suggestions while typing, an icon when the type has one (items, blocks, spawn eggs for entities, enchanted books,
 effect icons, buckets for fluids), a grid picker for those, and an automatic preview.
