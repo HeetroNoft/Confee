@@ -11,4 +11,12 @@ import java.util.Collection;
 public interface SuggestionProvider {
 
     Collection<String> suggestions();
+
+    /**
+     * True when some suggestions come from a loaded world (scoreboard tags, teams, datapack entries...): from the
+     * title screen, an empty field then shows a greyed "open a world for more suggestions" hint. Default false.
+     */
+    default boolean needsWorld() {
+        return false;
+    }
 }
