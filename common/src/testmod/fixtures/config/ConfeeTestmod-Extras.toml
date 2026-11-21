@@ -2,6 +2,8 @@
 # These comments are not Confee's: they are dropped when the file is moved.
 outlineWidth = 4
 singleSnbt = "{legacy:1b}"
+keptNote = "no braces, kept"
+lootStacks = ["{id:\"minecraft:diamond\",Count:3b}", "{id:\"minecraft:golden_apple\",Count:2b", "{id:\"minecraft:bread\",count:5}"]
 
 [outline]
 # Default: true
