@@ -104,6 +104,7 @@
   "confee.narration.keybind": "%s: key %s",
   "confee.narration.checkbox_on": "%s: %s, checked",
   "confee.narration.checkbox_off": "%s: %s, not checked",
+  "confee.suggestions.needs_world": "Open a world for more suggestions",
   "confee.widget.error": "This setting could not be displayed.",
   "confee.color.new": "New",
   "confee.color.old": "Current",
